@@ -5,7 +5,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   User,
-  UserCredential
+  UserCredential,
 } from 'firebase/auth';
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 

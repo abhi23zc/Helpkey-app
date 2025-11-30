@@ -46,8 +46,8 @@ export default function CustomTabBar() {
 
   const tabs = [
     { name: 'home', label: 'Home', icon: <Home color="#FFF" />, path: '/(tabs)/home' },
-    { name: 'search', label: 'Explore', icon: <Hotel color="#FFF" />, path: '/(tabs)/search' },
-    { name: 'bookings', label: 'History', icon: <Search color="#FFF" />, path: '/(tabs)/bookings' },
+    { name: 'search', label: 'Explore', icon: <Search color="#FFF" />, path: '/(tabs)/search' },
+    { name: 'bookings', label: 'History', icon: <Hotel color="#FFF" />, path: '/(tabs)/bookings' },
     { name: 'profile', label: 'Wallet', icon: <User2Icon color="#FFF" />, path: '/(tabs)/profile' },
   ];
 

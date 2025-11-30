@@ -1,5 +1,5 @@
 import { authService } from '@/services/authService';
-import { AntDesign, Feather } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -178,29 +178,6 @@ export default function Login() {
                   )}
                 </LinearGradient>
               </TouchableOpacity>
-
-              {/* Divider */}
-              <View style={styles.dividerContainer}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>Or continue with</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              {/* Social Login Buttons */}
-              <View style={styles.socialContainer}>
-                <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
-                  <View style={styles.socialIconWrapper}>
-                    <AntDesign name="google" size={24} color="#DB4437" />
-                    
-                  </View>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
-                  <View style={styles.socialIconWrapper}>
-                    <Feather name="facebook" size={24} color="#1877F2" />
-                  </View>
-                </TouchableOpacity>
-               
-              </View>
 
               {/* Sign up link */}
               <View style={styles.signInContainer}>

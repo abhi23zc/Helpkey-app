@@ -4,6 +4,7 @@
     "importHelpers": true,
     "esModuleInterop": true,
     "strict": true,
+    "jsx": "react-native",
     "paths": {
       "@/*": [
         "./*"

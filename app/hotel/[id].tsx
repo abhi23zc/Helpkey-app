@@ -16,7 +16,7 @@ import {
   Waves,
   Wifi
 } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -199,9 +199,23 @@ export default function HotelDetail() {
   };
 
   const handleBookNow = () => {
-    if (selectedRoom) {
-      console.log('Book room:', selectedRoom);
-      // Proceed to booking with selectedRoom
+    if (selectedRoom && hotel) {
+      router.push({
+        pathname: '/hotel/booking',
+        params: {
+          hotel: JSON.stringify({
+            id: hotel.id,
+            name: hotel.name,
+            location: hotel.location,
+            address: hotel.address,
+            image: hotel.image,
+            rating: hotel.rating,
+            latitude: hotel.latitude,
+            longitude: hotel.longitude,
+          }),
+          room: JSON.stringify(selectedRoom),
+        },
+      });
     } else {
       console.log('No room selected');
     }
@@ -529,7 +543,7 @@ export default function HotelDetail() {
         <View style={styles.priceContainer}>
           <Text style={styles.priceLabel}>Price</Text>
           <Text style={styles.price}>
-            ${minPrice}
+            ₹{minPrice}
             <Text style={styles.priceUnit}> /night</Text>
           </Text>
         </View>
