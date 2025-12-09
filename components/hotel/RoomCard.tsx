@@ -18,8 +18,11 @@ const RoomCard = ({ room, onSelect, isSelected }: RoomCardProps) => {
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-    const displayImage = (room.images && room.images.length > 0) ? room.images[0] : (room.image || 'https://images.unsplash.com/photo-1631049307204-dac81bd4118a?w=800');
-    const allImages = (room.images && room.images.length > 0) ? room.images : [displayImage];
+    // Convert .avif to .jpg for React Native compatibility
+    const rawDisplayImage = (room.images && room.images.length > 0) ? room.images[0] : (room.image || 'https://images.unsplash.com/photo-1631049307204-dac81bd4118a?w=800');
+    const displayImage = rawDisplayImage.replace(/\.avif$/, '.jpg');
+    const rawImages = (room.images && room.images.length > 0) ? room.images : [rawDisplayImage];
+    const allImages = rawImages.map(img => img.replace(/\.avif$/, '.jpg'));
 
     const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
         const slideSize = event.nativeEvent.layoutMeasurement.width;

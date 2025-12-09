@@ -32,7 +32,7 @@ const HotelCard = ({ hotel, showHourlyBadge, showDistance }: HotelCardProps) => 
   return (
     <TouchableOpacity style={styles.hotelCard} activeOpacity={0.9} onPress={handlePress}>
       <Image
-        source={{ uri: hotel.image }}
+        source={{ uri: hotel.image.replace(/\.avif$/, '.jpg') }}
         contentFit="cover"
         transition={200}
         style={styles.hotelImage}

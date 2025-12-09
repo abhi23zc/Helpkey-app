@@ -39,6 +39,10 @@ export default function PaymentScreen() {
   const additionalRequest = params.additionalRequest as string || '';
   const totalAmount = parseFloat(params.totalAmount as string) || 0;
   const nights = parseInt(params.nights as string) || 0;
+  const bookingType = (params.bookingType as string) || 'nightly';
+  const hourlyDuration = params.hourlyDuration ? parseInt(params.hourlyDuration as string) : undefined;
+  const totalPrice = parseFloat(params.totalPrice as string) || 0;
+  const taxesAndFees = parseFloat(params.taxesAndFees as string) || 0;
 
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'hotel'>('online');
@@ -72,49 +76,87 @@ export default function PaymentScreen() {
   const createBookingWithPayAtHotel = async () => {
     setLoading(true);
     try {
+      // Parse guest info from params
+      const allGuestInfoParam = params.allGuestInfo ? JSON.parse(params.allGuestInfo as string) : [];
+      // Parse customer preferences
+      const customerPreferences = params.customerPreferences ? JSON.parse(params.customerPreferences as string) : {};
+      
+      // Get booking type from params (what user actually selected)
+      const actualBookingType = (params.bookingType as string) || 'nightly';
+      const hourlyDuration = params.hourlyDuration ? parseInt(params.hourlyDuration as string) : undefined;
+      
+      // Calculate prices based on actual booking type
+      const totalPrice = parseFloat(params.totalPrice as string) || (roomData.price * nights);
+      const taxesAndFees = parseFloat(params.taxesAndFees as string) || Math.round(totalPrice * 0.18);
+      
       const bookingData = {
-        bookingType: 'nightly',
-        checkIn: formatDate(checkIn),
-        checkOut: formatDate(checkOut),
-        nights,
+        bookingType: actualBookingType,
+        checkIn: checkIn?.toISOString() || '',
+        checkOut: checkOut?.toISOString() || '',
+        nights: actualBookingType === 'nightly' ? nights : 0,
         guests,
         hotelId: hotelData.id,
         roomId: roomData.id,
         userId: user?.uid || '',
         userEmail: user?.email || '',
+        hotelAdmin: hotelData.hotelAdmin || '',
+        ...(actualBookingType === 'hourly' && hourlyDuration && { hourlyDuration }),
         hotelDetails: {
           hotelId: hotelData.id,
           name: hotelData.name,
           location: hotelData.location,
-          image: hotelData.image,
+          image: hotelData.image ? hotelData.image.replace(/\.avif$/, '.jpg') : hotelData.image,
         },
         roomDetails: {
           roomId: roomData.id,
           type: roomData.type,
-          roomNumber: '',
-          price: roomData.price,
-          image: roomData.image,
+          roomNumber: null,
+          price: parseFloat(params.totalPrice as string) / (actualBookingType === 'nightly' ? nights : 1) || roomData.price,
+          image: roomData.image ? roomData.image.replace(/\.avif$/, '.jpg') : roomData.image,
           beds: roomData.beds || '2',
           size: roomData.size || '300',
         },
-        guestInfo: [],
-        guestVerifications: [],
-        unitPrice: roomData.price,
-        totalPrice: roomData.price * nights,
-        taxesAndFees: Math.round(roomData.price * nights * 0.18),
+        guestInfo: allGuestInfoParam.map((guest: any) => ({
+          firstName: guest.firstName || '',
+          lastName: guest.lastName || '',
+          email: guest.email || '',
+          phone: guest.phone || '',
+          aadhaarNumber: guest.aadhaarNumber || '',
+          aadhaarVerified: guest.aadhaarVerified || false,
+          aadhaarData: guest.aadhaarData || null,
+          specialRequests: guest.specialRequests || '',
+        })),
+        guestVerifications: allGuestInfoParam.map((guest: any) => ({
+          firstName: guest.firstName || '',
+          lastName: guest.lastName || '',
+          phoneNumber: guest.phone || '',
+          aadhaarNumber: guest.aadhaarNumber || '',
+          verified: guest.aadhaarVerified || false,
+          verificationDetails: guest.aadhaarData || null,
+        })),
+        unitPrice: parseFloat(params.totalPrice as string) / (actualBookingType === 'nightly' ? nights : 1) || roomData.price,
+        totalPrice,
+        taxesAndFees,
         totalAmount,
         paymentInfo: {
           method: 'cash',
           status: 'pending',
-          orderId: '',
-          paymentId: '',
-          signature: '',
+          orderId: null,
+          paymentId: null,
+          signature: null,
         },
         status: 'pending',
         reference: `BK${Math.floor(Math.random() * 1000000)}`,
-        customerPreferences: {},
+        customerPreferences: customerPreferences,
         customerVerification: {},
       };
+
+      console.log('💾 Booking Data to Save (Pay at Hotel):', {
+        hotelAdmin: bookingData.hotelAdmin,
+        hotelDetailsImage: bookingData.hotelDetails.image,
+        roomDetailsImage: bookingData.roomDetails.image,
+        reference: bookingData.reference,
+      });
 
       await createBooking(bookingData);
 
@@ -452,36 +494,67 @@ export default function PaymentScreen() {
       // Payment verified, create booking
       const bookingReference = `BK${Date.now()}${Math.floor(Math.random() * 1000)}`;
       
+      // Parse guest info from params
+      const allGuestInfoParam = params.allGuestInfo ? JSON.parse(params.allGuestInfo as string) : [];
+      // Parse customer preferences
+      const customerPreferences = params.customerPreferences ? JSON.parse(params.customerPreferences as string) : {};
+      
+      // Get booking type from params (what user actually selected)
+      const actualBookingType = (params.bookingType as string) || 'nightly';
+      const hourlyDuration = params.hourlyDuration ? parseInt(params.hourlyDuration as string) : undefined;
+      
+      // Calculate prices based on actual booking type
+      const totalPrice = parseFloat(params.totalPrice as string) || (roomData.price * nights);
+      const taxesAndFees = parseFloat(params.taxesAndFees as string) || Math.round(totalPrice * 0.18);
+      
       const bookingData = {
-        bookingType: 'nightly',
-        checkIn: formatDate(checkIn),
-        checkOut: formatDate(checkOut),
-        nights,
+        bookingType: actualBookingType,
+        checkIn: checkIn?.toISOString() || '',
+        checkOut: checkOut?.toISOString() || '',
+        nights: actualBookingType === 'nightly' ? nights : 0,
         guests,
         hotelId: hotelData.id,
         roomId: roomData.id,
         userId: user?.uid || '',
         userEmail: user?.email || '',
+        hotelAdmin: hotelData.hotelAdmin || '',
+        ...(actualBookingType === 'hourly' && hourlyDuration && { hourlyDuration }),
         hotelDetails: {
           hotelId: hotelData.id,
           name: hotelData.name,
           location: hotelData.location,
-          image: hotelData.image,
+          image: hotelData.image ? hotelData.image.replace(/\.avif$/, '.jpg') : hotelData.image,
         },
         roomDetails: {
           roomId: roomData.id,
           type: roomData.type,
-          roomNumber: '',
-          price: roomData.price,
-          image: roomData.image,
+          roomNumber: null,
+          price: parseFloat(params.totalPrice as string) / (actualBookingType === 'nightly' ? nights : 1) || roomData.price,
+          image: roomData.image ? roomData.image.replace(/\.avif$/, '.jpg') : roomData.image,
           beds: roomData.beds || '2',
           size: roomData.size || '300',
         },
-        guestInfo: [],
-        guestVerifications: [],
-        unitPrice: roomData.price,
-        totalPrice: roomData.price * nights,
-        taxesAndFees: Math.round(roomData.price * nights * 0.18),
+        guestInfo: allGuestInfoParam.map((guest: any) => ({
+          firstName: guest.firstName || '',
+          lastName: guest.lastName || '',
+          email: guest.email || '',
+          phone: guest.phone || '',
+          aadhaarNumber: guest.aadhaarNumber || '',
+          aadhaarVerified: guest.aadhaarVerified || false,
+          aadhaarData: guest.aadhaarData || null,
+          specialRequests: guest.specialRequests || '',
+        })),
+        guestVerifications: allGuestInfoParam.map((guest: any) => ({
+          firstName: guest.firstName || '',
+          lastName: guest.lastName || '',
+          phoneNumber: guest.phone || '',
+          aadhaarNumber: guest.aadhaarNumber || '',
+          verified: guest.aadhaarVerified || false,
+          verificationDetails: guest.aadhaarData || null,
+        })),
+        unitPrice: parseFloat(params.totalPrice as string) / (actualBookingType === 'nightly' ? nights : 1) || roomData.price,
+        totalPrice,
+        taxesAndFees,
         totalAmount,
         paymentInfo: {
           method: 'razorpay',
@@ -490,11 +563,18 @@ export default function PaymentScreen() {
           paymentId: verifyData.payment_id || paymentId,
           signature: signature,
         },
-        status: 'confirmed',
+        status: 'pending',
         reference: bookingReference,
-        customerPreferences: {},
+        customerPreferences: customerPreferences,
         customerVerification: {},
       };
+
+      console.log('💾 Booking Data to Save (Razorpay):', {
+        hotelAdmin: bookingData.hotelAdmin,
+        hotelDetailsImage: bookingData.hotelDetails.image,
+        roomDetailsImage: bookingData.roomDetails.image,
+        reference: bookingData.reference,
+      });
 
       await createBooking(bookingData);
 
@@ -557,14 +637,21 @@ export default function PaymentScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Booking Summary Card */}
         <View style={styles.summaryCard}>
-          <Image source={{ uri: roomData.image || hotelData.image }} style={styles.hotelImage} />
+          <Image 
+            source={{ uri: (roomData.image || hotelData.image).replace(/\.avif$/, '.jpg') }} 
+            style={styles.hotelImage} 
+          />
           <View style={styles.summaryInfo}>
             <Text style={styles.hotelName}>{hotelData.name}</Text>
             <Text style={styles.roomType}>{roomData.type}</Text>
             <Text style={styles.dates}>
               {checkIn?.toLocaleDateString()} - {checkOut?.toLocaleDateString()}
             </Text>
-            <Text style={styles.nights}>{nights} night{nights > 1 ? 's' : ''}</Text>
+            <Text style={styles.nights}>
+              {bookingType === 'hourly' 
+                ? `${hourlyDuration} hour${hourlyDuration !== 1 ? 's' : ''}`
+                : `${nights} night${nights !== 1 ? 's' : ''}`}
+            </Text>
           </View>
         </View>
 
@@ -613,13 +700,17 @@ export default function PaymentScreen() {
           <Text style={styles.sectionTitle}>Price Breakdown</Text>
 
           <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Room Price ({nights} nights)</Text>
-            <Text style={styles.priceValue}>₹{roomData.price * nights}</Text>
+            <Text style={styles.priceLabel}>
+              {bookingType === 'hourly' 
+                ? `Hourly Rate (${hourlyDuration} hour${hourlyDuration !== 1 ? 's' : ''})`
+                : `Room Price (${nights} night${nights !== 1 ? 's' : ''})`}
+            </Text>
+            <Text style={styles.priceValue}>₹{totalPrice}</Text>
           </View>
 
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>Taxes & Fees (18%)</Text>
-            <Text style={styles.priceValue}>₹{Math.round(roomData.price * nights * 0.18)}</Text>
+            <Text style={styles.priceValue}>₹{taxesAndFees}</Text>
           </View>
 
           <View style={styles.divider} />

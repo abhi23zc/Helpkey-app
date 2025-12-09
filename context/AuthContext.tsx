@@ -1,5 +1,6 @@
 import { auth } from '@/config/firebase';
-import { authService, UserData } from '@/services/authService';
+import { authService } from '@/services/authService';
+import { UserData } from '@/types/user';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 

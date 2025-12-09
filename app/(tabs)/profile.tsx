@@ -73,6 +73,43 @@ export default function Profile() {
                 </View>
               </View>
 
+              {/* Aadhaar Verification Navigation */}
+              <TouchableOpacity 
+                style={[
+                  styles.savedGuestsButton,
+                  userData?.aadhaarData?.verified && styles.verifiedButton
+                ]}
+                onPress={() => router.push('/profile/verification' as any)}
+              >
+                <Feather 
+                  name={userData?.aadhaarData?.verified ? "check-circle" : "shield"} 
+                  size={20} 
+                  color={userData?.aadhaarData?.verified ? "#10B981" : "#00BFA6"} 
+                />
+                <View style={styles.infoText}>
+                  <Text style={styles.savedGuestsLabel}>
+                    {userData?.aadhaarData?.verified ? 'Aadhaar Verified' : 'Verify Aadhaar'}
+                  </Text>
+                  <Text style={styles.savedGuestsDesc}>
+                    {userData?.aadhaarData?.verified ? 'Pre-checkin enabled' : 'Enable pre-checkin for faster bookings'}
+                  </Text>
+                </View>
+                <Feather name="chevron-right" size={20} color="#9CA3AF" />
+              </TouchableOpacity>
+
+              {/* Saved Guests Navigation */}
+              <TouchableOpacity 
+                style={styles.savedGuestsButton}
+                onPress={() => router.push('/profile/saved-guests' as any)}
+              >
+                <Feather name="users" size={20} color="#00BFA6" />
+                <View style={styles.infoText}>
+                  <Text style={styles.savedGuestsLabel}>Saved Guests</Text>
+                  <Text style={styles.savedGuestsDesc}>Manage your saved guest information</Text>
+                </View>
+                <Feather name="chevron-right" size={20} color="#9CA3AF" />
+              </TouchableOpacity>
+
               <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                 <Feather name="log-out" size={20} color="#FFF" />
                 <Text style={styles.logoutText}>Logout</Text>
@@ -142,6 +179,31 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1F2937',
     fontWeight: '600',
+  },
+  savedGuestsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F5F3',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#00BFA6',
+    gap: 12,
+    marginTop: 8,
+  },
+  savedGuestsLabel: {
+    fontSize: 16,
+    color: '#1F2937',
+    fontWeight: '600',
+  },
+  savedGuestsDesc: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  verifiedButton: {
+    backgroundColor: '#D1FAE5',
+    borderColor: '#10B981',
   },
   logoutButton: {
     flexDirection: 'row',

@@ -21,6 +21,7 @@ export interface BookingData {
   roomId: string;
   userId: string;
   userEmail: string;
+  hourlyDuration?: number;
   hotelDetails: {
     hotelId: string;
     name: string;
@@ -30,7 +31,7 @@ export interface BookingData {
   roomDetails: {
     roomId: string;
     type: string;
-    roomNumber: string;
+    roomNumber: string | null;
     price: number;
     image: string;
     beds: string;
@@ -61,9 +62,9 @@ export interface BookingData {
   paymentInfo: {
     method: string;
     status: string;
-    orderId: string;
-    paymentId: string;
-    signature: string;
+    orderId: string | null;
+    paymentId: string | null;
+    signature: string | null;
   };
   status: string;
   reference: string;
@@ -74,9 +75,15 @@ export interface BookingData {
 
 export const createBooking = async (bookingData: BookingData): Promise<string> => {
   try {
-    // Get hotel admin ID
-    const hotelDoc = await getDoc(doc(db, 'hotels', bookingData.hotelId));
-    const hotelAdmin = hotelDoc.exists() ? hotelDoc.data()?.userId || '' : '';
+    // Use hotelAdmin from bookingData if provided, otherwise fetch from hotel document
+    let hotelAdmin = bookingData.hotelAdmin || '';
+    
+    if (!hotelAdmin) {
+      const hotelDoc = await getDoc(doc(db, 'hotels', bookingData.hotelId));
+      hotelAdmin = hotelDoc.exists() ? (hotelDoc.data()?.hotelAdmin || hotelDoc.data()?.userId || '') : '';
+    }
+
+    console.log('💾 Saving to Firebase with hotelAdmin:', hotelAdmin);
 
     const bookingRef = await addDoc(collection(db, 'bookings'), {
       ...bookingData,

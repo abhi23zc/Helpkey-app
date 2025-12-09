@@ -1,6 +1,12 @@
 import { useAuth } from '@/context/AuthContext';
 import { getBookingById } from '@/services/bookingService';
+import PreferencesDisplay from '@/components/booking/PreferencesDisplay';
+import CancelBookingModal from '@/components/booking/CancelBookingModal';
+import RefundRequestModal from '@/components/booking/RefundRequestModal';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { db } from '@/config/firebase';
+import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { Alert } from 'react-native';
 import {
   AlertCircle,
   ArrowLeft,
@@ -47,14 +53,23 @@ interface BookingDetails {
   unitPrice: number;
   totalPrice: number;
   taxesAndFees: number;
+  bookingType: string;
+  hourlyDuration?: number;
+  hotelId: string;
+  roomId: string;
+  userId: string;
+  userEmail: string;
+  hotelAdmin?: string;
   hotelDetails: {
+    hotelId: string;
     name: string;
     location: string;
     image: string;
   };
   roomDetails: {
+    roomId: string;
     type: string;
-    roomNumber: string;
+    roomNumber: string | null;
     price: number;
     beds: string;
     size: string;
@@ -66,13 +81,27 @@ interface BookingDetails {
     email: string;
     phone: string;
     aadhaarNumber: string;
+    aadhaarVerified: boolean;
+    aadhaarData: any;
     specialRequests: string;
+  }>;
+  guestVerifications: Array<{
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    aadhaarNumber: string;
+    verified: boolean;
+    verificationDetails: any;
   }>;
   paymentInfo: {
     method: string;
     status: string;
+    orderId: string | null;
+    paymentId: string | null;
+    signature: string | null;
   };
-  bookingType: string;
+  customerPreferences: any;
+  customerVerification: any;
   createdAt: any;
 }
 
@@ -83,6 +112,10 @@ export default function BookingDetailsScreen() {
   const [booking, setBooking] = useState<BookingDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState<'details' | 'room' | 'guest' | 'payment'>('details');
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [refundRequest, setRefundRequest] = useState<any>(null);
+  const [loadingRefund, setLoadingRefund] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -94,11 +127,86 @@ export default function BookingDetailsScreen() {
     try {
       setLoading(true);
       const data = await getBookingById(id as string);
-      setBooking(data as BookingDetails);
+      const bookingData = data as BookingDetails;
+      setBooking(bookingData);
+      
+      // Check for existing refund request if booking is cancelled
+      if (bookingData && bookingData.status === 'cancelled') {
+        await checkRefundRequest(id as string);
+      }
     } catch (error) {
       console.error('Error fetching booking details:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkRefundRequest = async (bookingId: string) => {
+    try {
+      setLoadingRefund(true);
+      const q = query(
+        collection(db, 'refundRequests'),
+        where('bookingId', '==', bookingId)
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const request = querySnapshot.docs[0].data();
+        setRefundRequest({
+          id: querySnapshot.docs[0].id,
+          ...request,
+        });
+      } else {
+        setRefundRequest(null);
+      }
+    } catch (error) {
+      console.error('Error checking refund request:', error);
+    } finally {
+      setLoadingRefund(false);
+    }
+  };
+
+  const handleCancelBooking = async (reason: string) => {
+    try {
+      if (!booking) return;
+
+      // Update booking status in Firestore
+      const bookingRef = doc(db, 'bookings', booking.id);
+      await updateDoc(bookingRef, {
+        status: 'cancelled',
+        cancellationReason: reason,
+        cancelledAt: new Date().toISOString(),
+        cancelledBy: user?.uid || 'user',
+      });
+
+      // Update local state
+      setBooking({
+        ...booking,
+        status: 'cancelled',
+      });
+
+      Alert.alert(
+        'Booking Cancelled',
+        'Your booking has been cancelled successfully. You can now request a refund.',
+        [
+          {
+            text: 'Request Refund',
+            onPress: () => setShowRefundModal(true),
+          },
+          {
+            text: 'OK',
+            style: 'cancel',
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Error cancelling booking:', error);
+      Alert.alert(
+        'Error',
+        'Failed to cancel booking. Please try again or contact support.',
+        [{ text: 'OK' }]
+      );
+      throw error;
     }
   };
 
@@ -203,24 +311,52 @@ export default function BookingDetailsScreen() {
           <Text style={styles.referenceLabel}>Booking Reference</Text>
           <Text style={styles.referenceValue}>{booking.reference}</Text>
 
+          {/* Booking Type Badge */}
+          {booking.bookingType && (
+            <View style={[
+              styles.bookingTypeBadge,
+              { backgroundColor: booking.bookingType === 'hourly' ? '#FFF4E6' : '#E8F5F3' }
+            ]}>
+              <Text style={[
+                styles.bookingTypeBadgeText,
+                { color: booking.bookingType === 'hourly' ? '#F57C00' : '#00BFA6' }
+              ]}>
+                {booking.bookingType === 'hourly' ? '⏱️ Hourly Booking' : '🌙 Nightly Booking'}
+              </Text>
+            </View>
+          )}
+
           <View style={styles.datesContainer}>
             <View style={styles.dateBox}>
               <Text style={styles.dateLabel}>Check-in</Text>
               <Text style={styles.dateValue}>{formatDate(booking.checkIn)}</Text>
-              <Text style={styles.timeValue}>3:00 PM</Text>
+              <Text style={styles.timeValue}>
+                {booking.bookingType === 'hourly' ? formatTime(booking.checkIn) : '3:00 PM'}
+              </Text>
             </View>
             <View style={styles.dateBox}>
               <Text style={styles.dateLabel}>Check-out</Text>
               <Text style={styles.dateValue}>{formatDate(booking.checkOut)}</Text>
-              <Text style={styles.timeValue}>11:00 AM</Text>
+              <Text style={styles.timeValue}>
+                {booking.bookingType === 'hourly' ? formatTime(booking.checkOut) : '11:00 AM'}
+              </Text>
             </View>
           </View>
 
           <View style={styles.durationRow}>
-            <View style={styles.durationItem}>
-              <Clock size={16} color="#00BFA6" strokeWidth={2} />
-              <Text style={styles.durationText}>{booking.nights} night{booking.nights > 1 ? 's' : ''}</Text>
-            </View>
+            {booking.bookingType === 'hourly' && booking.hourlyDuration ? (
+              <View style={styles.durationItem}>
+                <Clock size={16} color="#F57C00" strokeWidth={2} />
+                <Text style={[styles.durationText, { color: '#F57C00' }]}>
+                  {booking.hourlyDuration} hour{booking.hourlyDuration > 1 ? 's' : ''}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.durationItem}>
+                <Clock size={16} color="#00BFA6" strokeWidth={2} />
+                <Text style={styles.durationText}>{booking.nights} night{booking.nights > 1 ? 's' : ''}</Text>
+              </View>
+            )}
             <View style={styles.durationItem}>
               <Users size={16} color="#00BFA6" strokeWidth={2} />
               <Text style={styles.durationText}>{booking.guests} guest{booking.guests > 1 ? 's' : ''}</Text>
@@ -423,6 +559,81 @@ export default function BookingDetailsScreen() {
                       <Text style={styles.specialRequests}>{booking.guestInfo[0].specialRequests}</Text>
                     </>
                   )}
+
+                  {/* Pre-Checkin Status */}
+                  {booking.customerPreferences && booking.customerPreferences.preCheckinEnabled && (
+                    <>
+                      <View style={styles.divider} />
+                      <View style={styles.preCheckinBanner}>
+                        <View style={styles.preCheckinHeader}>
+                          <View style={styles.preCheckinIconContainer}>
+                            <Text style={styles.preCheckinIcon}>🛡️</Text>
+                          </View>
+                          <View style={styles.preCheckinHeaderText}>
+                            <Text style={styles.preCheckinTitle}>Pre-checkin Enabled</Text>
+                            <Text style={styles.preCheckinSubtitle}>
+                              Skip the front desk queue with pre-verified identity
+                            </Text>
+                          </View>
+                        </View>
+                        
+                        <View style={styles.preCheckinBenefits}>
+                          <View style={styles.preCheckinBenefitItem}>
+                            <CheckCircle size={16} color="#10B981" strokeWidth={2} />
+                            <Text style={styles.preCheckinBenefitText}>Aadhaar verified</Text>
+                          </View>
+                          <View style={styles.preCheckinBenefitItem}>
+                            <CheckCircle size={16} color="#10B981" strokeWidth={2} />
+                            <Text style={styles.preCheckinBenefitText}>Identity pre-verified</Text>
+                          </View>
+                          <View style={styles.preCheckinBenefitItem}>
+                            <CheckCircle size={16} color="#10B981" strokeWidth={2} />
+                            <Text style={styles.preCheckinBenefitText}>Faster check-in process</Text>
+                          </View>
+                        </View>
+
+                        {/* Customer Verification Details */}
+                        {booking.customerVerification && booking.customerVerification.verified && (
+                          <View style={styles.verificationDetails}>
+                            <Text style={styles.verificationDetailsTitle}>Verified Customer Details</Text>
+                            <View style={styles.verificationDetailRow}>
+                              <Text style={styles.verificationDetailLabel}>Full Name:</Text>
+                              <Text style={styles.verificationDetailValue}>
+                                {booking.customerVerification.fullName}
+                              </Text>
+                            </View>
+                            <View style={styles.verificationDetailRow}>
+                              <Text style={styles.verificationDetailLabel}>Date of Birth:</Text>
+                              <Text style={styles.verificationDetailValue}>
+                                {booking.customerVerification.dateOfBirth}
+                              </Text>
+                            </View>
+                            <View style={styles.verificationDetailRow}>
+                              <Text style={styles.verificationDetailLabel}>Gender:</Text>
+                              <Text style={styles.verificationDetailValue}>
+                                {booking.customerVerification.gender}
+                              </Text>
+                            </View>
+                            <View style={styles.verificationDetailRow}>
+                              <Text style={styles.verificationDetailLabel}>Aadhaar:</Text>
+                              <Text style={styles.verificationDetailValue}>
+                                XXXX XXXX {booking.customerVerification.aadhaarNumber?.slice(-4)}
+                              </Text>
+                            </View>
+                          </View>
+                        )}
+                      </View>
+                    </>
+                  )}
+
+                  {/* Customer Preferences */}
+                  {booking.customerPreferences && booking.customerPreferences.travelerType && (
+                    <>
+                      <View style={styles.divider} />
+                      <Text style={styles.sectionSubtitle}>Your Preferences</Text>
+                      <PreferencesDisplay preferences={booking.customerPreferences} />
+                    </>
+                  )}
                 </>
               )}
             </View>
@@ -482,6 +693,142 @@ export default function BookingDetailsScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Action Buttons */}
+      {booking && (
+        <>
+          {/* Cancel Button - Only show for pending/confirmed bookings */}
+          {(booking.status === 'pending' || booking.status === 'confirmed') && (
+            <View style={styles.bottomBar}>
+              <TouchableOpacity
+                style={styles.cancelBookingButton}
+                onPress={() => setShowCancelModal(true)}
+              >
+                <Text style={styles.cancelBookingButtonText}>Cancel Booking</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Refund Section - Only show for cancelled bookings with payment */}
+          {booking.status === 'cancelled' && booking.paymentInfo?.paymentId && (
+            <View style={styles.bottomBar}>
+              {loadingRefund ? (
+                <View style={styles.loadingRefundContainer}>
+                  <ActivityIndicator size="small" color="#00BFA6" />
+                  <Text style={styles.loadingRefundText}>Checking refund status...</Text>
+                </View>
+              ) : refundRequest ? (
+                // Show refund status if request exists
+                <View style={styles.refundStatusContainer}>
+                  <View style={styles.refundStatusHeader}>
+                    <Text style={styles.refundStatusTitle}>Refund Request Status</Text>
+                    <View style={[
+                      styles.refundStatusBadge,
+                      {
+                        backgroundColor:
+                          refundRequest.status === 'pending' ? '#FEF3C7' :
+                          refundRequest.status === 'approved' ? '#D1FAE5' :
+                          refundRequest.status === 'rejected' ? '#FEE2E2' :
+                          '#DBEAFE'
+                      }
+                    ]}>
+                      <Text style={[
+                        styles.refundStatusBadgeText,
+                        {
+                          color:
+                            refundRequest.status === 'pending' ? '#92400E' :
+                            refundRequest.status === 'approved' ? '#065F46' :
+                            refundRequest.status === 'rejected' ? '#991B1B' :
+                            '#1E40AF'
+                        }
+                      ]}>
+                        {refundRequest.status.toUpperCase()}
+                      </Text>
+                    </View>
+                  </View>
+                  
+                  <View style={styles.refundStatusDetails}>
+                    <View style={styles.refundStatusRow}>
+                      <Text style={styles.refundStatusLabel}>Reason:</Text>
+                      <Text style={styles.refundStatusValue}>{refundRequest.reason}</Text>
+                    </View>
+                    <View style={styles.refundStatusRow}>
+                      <Text style={styles.refundStatusLabel}>Amount:</Text>
+                      <Text style={styles.refundStatusValue}>₹{refundRequest.totalAmount}</Text>
+                    </View>
+                    <View style={styles.refundStatusRow}>
+                      <Text style={styles.refundStatusLabel}>Requested:</Text>
+                      <Text style={styles.refundStatusValue}>
+                        {refundRequest.requestedAt?.toDate?.()?.toLocaleDateString() || 'Recently'}
+                      </Text>
+                    </View>
+                    {refundRequest.adminNotes && (
+                      <View style={styles.refundStatusRow}>
+                        <Text style={styles.refundStatusLabel}>Admin Notes:</Text>
+                        <Text style={styles.refundStatusValue}>{refundRequest.adminNotes}</Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {refundRequest.status === 'pending' && (
+                    <Text style={styles.refundStatusNote}>
+                      Your refund request is being reviewed. You'll be notified once it's processed.
+                    </Text>
+                  )}
+                  {refundRequest.status === 'approved' && (
+                    <Text style={[styles.refundStatusNote, { color: '#065F46' }]}>
+                      Your refund has been approved and will be processed soon.
+                    </Text>
+                  )}
+                  {refundRequest.status === 'processed' && (
+                    <Text style={[styles.refundStatusNote, { color: '#1E40AF' }]}>
+                      Your refund has been processed successfully.
+                    </Text>
+                  )}
+                  {refundRequest.status === 'rejected' && (
+                    <Text style={[styles.refundStatusNote, { color: '#991B1B' }]}>
+                      Your refund request was rejected. Please contact support for more information.
+                    </Text>
+                  )}
+                </View>
+              ) : (
+                // Show request button if no request exists
+                <TouchableOpacity
+                  style={styles.refundButton}
+                  onPress={() => setShowRefundModal(true)}
+                >
+                  <Text style={styles.refundButtonText}>Request Refund</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+        </>
+      )}
+
+      {/* Cancel Booking Modal */}
+      {booking && (
+        <CancelBookingModal
+          visible={showCancelModal}
+          bookingReference={booking.reference}
+          onClose={() => setShowCancelModal(false)}
+          onConfirm={handleCancelBooking}
+        />
+      )}
+
+      {/* Refund Request Modal */}
+      {booking && (
+        <RefundRequestModal
+          visible={showRefundModal}
+          onClose={() => setShowRefundModal(false)}
+          bookingId={booking.id}
+          bookingReference={booking.reference}
+          totalAmount={booking.totalAmount}
+          onRequestSubmitted={() => {
+            setShowRefundModal(false);
+            checkRefundRequest(booking.id);
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -601,6 +948,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1A1A1A',
     marginBottom: isSmallDevice ? 16 : 20,
+  },
+  bookingTypeBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 16,
+  },
+  bookingTypeBadgeText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   datesContainer: {
     flexDirection: 'row',
@@ -945,5 +1303,245 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1A1A1A',
     textTransform: 'capitalize',
+  },
+  bottomBar: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: Platform.OS === 'ios' ? 30 : 16,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 12,
+      },
+    }),
+  },
+  cancelBookingButton: {
+    backgroundColor: '#dc3545',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#dc3545',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+  },
+  cancelBookingButtonText: {
+    color: '#fff',
+    fontSize: isSmallDevice ? 15 : 16,
+    fontWeight: '700',
+  },
+  refundButton: {
+    backgroundColor: '#2563EB',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#2563EB',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+  },
+  refundButtonText: {
+    color: '#fff',
+    fontSize: isSmallDevice ? 15 : 16,
+    fontWeight: '700',
+  },
+  loadingRefundContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    gap: 12,
+  },
+  loadingRefundText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  refundStatusContainer: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+  },
+  refundStatusHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
+  },
+  refundStatusTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1A1A1A',
+  },
+  refundStatusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  refundStatusBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  refundStatusDetails: {
+    gap: 12,
+  },
+  refundStatusRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  refundStatusLabel: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+    flex: 1,
+  },
+  refundStatusValue: {
+    fontSize: 14,
+    color: '#1A1A1A',
+    fontWeight: '600',
+    flex: 2,
+    textAlign: 'right',
+  },
+  refundStatusNote: {
+    fontSize: 13,
+    color: '#666',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E8E8E8',
+    lineHeight: 18,
+    fontStyle: 'italic',
+  },
+  // Pre-checkin styles
+  preCheckinBanner: {
+    backgroundColor: '#D1FAE5',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#6EE7B7',
+  },
+  preCheckinHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+    gap: 12,
+  },
+  preCheckinIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#10B981',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  preCheckinIcon: {
+    fontSize: 24,
+  },
+  preCheckinHeaderText: {
+    flex: 1,
+  },
+  preCheckinTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#065F46',
+    marginBottom: 4,
+  },
+  preCheckinSubtitle: {
+    fontSize: 13,
+    color: '#047857',
+    lineHeight: 18,
+  },
+  preCheckinBenefits: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+    gap: 10,
+    marginBottom: 12,
+  },
+  preCheckinBenefitItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  preCheckinBenefitText: {
+    fontSize: 14,
+    color: '#047857',
+    fontWeight: '500',
+  },
+  verificationDetails: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+  },
+  verificationDetailsTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#065F46',
+    marginBottom: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#6EE7B7',
+  },
+  verificationDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+    gap: 12,
+  },
+  verificationDetailLabel: {
+    fontSize: 13,
+    color: '#047857',
+    fontWeight: '500',
+    flex: 1,
+  },
+  verificationDetailValue: {
+    fontSize: 13,
+    color: '#065F46',
+    fontWeight: '600',
+    flex: 1,
+    textAlign: 'right',
   },
 });

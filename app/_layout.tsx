@@ -16,6 +16,8 @@ export default function RootLayout() {
           <Stack.Screen name="hotel/booking" options={{ headerShown: false }} />
           <Stack.Screen name="hotel/payment" options={{ headerShown: false }} />
           <Stack.Screen name="booking/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="profile/saved-guests" options={{ headerShown: false }} />
+          <Stack.Screen name="profile/verification" options={{ headerShown: false }} />
         </Stack>
       </AuthProvider>
     </GestureHandlerRootView>

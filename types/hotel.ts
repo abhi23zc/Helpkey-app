@@ -70,4 +70,5 @@ export interface Hotel {
   longitude?: number;
   distance?: number;
   available?: boolean;
+  hotelAdmin?: string;
 }

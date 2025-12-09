@@ -37,15 +37,58 @@ interface Booking {
   nights: number;
   guests: number;
   totalAmount: number;
+  totalPrice: number;
+  taxesAndFees: number;
+  unitPrice: number;
+  bookingType: string;
+  hourlyDuration?: number;
+  hotelId: string;
+  roomId: string;
+  userId: string;
+  userEmail: string;
+  hotelAdmin?: string;
   hotelDetails: {
+    hotelId: string;
     name: string;
     location: string;
     image: string;
   };
   roomDetails: {
+    roomId: string;
     type: string;
-    roomNumber: string;
+    roomNumber: string | null;
+    price: number;
+    image: string;
+    beds: string;
+    size: string;
   };
+  guestInfo: Array<{
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    aadhaarNumber: string;
+    aadhaarVerified: boolean;
+    aadhaarData: any;
+    specialRequests: string;
+  }>;
+  guestVerifications: Array<{
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    aadhaarNumber: string;
+    verified: boolean;
+    verificationDetails: any;
+  }>;
+  paymentInfo: {
+    method: string;
+    status: string;
+    orderId: string | null;
+    paymentId: string | null;
+    signature: string | null;
+  };
+  customerPreferences: any;
+  customerVerification: any;
   createdAt: any;
 }
 

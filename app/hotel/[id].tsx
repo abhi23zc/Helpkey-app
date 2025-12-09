@@ -86,6 +86,17 @@ export default function HotelDetail() {
 
       if (hotelDoc.exists()) {
         const hotelData = hotelDoc.data();
+        console.log('🏨 Hotel Data from Firebase:', {
+          id: hotelDoc.id,
+          name: hotelData.name,
+          image: hotelData.image,
+          images: hotelData.images,
+          imagesLength: hotelData.images?.length,
+          firstImage: hotelData.images?.[0],
+          hotelAdmin: hotelData.hotelAdmin,
+          userId: hotelData.userId,
+          allFields: Object.keys(hotelData)
+        });
 
         // Fetch rooms
         const roomsQuery = query(collection(db, 'rooms'), where('hotelId', '==', id));
@@ -125,11 +136,15 @@ export default function HotelDetail() {
           reviewCount: hotelData.reviewCount || 0,
           stars: hotelData.stars || 3,
           image:
-            hotelData.image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800',
+            hotelData.image || 
+            (Array.isArray(hotelData.images) && hotelData.images.length > 0 ? hotelData.images[0] : null) ||
+            'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800',
           images:
             Array.isArray(hotelData.images) && hotelData.images.length > 0
               ? hotelData.images
-              : [hotelData.image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800'],
+              : [hotelData.image || 
+                 (Array.isArray(hotelData.images) && hotelData.images.length > 0 ? hotelData.images[0] : null) ||
+                 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800'],
           videos: hotelData.videos || [],
           amenities: Array.isArray(hotelData.amenities) ? hotelData.amenities : [],
           description: hotelData.description || 'No description available.',
@@ -143,6 +158,7 @@ export default function HotelDetail() {
           longitude: hotelData.longitude || 77.209,
           distance: hotelData.distance,
           available: hotelData.available !== false,
+          hotelAdmin: hotelData.hotelAdmin || hotelData.userId || '',
         };
 
         setHotel(processedHotel);
@@ -200,19 +216,23 @@ export default function HotelDetail() {
 
   const handleBookNow = () => {
     if (selectedRoom && hotel) {
+      const hotelDataToPass = {
+        id: hotel.id,
+        name: hotel.name,
+        location: hotel.location,
+        address: hotel.address,
+        image: hotel.image,
+        rating: hotel.rating,
+        latitude: hotel.latitude,
+        longitude: hotel.longitude,
+        hotelAdmin: hotel.hotelAdmin || '',
+      };
+      console.log('📤 Passing hotel data to booking:', hotelDataToPass);
+      
       router.push({
         pathname: '/hotel/booking',
         params: {
-          hotel: JSON.stringify({
-            id: hotel.id,
-            name: hotel.name,
-            location: hotel.location,
-            address: hotel.address,
-            image: hotel.image,
-            rating: hotel.rating,
-            latitude: hotel.latitude,
-            longitude: hotel.longitude,
-          }),
+          hotel: JSON.stringify(hotelDataToPass),
           room: JSON.stringify(selectedRoom),
         },
       });
@@ -255,7 +275,9 @@ export default function HotelDetail() {
     );
   }
 
-  const displayImages = hotel.images && hotel.images.length > 0 ? hotel.images : [hotel.image];
+  // Convert .avif to .jpg for React Native compatibility
+  const rawImages = hotel.images && hotel.images.length > 0 ? hotel.images : [hotel.image];
+  const displayImages = rawImages.map(img => img.replace(/\.avif$/, '.jpg'));
   const minPrice = selectedRoom ? selectedRoom.price : (hotel.price || 0);
   const displayRating = averageRating > 0 ? averageRating : hotel.rating;
   const displayReviewCount = totalReviews > 0 ? totalReviews : hotel.reviews || hotel.reviewCount || 0;
