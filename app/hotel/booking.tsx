@@ -70,8 +70,23 @@ export default function BookingScreen() {
   const params = useLocalSearchParams();
   const { userData } = useAuth();
   
-  const hotelData = params.hotel ? JSON.parse(params.hotel as string) : null;
-  const roomData = params.room ? JSON.parse(params.room as string) : null;
+  const hotelData = params.hotel ? (() => {
+    try {
+      return JSON.parse(params.hotel as string);
+    } catch (e) {
+      console.error('Error parsing hotel data:', e);
+      return null;
+    }
+  })() : null;
+  
+  const roomData = params.room ? (() => {
+    try {
+      return JSON.parse(params.room as string);
+    } catch (e) {
+      console.error('Error parsing room data:', e);
+      return null;
+    }
+  })() : null;
 
   const [currentStep, setCurrentStep] = useState(1);
   const [checkInDate, setCheckInDate] = useState<Date | null>(null);
@@ -82,6 +97,47 @@ export default function BookingScreen() {
   const [showGuestSelector, setShowGuestSelector] = useState(false);
   const [showTravelerTypeSelector, setShowTravelerTypeSelector] = useState(false);
   const [additionalRequest, setAdditionalRequest] = useState('');
+  const [showRequestOptions, setShowRequestOptions] = useState(false);
+
+  // Predefined request options
+  const predefinedRequests = [
+    'Early check-in',
+    'Late check-out',
+    'High floor room',
+    'Quiet room',
+    'Non-smoking room',
+    'Extra towels',
+    'Extra pillows',
+    'Room service'
+  ];
+
+  // Helper function to get current requests as array
+  const getCurrentRequests = () => {
+    if (!additionalRequest.trim()) return [];
+    return additionalRequest.split(',').map(req => req.trim()).filter(req => req.length > 0);
+  };
+
+  // Helper function to check if a request is selected
+  const isRequestSelected = (request: string) => {
+    const currentRequests = getCurrentRequests();
+    return currentRequests.includes(request);
+  };
+
+  // Helper function to toggle request selection
+  const toggleRequest = (request: string) => {
+    const currentRequests = getCurrentRequests();
+    let newRequests;
+    
+    if (currentRequests.includes(request)) {
+      // Remove the request
+      newRequests = currentRequests.filter(req => req !== request);
+    } else {
+      // Add the request
+      newRequests = [...currentRequests, request];
+    }
+    
+    setAdditionalRequest(newRequests.join(', '));
+  };
   const [loading, setLoading] = useState(false);
   const [paymentMode, setPaymentMode] = useState<'online' | 'hotel'>('online');
   
@@ -292,7 +348,7 @@ export default function BookingScreen() {
   const showCheckOutDatePicker = () => {
     if (Platform.OS === 'android') {
       DateTimePickerAndroid.open({
-        value: checkOutDate || new Date(checkInDate!.getTime() + 86400000),
+        value: checkOutDate || new Date((checkInDate?.getTime() || Date.now()) + 86400000),
         mode: 'date',
         minimumDate: checkInDate ? new Date(checkInDate.getTime() + 86400000) : new Date(),
         onChange: (event, selectedDate) => {
@@ -594,6 +650,15 @@ export default function BookingScreen() {
     );
   }
 
+  // Defensive check for required data
+  if (typeof hotelData !== 'object' || typeof roomData !== 'object') {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.errorText}>Invalid booking data format</Text>
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="dark-content" />
@@ -658,26 +723,26 @@ export default function BookingScreen() {
         <View style={styles.hotelCard}>
           <View style={styles.hotelImageWrapper}>
             <Image 
-              source={{ uri: (roomData.image || hotelData.image).replace(/\.avif$/, '.jpg') }} 
+              source={{ uri: (roomData?.image || hotelData?.image || '').replace(/\.avif$/, '.jpg') }} 
               style={styles.hotelImage}
               resizeMode="cover"
             />
           </View>
           <View style={styles.hotelInfo}>
-            <Text style={styles.hotelName} numberOfLines={1}>{hotelData.name}</Text>
+            <Text style={styles.hotelName} numberOfLines={1}>{hotelData?.name || 'Hotel Name'}</Text>
             <View style={styles.hotelMetaRow}>
               <MapPin size={isSmallDevice ? 12 : 14} color="#666" strokeWidth={2} />
-              <Text style={styles.hotelLocation} numberOfLines={1}>{hotelData.location}</Text>
+              <Text style={styles.hotelLocation} numberOfLines={1}>{hotelData?.location || 'Location'}</Text>
             </View>
-            <Text style={styles.roomType} numberOfLines={1}>{roomData.type}</Text>
+            <Text style={styles.roomType} numberOfLines={1}>{roomData?.type || 'Room Type'}</Text>
             <View style={styles.priceRow}>
               <View style={styles.priceContainer}>
-                <Text style={styles.price}>₹{roomData.price}</Text>
+                <Text style={styles.price}>₹{roomData?.price || 0}</Text>
                 <Text style={styles.priceUnit}>/night</Text>
               </View>
               {hotelData.rating && (
                 <View style={styles.ratingBadge}>
-                  <Text style={styles.ratingText}>⭐ {hotelData.rating}</Text>
+                  <Text style={styles.ratingText}>⭐ {hotelData?.rating || 'N/A'}</Text>
                 </View>
               )}
             </View>
@@ -807,11 +872,11 @@ export default function BookingScreen() {
                       >
                         <Calendar size={20} color="#999" />
                         <Text style={[styles.dateText, checkInDate && styles.dateTextSelected]}>
-                          {checkInDate.toLocaleTimeString('en-US', {
+                          {checkInDate ? checkInDate.toLocaleTimeString('en-US', {
                             hour: 'numeric',
                             minute: '2-digit',
                             hour12: true
-                          })}
+                          }) : 'Select time'}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -905,18 +970,187 @@ export default function BookingScreen() {
 
             {/* Additional Request */}
             <View style={styles.section}>
-              <Text style={styles.fieldLabel}>Additional Request</Text>
-              <TouchableOpacity style={styles.requestInput}>
-                <MessageSquare size={20} color="#999" />
-                <TextInput
-                  style={styles.requestTextInput}
-                  placeholder="Add request"
-                  placeholderTextColor="#999"
-                  value={additionalRequest}
-                  onChangeText={setAdditionalRequest}
-                  multiline
-                />
-              </TouchableOpacity>
+              <View style={styles.requestHeader}>
+                <View style={styles.requestTitleRow}>
+                  <Text style={styles.fieldLabel}>✨ Make Your Stay Special</Text>
+                  {getCurrentRequests().length > 0 && (
+                    <View style={styles.selectedCounter}>
+                      <Text style={styles.selectedCounterText}>
+                        {getCurrentRequests().length} selected
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={styles.requestSubtitle}>
+                  Tap options below or type directly in the text field
+                </Text>
+              </View>
+              
+              {/* Popular Requests */}
+              <View style={styles.requestCategory}>
+                <Text style={styles.categoryTitle}>🕐 Timing Preferences</Text>
+                <View style={styles.quickRequestOptions}>
+                  <TouchableOpacity
+                    style={[
+                      styles.quickRequestChip,
+                      isRequestSelected('Early check-in') && styles.quickRequestChipActive
+                    ]}
+                    onPress={() => toggleRequest('Early check-in')}
+                  >
+                    <Text style={styles.chipIcon}>🌅</Text>
+                    <Text style={[
+                      styles.quickRequestChipText,
+                      isRequestSelected('Early check-in') && styles.quickRequestChipTextActive
+                    ]}>
+                      Early check-in
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[
+                      styles.quickRequestChip,
+                      isRequestSelected('Late check-out') && styles.quickRequestChipActive
+                    ]}
+                    onPress={() => toggleRequest('Late check-out')}
+                  >
+                    <Text style={styles.chipIcon}>🌙</Text>
+                    <Text style={[
+                      styles.quickRequestChipText,
+                      isRequestSelected('Late check-out') && styles.quickRequestChipTextActive
+                    ]}>
+                      Late check-out
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Room Preferences */}
+              <View style={styles.requestCategory}>
+                <Text style={styles.categoryTitle}>🏨 Room Preferences</Text>
+                <View style={styles.quickRequestOptions}>
+                  <TouchableOpacity
+                    style={[
+                      styles.quickRequestChip,
+                      isRequestSelected('High floor room') && styles.quickRequestChipActive
+                    ]}
+                    onPress={() => toggleRequest('High floor room')}
+                  >
+                    <Text style={styles.chipIcon}>🏢</Text>
+                    <Text style={[
+                      styles.quickRequestChipText,
+                      isRequestSelected('High floor room') && styles.quickRequestChipTextActive
+                    ]}>
+                      High floor room
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[
+                      styles.quickRequestChip,
+                      isRequestSelected('Quiet room') && styles.quickRequestChipActive
+                    ]}
+                    onPress={() => toggleRequest('Quiet room')}
+                  >
+                    <Text style={styles.chipIcon}>🤫</Text>
+                    <Text style={[
+                      styles.quickRequestChipText,
+                      isRequestSelected('Quiet room') && styles.quickRequestChipTextActive
+                    ]}>
+                      Quiet room
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[
+                      styles.quickRequestChip,
+                      isRequestSelected('Non-smoking room') && styles.quickRequestChipActive
+                    ]}
+                    onPress={() => toggleRequest('Non-smoking room')}
+                  >
+                    <Text style={styles.chipIcon}>🚭</Text>
+                    <Text style={[
+                      styles.quickRequestChipText,
+                      isRequestSelected('Non-smoking room') && styles.quickRequestChipTextActive
+                    ]}>
+                      Non-smoking room
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Amenities */}
+              <View style={styles.requestCategory}>
+                <Text style={styles.categoryTitle}>🛁 Extra Amenities</Text>
+                <View style={styles.quickRequestOptions}>
+                  <TouchableOpacity
+                    style={[
+                      styles.quickRequestChip,
+                      isRequestSelected('Extra towels') && styles.quickRequestChipActive
+                    ]}
+                    onPress={() => toggleRequest('Extra towels')}
+                  >
+                    <Text style={styles.chipIcon}>🏖️</Text>
+                    <Text style={[
+                      styles.quickRequestChipText,
+                      isRequestSelected('Extra towels') && styles.quickRequestChipTextActive
+                    ]}>
+                      Extra towels
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[
+                      styles.quickRequestChip,
+                      isRequestSelected('Extra pillows') && styles.quickRequestChipActive
+                    ]}
+                    onPress={() => toggleRequest('Extra pillows')}
+                  >
+                    <Text style={styles.chipIcon}>🛏️</Text>
+                    <Text style={[
+                      styles.quickRequestChipText,
+                      isRequestSelected('Extra pillows') && styles.quickRequestChipTextActive
+                    ]}>
+                      Extra pillows
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[
+                      styles.quickRequestChip,
+                      isRequestSelected('Room service') && styles.quickRequestChipActive
+                    ]}
+                    onPress={() => toggleRequest('Room service')}
+                  >
+                    <Text style={styles.chipIcon}>🍽️</Text>
+                    <Text style={[
+                      styles.quickRequestChipText,
+                      isRequestSelected('Room service') && styles.quickRequestChipTextActive
+                    ]}>
+                      Room service
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Custom Request */}
+              <View style={styles.customRequestSection}>
+                <Text style={styles.categoryTitle}>💭 Something Else?</Text>
+                <View style={styles.requestInput}>
+                  <MessageSquare size={20} color="#00BFA6" />
+                  <TextInput
+                    style={styles.requestTextInput}
+                    placeholder="Tell us about any special requests or preferences..."
+                    placeholderTextColor="#999"
+                    value={additionalRequest}
+                    onChangeText={setAdditionalRequest}
+                    multiline
+                    numberOfLines={3}
+                  />
+                </View>
+                <Text style={styles.requestHint}>
+                  💡 Our team will do their best to accommodate your requests
+                </Text>
+              </View>
             </View>
           </>
         )}
@@ -1090,11 +1324,11 @@ export default function BookingScreen() {
               >
                 <View style={styles.travelerTypeDisplay}>
                   {(() => {
-                    const Icon = getTravelerTypeIcon(customerPreferences.travelerType);
+                    const Icon = getTravelerTypeIcon(customerPreferences.travelerType || '');
                     return <Icon size={20} color="#00BFA6" strokeWidth={2} />;
                   })()}
                   <Text style={styles.travelerTypeText}>
-                    {getTravelerTypeLabel(customerPreferences.travelerType)}
+                    {getTravelerTypeLabel(customerPreferences.travelerType || '')}
                   </Text>
                 </View>
                 <Text style={styles.changeTravelerTypeLink}>Change</Text>
@@ -1270,16 +1504,16 @@ export default function BookingScreen() {
                 <View style={styles.guestSummaryRow}>
                   <Text style={styles.guestSummaryLabel}>Primary Guest:</Text>
                   <Text style={styles.guestSummaryValue}>
-                    {guestInfoList[0].firstName} {guestInfoList[0].lastName}
+                    {guestInfoList[0]?.firstName || ''} {guestInfoList[0]?.lastName || ''}
                   </Text>
                 </View>
                 <View style={styles.guestSummaryRow}>
                   <Text style={styles.guestSummaryLabel}>Email:</Text>
-                  <Text style={styles.guestSummaryValue}>{guestInfoList[0].email}</Text>
+                  <Text style={styles.guestSummaryValue}>{guestInfoList[0]?.email || ''}</Text>
                 </View>
                 <View style={styles.guestSummaryRow}>
                   <Text style={styles.guestSummaryLabel}>Phone:</Text>
-                  <Text style={styles.guestSummaryValue}>{guestInfoList[0].phone}</Text>
+                  <Text style={styles.guestSummaryValue}>{guestInfoList[0]?.phone || ''}</Text>
                 </View>
                 <View style={styles.guestSummaryRow}>
                   <Text style={styles.guestSummaryLabel}>Total Guests:</Text>
@@ -1290,7 +1524,7 @@ export default function BookingScreen() {
                     <Text style={styles.additionalGuestsLabel}>Additional Guests:</Text>
                     {guestInfoList.slice(1).map((guest, index) => (
                       <Text key={index} style={styles.additionalGuestName}>
-                        • {guest.firstName} {guest.lastName}
+                        • {guest.firstName} {guest.lastName || ''}
                       </Text>
                     ))}
                   </View>
@@ -1338,14 +1572,14 @@ export default function BookingScreen() {
                 </Text>
                 <Text style={styles.summaryValue}>
                   {bookingType === 'hourly' 
-                    ? `${selectedHourlyRate?.hours} hours`
+                    ? `${selectedHourlyRate?.hours || 0} hours`
                     : calculateNights()}
                 </Text>
               </View>
 
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Room Type</Text>
-                <Text style={styles.summaryValue}>{roomData.type}</Text>
+                <Text style={styles.summaryValue}>{roomData?.type || 'Room Type'}</Text>
               </View>
 
               {customerPreferences.preCheckinEnabled && (
@@ -1357,7 +1591,7 @@ export default function BookingScreen() {
                 </View>
               )}
 
-              {additionalRequest && (
+              {additionalRequest.trim() && (
                 <>
                   <View style={styles.divider} />
                   <View style={styles.summaryColumn}>
@@ -1379,7 +1613,7 @@ export default function BookingScreen() {
                   <Text style={styles.summaryValue}>
                     ₹{bookingType === 'hourly' && selectedHourlyRate 
                       ? selectedHourlyRate.price 
-                      : roomData.price} × {bookingType === 'hourly' 
+                      : (roomData?.price || 0)} × {bookingType === 'hourly' 
                       ? `${selectedHourlyRate?.hours} hour${selectedHourlyRate?.hours !== 1 ? 's' : ''}`
                       : `${calculateNights()} night${calculateNights() !== 1 ? 's' : ''}`}
                   </Text>
@@ -1435,7 +1669,7 @@ export default function BookingScreen() {
 
       {Platform.OS === 'ios' && showCheckOutPicker && bookingType === 'nightly' && (
         <DateTimePicker
-          value={checkOutDate || new Date(checkInDate!.getTime() + 86400000)}
+          value={checkOutDate || new Date((checkInDate?.getTime() || Date.now()) + 86400000)}
           mode="date"
           display="default"
           onChange={handleCheckOutChange}
@@ -1779,17 +2013,133 @@ const styles = StyleSheet.create({
   requestInput: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
+    backgroundColor: '#fff',
+    borderRadius: 16,
     padding: 16,
     gap: 12,
-    minHeight: 60,
+    minHeight: 80,
+    borderWidth: 1.5,
+    borderColor: '#E8F5F3',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#00BFA6',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   requestTextInput: {
     flex: 1,
     fontSize: 14,
     color: '#1A1A1A',
     padding: 0,
+    textAlignVertical: 'top',
+    lineHeight: 20,
+  },
+  quickRequestOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+  quickRequestChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 25,
+    borderWidth: 1.5,
+    borderColor: '#E8E8E8',
+    marginRight: 8,
+    marginBottom: 8,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
+  },
+  quickRequestChipActive: {
+    backgroundColor: '#00BFA6',
+    borderColor: '#00BFA6',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#00BFA6',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  quickRequestChipText: {
+    fontSize: 13,
+    color: '#666',
+    fontWeight: '600',
+  },
+  quickRequestChipTextActive: {
+    color: '#fff',
+  },
+  requestHeader: {
+    marginBottom: 20,
+  },
+  requestTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  selectedCounter: {
+    backgroundColor: '#00BFA6',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  selectedCounterText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  requestSubtitle: {
+    fontSize: 13,
+    color: '#666',
+    marginTop: 4,
+    lineHeight: 18,
+  },
+  requestCategory: {
+    marginBottom: 20,
+  },
+  categoryTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 12,
+  },
+  chipIcon: {
+    fontSize: 14,
+    marginRight: 6,
+  },
+  customRequestSection: {
+    marginTop: 8,
+  },
+  requestHint: {
+    fontSize: 12,
+    color: '#00BFA6',
+    marginTop: 8,
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
   inputGroup: {
     marginBottom: isSmallDevice ? 14 : 16,

@@ -25,6 +25,8 @@ const isSmallDevice = SCREEN_WIDTH < 375;
 const isTablet = SCREEN_WIDTH >= 768;
 
 import { API_CONFIG, RAZORPAY_CONFIG } from '@/config/razorpay';
+import { useNotifications } from '@/hooks/useNotifications';
+import PhoneValidator from '@/utils/phoneValidation';
 
 export default function PaymentScreen() {
   const router = useRouter();
@@ -48,6 +50,53 @@ export default function PaymentScreen() {
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'hotel'>('online');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentHtml, setPaymentHtml] = useState('');
+  
+  // WhatsApp notification hook
+  const { sendNotification } = useNotifications();
+
+  // Helper function to format date for notifications
+  const formatDateForNotification = (date: Date | null) => {
+    if (!date) return '';
+    return date.toLocaleDateString('en-IN', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Helper function to create notification data
+  const createNotificationData = (bookingReference: string, allGuestInfo: any[]) => {
+    const primaryGuest = allGuestInfo[0] || {};
+    
+    // Validate and format guest phone number
+    const guestPhoneValidation = PhoneValidator.validateAndFormat(primaryGuest.phone || '');
+    
+    if (!guestPhoneValidation.isValid) {
+      console.warn('⚠️ Invalid guest phone number:', guestPhoneValidation.error);
+      console.warn('📱 Guest phone details:', PhoneValidator.getValidationSummary(primaryGuest.phone || ''));
+    }
+    
+    return {
+      hotelName: hotelData?.name || 'Hotel',
+      roomType: roomData?.type || 'Room',
+      guestName: `${primaryGuest.firstName || ''} ${primaryGuest.lastName || ''}`.trim() || 'Guest',
+      checkIn: formatDateForNotification(checkIn),
+      checkOut: formatDateForNotification(checkOut),
+      totalAmount: totalAmount,
+      bookingId: bookingReference,
+      guestPhone: guestPhoneValidation.isValid ? guestPhoneValidation.formattedNumber : (primaryGuest.phone || ''),
+      nights: bookingType === 'nightly' ? nights : undefined,
+      guests: guests,
+      additionalRequests: additionalRequest || undefined,
+      // Hotel data for admin notifications
+      hotelId: hotelData?.id || '', // Hotel ID for admin phone resolution
+      hotelLocation: hotelData?.location || '',
+      // Note: hotelAdminPhone will be resolved by NotificationManager from users collection
+    };
+  };
   const webViewRef = useRef<WebView>(null);
   
   // Debug mode - set to true to test without API
@@ -160,9 +209,31 @@ export default function PaymentScreen() {
 
       await createBooking(bookingData);
 
+      // Send WhatsApp notifications (guest + hotel admin)
+      try {
+        const notificationData = createNotificationData(bookingData.reference, allGuestInfoParam);
+        
+        // Send booking confirmation to guest
+        await sendNotification({
+          type: 'booking_confirmed',
+          data: notificationData
+        });
+        
+        // Send admin alert (NotificationManager will resolve admin phone from users collection)
+        await sendNotification({
+          type: 'admin_new_booking',
+          data: notificationData
+          // No adminPhone parameter - let NotificationManager resolve it using hotelId
+        });
+        console.log('✅ WhatsApp notifications sent to guest and hotel admin');
+      } catch (notificationError) {
+        console.error('❌ Failed to send WhatsApp notifications:', notificationError);
+        // Don't block the booking process if notification fails
+      }
+
       Alert.alert(
         'Booking Confirmed!',
-        `Your booking reference is ${bookingData.reference}. Please pay at the hotel during check-in.`,
+        `Your booking reference is ${bookingData.reference}. Please pay at the hotel during check-in.\n\n📱 You'll receive a WhatsApp confirmation shortly.`,
         [
           {
             text: 'View Bookings',
@@ -578,9 +649,40 @@ export default function PaymentScreen() {
 
       await createBooking(bookingData);
 
+      // Send WhatsApp notifications (payment success, booking confirmation, admin alert)
+      try {
+        const notificationData = createNotificationData(bookingReference, allGuestInfoParam);
+        
+        // Send payment success notification to guest
+        await sendNotification({
+          type: 'payment_success',
+          data: {
+            ...notificationData,
+            paymentId: paymentId
+          }
+        });
+
+        // Send booking confirmation notification to guest
+        await sendNotification({
+          type: 'booking_confirmed',
+          data: notificationData
+        });
+
+        // Send admin alert (NotificationManager will resolve admin phone from users collection)
+        await sendNotification({
+          type: 'admin_new_booking',
+          data: notificationData
+          // No adminPhone parameter - let NotificationManager resolve it using hotelId
+        });
+        console.log('✅ WhatsApp notifications sent to guest and hotel admin');
+      } catch (notificationError) {
+        console.error('❌ Failed to send WhatsApp notifications:', notificationError);
+        // Don't block the booking process if notification fails
+      }
+
       Alert.alert(
         '🎉 Payment Successful!',
-        `Your booking is confirmed!\n\nBooking Reference: ${bookingReference}\n\nA confirmation email has been sent to ${user?.email}`,
+        `Your booking is confirmed!\n\nBooking Reference: ${bookingReference}\n\nA confirmation email has been sent to ${user?.email}\n\n📱 You'll receive WhatsApp confirmations shortly.`,
         [
           {
             text: 'View Bookings',

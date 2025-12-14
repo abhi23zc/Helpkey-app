@@ -185,6 +185,9 @@ export default function BookingDetailsScreen() {
         status: 'cancelled',
       });
 
+      // Send admin notification about user cancellation
+      await sendUserCancellationNotification(booking, reason);
+
       Alert.alert(
         'Booking Cancelled',
         'Your booking has been cancelled successfully. You can now request a refund.',
@@ -207,6 +210,61 @@ export default function BookingDetailsScreen() {
         [{ text: 'OK' }]
       );
       throw error;
+    }
+  };
+
+  const sendUserCancellationNotification = async (booking: any, reason: string) => {
+    try {
+      if (!booking.guestInfo?.[0]) {
+        console.warn('No guest info available for cancellation notification');
+        return;
+      }
+
+      const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      };
+
+      const calculateNights = () => {
+        const checkInDate = new Date(booking.checkIn);
+        const checkOutDate = new Date(booking.checkOut);
+        const timeDiff = checkOutDate.getTime() - checkInDate.getTime();
+        return Math.ceil(timeDiff / (1000 * 3600 * 24));
+      };
+
+      const notificationData = {
+        guestName: `${booking.guestInfo[0].firstName || ''} ${booking.guestInfo[0].lastName || ''}`.trim() || 'Guest',
+        guestPhone: booking.guestInfo[0].phone || '',
+        hotelName: booking.hotelDetails?.name || 'Hotel',
+        roomType: booking.roomDetails?.type || 'Room',
+        checkIn: formatDate(booking.checkIn),
+        checkOut: formatDate(booking.checkOut),
+        bookingId: booking.reference,
+        totalAmount: booking.totalAmount,
+        nights: booking.nights || calculateNights(),
+        guests: booking.guests,
+        hotelId: booking.hotelId,
+        hotelAdmin: booking.hotelAdmin,
+        reason: reason || 'Guest initiated cancellation'
+      };
+
+      console.log('📱 Sending admin notification for user cancellation from mobile app');
+
+      // Use the notification manager to send admin notification
+      const notificationManager = require('@/services/notificationManager').default;
+      await notificationManager.handleEvent({
+        type: 'admin_booking_cancelled_by_user',
+        data: notificationData
+      });
+
+      console.log('✅ Admin cancellation notification sent successfully from mobile app');
+
+    } catch (error) {
+      console.error('❌ Error sending admin cancellation notification from mobile app:', error);
     }
   };
 
@@ -1013,12 +1071,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   hotelSection: {
-    padding:5,
+    padding: 5,
     backgroundColor: '#fff',
     marginBottom: 12,
   },
   imageWrapper: {
-    padding:5,
+    padding: 5,
     width: '100%',
     aspectRatio: 16 / 9,
     // backgroundColor: '#E8E8E8',

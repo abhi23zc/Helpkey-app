@@ -11,8 +11,8 @@
     "ios": {
       "supportsTablet": true
     },
+    "jsEngine": "hermes",
     "android": {
-
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -40,11 +40,19 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "cbf44b03-6026-46ac-b160-5850ec46f1be"
+      }
     }
   }
 }

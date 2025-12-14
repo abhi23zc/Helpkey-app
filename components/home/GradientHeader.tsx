@@ -12,6 +12,7 @@ interface GradientHeaderProps {
   onNotificationPress?: () => void;
   userLocation?: string;
   onLocationPress?: () => void;
+  onSearchPress?: () => void;
 }
 
 const GradientHeader = ({
@@ -22,6 +23,7 @@ const GradientHeader = ({
   onNotificationPress,
   userLocation = 'India',
   onLocationPress,
+  onSearchPress,
 }: GradientHeaderProps) => {
   return (
     <LinearGradient
@@ -65,16 +67,18 @@ const GradientHeader = ({
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
+        <TouchableOpacity style={styles.searchBar} onPress={onSearchPress} activeOpacity={0.7}>
           <TextInput
             placeholder="Find the best Hotels"
             placeholderTextColor="rgba(255,255,255,0.6)"
             style={styles.searchInput}
             value={searchQuery}
             onChangeText={onSearchChange}
+            editable={false}
+            pointerEvents="none"
           />
-        </View>
-        <TouchableOpacity style={styles.searchButton}>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.searchButton} onPress={onSearchPress}>
           <SearchIcon size={24} color="#fff" />
         </TouchableOpacity>
       </View>
