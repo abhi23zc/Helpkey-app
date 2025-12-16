@@ -170,9 +170,9 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
     },
     containerSelected: {
-        borderColor: '#00BFA6',
+        borderColor: '#4F46E5',
         borderWidth: 1.5,
-        backgroundColor: '#F0FDF4',
+        backgroundColor: '#EEF2FF',
     },
     innerContainer: {
         flexDirection: 'row',
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
         width: 18,
         height: 18,
         borderRadius: 9,
-        backgroundColor: '#00BFA6',
+        backgroundColor: '#4F46E5',
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
     },
     statusText: {
         fontSize: 11,
-        color: '#00BFA6',
+        color: '#059669', // slight green for status is okay or use indigo? Let's use green for status usually
         fontWeight: '500',
     },
     statsRow: {
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     },
     hourlyTagText: {
         fontSize: 9,
-        color: '#00BFA6',
+        color: '#4F46E5',
         fontWeight: '600',
     },
     // Modal Styles

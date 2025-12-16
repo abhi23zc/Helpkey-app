@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
-import { MapPin, X, SearchIcon } from 'lucide-react-native';
+import { MapPin, X, Search as SearchIcon } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
 const isTablet = width >= 768;
@@ -35,9 +35,9 @@ const getMockPredictions = (query: string): PlacePrediction[] => {
   ];
 
   const normalizedQuery = query.toLowerCase().trim();
-  
+
   return cities
-    .filter(city => 
+    .filter(city =>
       city.name.toLowerCase().includes(normalizedQuery) ||
       city.state.toLowerCase().includes(normalizedQuery)
     )
@@ -126,12 +126,12 @@ export default function InlineLocationSearch({
 
     setLoading(true);
     setShowResults(true);
-    
+
     try {
       // Use a proxy or different approach for mobile apps
       // For now, let's use a simpler approach with mock data for common Indian cities
       const mockPredictions = getMockPredictions(query);
-      
+
       if (mockPredictions.length > 0) {
         setPredictions(mockPredictions);
       } else {
@@ -196,20 +196,20 @@ export default function InlineLocationSearch({
 
   const handleSelectPlace = async (prediction: PlacePrediction) => {
     setLoading(true);
-    
+
     // Hide results immediately to prevent re-showing
     setShowResults(false);
     setPredictions([]);
-    
+
     const details = await getPlaceDetails(prediction.place_id, prediction);
     setLoading(false);
 
     // Mark that a location has been selected
     setIsLocationSelected(true);
-    
+
     // Update the search query to show the selected location
     setSearchQuery(prediction.structured_formatting.main_text);
-    
+
     // Blur the input to remove focus
     searchInputRef.current?.blur();
 
@@ -225,12 +225,12 @@ export default function InlineLocationSearch({
 
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
-    
+
     // Reset location selected state when user starts typing
     if (isLocationSelected) {
       setIsLocationSelected(false);
     }
-    
+
     if (onSearchChange) {
       onSearchChange(text);
     }
@@ -254,7 +254,7 @@ export default function InlineLocationSearch({
       activeOpacity={0.7}
     >
       <View style={styles.predictionIcon}>
-        <MapPin size={16} color="#00BCD4" />
+        <MapPin size={16} color="#0EA5E9" />
       </View>
       <View style={styles.predictionText}>
         <Text style={styles.predictionMain} numberOfLines={1}>
@@ -273,19 +273,19 @@ export default function InlineLocationSearch({
     <View style={styles.container}>
       {/* Search Input */}
       <View style={[
-        styles.searchContainer, 
+        styles.searchContainer,
         isLocationSelected && styles.searchContainerSelected
       ]}>
         {isLocationSelected ? (
-          <MapPin size={isTablet ? 22 : 20} color="#00BCD4" />
+          <MapPin size={isTablet ? 22 : 20} color="#0EA5E9" />
         ) : (
-          <SearchIcon size={isTablet ? 22 : 20} color="#999" />
+          <SearchIcon size={isTablet ? 22 : 20} color="#6B7280" />
         )}
         <TextInput
           ref={searchInputRef}
           style={styles.searchInput}
           placeholder={placeholder}
-          placeholderTextColor="#999"
+          placeholderTextColor="#9CA3AF"
           value={searchQuery}
           onChangeText={handleSearchChange}
           onFocus={() => {
@@ -306,11 +306,11 @@ export default function InlineLocationSearch({
         />
         {searchQuery.length > 0 && (
           <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-            <X size={18} color="#999" />
+            <X size={18} color="#6B7280" />
           </TouchableOpacity>
         )}
         {loading && (
-          <ActivityIndicator size="small" color="#00BCD4" style={styles.loadingIndicator} />
+          <ActivityIndicator size="small" color="#0EA5E9" style={styles.loadingIndicator} />
         )}
       </View>
 
@@ -319,7 +319,7 @@ export default function InlineLocationSearch({
         <View style={styles.resultsContainer}>
           {loading && predictions.length === 0 ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="#00BCD4" />
+              <ActivityIndicator size="small" color="#0EA5E9" />
               <Text style={styles.loadingText}>Searching...</Text>
             </View>
           ) : (
@@ -346,24 +346,25 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F9FAFB',
     borderRadius: 25,
     paddingHorizontal: isTablet ? 20 : 16,
-    paddingVertical: isTablet ? 16 : 12,
+    paddingVertical: isTablet ? 16 : 14,
     gap: isTablet ? 16 : 12,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: '#E5E7EB',
   },
   searchContainerSelected: {
-    backgroundColor: '#E8F8F5',
-    borderColor: '#00BCD4',
+    backgroundColor: '#E0F2FE', // Sky 50
+    borderColor: '#0EA5E9', // Sky 500
+    borderWidth: 1.5,
   },
   searchInput: {
     flex: 1,
     fontSize: isTablet ? 18 : 16,
-    color: '#333',
+    color: '#111827',
     padding: 0,
-    fontWeight: '400',
+    fontWeight: '500',
   },
   clearButton: {
     padding: 4,
@@ -377,18 +378,21 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: '#fff',
-    borderRadius: 12,
-    marginTop: 4,
+    borderRadius: 16,
+    marginTop: 8,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 10,
     },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
     maxHeight: 300,
     zIndex: 1001,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    overflow: 'hidden',
   },
   resultsList: {
     maxHeight: 300,
@@ -402,22 +406,22 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 14,
-    color: '#666',
+    color: '#6B7280',
   },
   predictionItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 12,
+    paddingVertical: 14,
+    gap: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#f5f5f5',
+    borderBottomColor: '#F3F4F6',
   },
   predictionIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#f0f9ff',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#E0F2FE', // Sky 50
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -425,13 +429,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   predictionMain: {
-    fontSize: isTablet ? 16 : 14,
+    fontSize: isTablet ? 16 : 15,
     fontWeight: '600',
-    color: '#333',
+    color: '#111827',
     marginBottom: 2,
   },
   predictionSecondary: {
-    fontSize: isTablet ? 14 : 12,
-    color: '#666',
+    fontSize: isTablet ? 14 : 13,
+    color: '#6B7280',
   },
 });

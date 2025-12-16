@@ -1,5 +1,7 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MotiView, MotiText } from 'moti';
 import {
   AirVent,
   ArrowLeft,
@@ -11,12 +13,14 @@ import {
   Share2,
   Star,
   Tv,
-  User,
+  Users,
   UtensilsCrossed,
   Waves,
-  Wifi
+  Wifi,
+  ChevronRight,
+  Info
 } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -29,9 +33,10 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Animated,
 } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import RoomCard from '@/components/hotel/RoomCard';
 import { db } from '@/config/firebase';
@@ -39,8 +44,7 @@ import { Hotel, Review, Room } from '@/types/hotel';
 import { collection, doc, getDoc, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
 
 const { width, height } = Dimensions.get('window');
-const IMAGE_HEIGHT = height * 0.35;
-const isSmallDevice = width < 375;
+const IMAGE_HEIGHT = height * 0.45;
 
 const amenityIcons: { [key: string]: any } = {
   'Free WiFi': Wifi,
@@ -63,6 +67,9 @@ const amenityIcons: { [key: string]: any } = {
 export default function HotelDetail() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const scrollY = useRef(new Animated.Value(0)).current;
+
   const [hotel, setHotel] = useState<Hotel | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,17 +93,6 @@ export default function HotelDetail() {
 
       if (hotelDoc.exists()) {
         const hotelData = hotelDoc.data();
-        console.log('🏨 Hotel Data from Firebase:', {
-          id: hotelDoc.id,
-          name: hotelData.name,
-          image: hotelData.image,
-          images: hotelData.images,
-          imagesLength: hotelData.images?.length,
-          firstImage: hotelData.images?.[0],
-          hotelAdmin: hotelData.hotelAdmin,
-          userId: hotelData.userId,
-          allFields: Object.keys(hotelData)
-        });
 
         // Fetch rooms
         const roomsQuery = query(collection(db, 'rooms'), where('hotelId', '==', id));
@@ -136,15 +132,15 @@ export default function HotelDetail() {
           reviewCount: hotelData.reviewCount || 0,
           stars: hotelData.stars || 3,
           image:
-            hotelData.image || 
+            hotelData.image ||
             (Array.isArray(hotelData.images) && hotelData.images.length > 0 ? hotelData.images[0] : null) ||
             'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800',
           images:
             Array.isArray(hotelData.images) && hotelData.images.length > 0
               ? hotelData.images
-              : [hotelData.image || 
-                 (Array.isArray(hotelData.images) && hotelData.images.length > 0 ? hotelData.images[0] : null) ||
-                 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800'],
+              : [hotelData.image ||
+                (Array.isArray(hotelData.images) && hotelData.images.length > 0 ? hotelData.images[0] : null) ||
+                'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800'],
           videos: hotelData.videos || [],
           amenities: Array.isArray(hotelData.amenities) ? hotelData.amenities : [],
           description: hotelData.description || 'No description available.',
@@ -207,7 +203,7 @@ export default function HotelDetail() {
   };
 
   const handleShare = () => {
-    console.log('Share hotel');
+    // Implement share logic
   };
 
   const handleFavorite = () => {
@@ -227,8 +223,7 @@ export default function HotelDetail() {
         longitude: hotel.longitude,
         hotelAdmin: hotel.hotelAdmin || '',
       };
-      console.log('📤 Passing hotel data to booking:', hotelDataToPass);
-      
+
       router.push({
         pathname: '/hotel/booking',
         params: {
@@ -262,7 +257,7 @@ export default function HotelDetail() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#00BFA6" />
+        <ActivityIndicator size="large" color="#111827" />
       </View>
     );
   }
@@ -282,183 +277,213 @@ export default function HotelDetail() {
   const displayRating = averageRating > 0 ? averageRating : hotel.rating;
   const displayReviewCount = totalReviews > 0 ? totalReviews : hotel.reviews || hotel.reviewCount || 0;
 
+  // Animation values
+  const imageTranslateY = scrollY.interpolate({
+    inputRange: [-IMAGE_HEIGHT, 0, IMAGE_HEIGHT],
+    outputRange: [IMAGE_HEIGHT / 2, 0, -IMAGE_HEIGHT / 3],
+    extrapolate: 'clamp',
+  });
+
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, IMAGE_HEIGHT - 100],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      <ScrollView showsVerticalScrollIndicator={false} bounces={true}>
-        {/* Image Carousel */}
-        <View style={styles.imageContainer}>
-          <Image
-            source={{ uri: displayImages[selectedImageIndex] }}
-            style={styles.mainImage}
-            contentFit="cover"
-            transition={300}
-            placeholder={{ blurhash: 'LKO2?U%2Tw=w]~RBVZRi};RPxuwH' }}
-            placeholderContentFit="cover"
-          />
+      {/* Animated Header Background */}
+      <Animated.View style={[styles.headerBackground, { opacity: headerOpacity, height: insets.top + 60 }]} />
 
-          {/* Header Buttons */}
-          <SafeAreaView style={styles.headerButtons} edges={['top']}>
-            <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
-              <ArrowLeft size={22} color="#333" strokeWidth={2.5} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
-              <Share2 size={20} color="#333" strokeWidth={2.5} />
-            </TouchableOpacity>
-          </SafeAreaView>
-
-          {/* Image Thumbnails */}
-          {displayImages.length > 1 && (
-            <View style={styles.thumbnailContainer}>
-              <FlatList
-                data={displayImages.slice(0, 4)}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                keyExtractor={(_, index) => index.toString()}
-                renderItem={({ item, index }) => (
-                  <TouchableOpacity
-                    onPress={() => setSelectedImageIndex(index)}
-                    style={[styles.thumbnail, selectedImageIndex === index && styles.thumbnailActive]}
-                  >
-                    <Image source={{ uri: item }} style={styles.thumbnailImage} contentFit="cover" />
-                    {index === 3 && displayImages.length > 4 && (
-                      <View style={styles.thumbnailOverlay}>
-                        <Text style={styles.thumbnailOverlayText}>{displayImages.length - 3}+</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                )}
-              />
-            </View>
-          )}
+      {/* Fixed Header Buttons */}
+      <SafeAreaView style={styles.headerButtons} edges={['top']}>
+        <TouchableOpacity style={styles.glassButton} onPress={() => router.back()}>
+          <ArrowLeft size={22} color="#FFF" strokeWidth={2.5} />
+        </TouchableOpacity>
+        <View style={styles.headerRightButtons}>
+          <TouchableOpacity style={[styles.glassButton, { marginRight: 10 }]} onPress={handleShare}>
+            <Share2 size={20} color="#FFF" strokeWidth={2.5} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.glassButton} onPress={handleFavorite}>
+            <Heart
+              size={20}
+              color={isFavorite ? '#FF4757' : '#FFF'}
+              fill={isFavorite ? '#FF4757' : 'none'}
+              strokeWidth={2.5}
+            />
+          </TouchableOpacity>
         </View>
+      </SafeAreaView>
 
-        {/* Hotel Info */}
-        <View style={styles.contentContainer}>
-          {/* Title and Favorite */}
-          <View style={styles.titleRow}>
-            <Text style={styles.hotelName}>{hotel.name}</Text>
-            <TouchableOpacity
-              style={[styles.favoriteButton, isFavorite && styles.favoriteButtonActive]}
-              onPress={handleFavorite}
-            >
-              <Heart
-                size={22}
-                color={isFavorite ? '#fff' : '#FF4757'}
-                fill={isFavorite ? '#FF4757' : 'none'}
-                strokeWidth={2}
-              />
-            </TouchableOpacity>
-          </View>
-
-          {/* Location */}
-          <View style={styles.locationRow}>
-            <MapPin size={16} color="#666" strokeWidth={2} />
-            <Text style={styles.locationText}>{hotel.address || hotel.location}</Text>
-          </View>
-
-          {/* Rating */}
-          <View style={styles.ratingRow}>
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                size={18}
-                color="#FFB800"
-                fill={i < Math.floor(displayRating) ? '#FFB800' : 'none'}
-                strokeWidth={0}
-              />
-            ))}
-            <Text style={styles.ratingText}>{displayRating.toFixed(1)}</Text>
-            <Text style={styles.reviewsText}>• {displayReviewCount} reviews</Text>
-          </View>
-
-          {/* Property Facilities */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Property Facilities</Text>
-              {hotel.amenities && hotel.amenities.length > 5 && (
-                <TouchableOpacity
-                  onPress={() =>
-                    router.push({
-                      pathname: '/hotel/amenities',
-                      params: {
-                        amenities: JSON.stringify(hotel.amenities),
-                        hotelName: hotel.name,
-                      },
-                    })
-                  }
-                >
-                  <Text style={styles.seeAllText}>See all</Text>
-                </TouchableOpacity>
+      <Animated.ScrollView
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
+        bounces={false}
+      >
+        {/* Parallax Image Hero */}
+        <View style={styles.imageContainer}>
+          <Animated.View style={[styles.parallaxImage, { transform: [{ translateY: imageTranslateY }] }]}>
+            <FlatList
+              data={displayImages}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(_, index) => index.toString()}
+              onMomentumScrollEnd={(event: any) => {
+                const index = Math.round(event.nativeEvent.contentOffset.x / width);
+                setSelectedImageIndex(index);
+              }}
+              renderItem={({ item }) => (
+                <Image
+                  source={{ uri: item }}
+                  style={{ width: width, height: '100%' }}
+                  contentFit="cover"
+                  transition={300}
+                />
               )}
-            </View>
+            />
+            <LinearGradient
+              colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.7)']}
+              style={styles.imageOverlay}
+              pointerEvents="none"
+            />
+          </Animated.View>
 
-            <View style={styles.facilitiesGrid}>
-              {hotel.amenities && hotel.amenities.length > 0 ? (
-                hotel.amenities.slice(0, 5).map((amenity, index) => {
-                  const amenityStr = typeof amenity === 'string' ? amenity : String(amenity || '');
-                  const IconComponent = amenityIcons[amenityStr] || Wifi;
-                  return (
-                    <View key={index} style={styles.facilityItem}>
-                      <View style={styles.facilityIcon}>
-                        <IconComponent size={22} color="#00BFA6" strokeWidth={2} />
-                      </View>
-                      <Text style={styles.facilityText} numberOfLines={2}>
-                        {amenityStr.replace(/-/g, ' ')}
-                      </Text>
-                    </View>
-                  );
-                })
-              ) : (
-                <Text style={styles.noDataText}>No facilities listed</Text>
-              )}
-            </View>
-          </View>
-
-          {/* Choose Room Section */}
-          {hotel.rooms && hotel.rooms.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Choose Room</Text>
-              <View style={{ marginTop: 16 }}>
-                {hotel.rooms.map((room) => (
-                  <RoomCard
-                    key={room.id}
-                    room={room}
-                    onSelect={setSelectedRoom}
-                    isSelected={selectedRoom?.id === room.id}
+          {/* Image Gallery/Dots */}
+          <View style={styles.galleryIndicator}>
+            {displayImages.length > 1 && (
+              <View style={styles.dotsContainer}>
+                {displayImages.slice(0, 5).map((_, idx) => (
+                  <View
+                    key={idx}
+                    style={[
+                      styles.dot,
+                      idx === selectedImageIndex ? styles.activeDot : styles.inactiveDot
+                    ]}
                   />
                 ))}
+                {displayImages.length > 5 && <View style={styles.dotSmall} />}
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Content Body */}
+        <View style={styles.contentContainer}>
+
+          {/* Title & Info */}
+          <MotiView
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ type: 'timing', duration: 500 } as any}
+          >
+            <View style={styles.mainInfo}>
+              <Text style={styles.hotelName}>{hotel.name}</Text>
+              <View style={styles.locationRow}>
+                <MapPin size={16} color="#6B7280" />
+                <Text style={styles.locationText} numberOfLines={1}>{hotel.address || hotel.location}</Text>
+              </View>
+
+              <View style={styles.ratingBadgeContainer}>
+                <View style={styles.ratingBadge}>
+                  <Star size={14} color="#F59E0B" fill="#F59E0B" />
+                  <Text style={styles.ratingValue}>{displayRating.toFixed(1)}</Text>
+                </View>
+                <Text style={styles.reviewCountText}>({displayReviewCount} reviews)</Text>
               </View>
             </View>
-          )}
+          </MotiView>
+
+          <View style={styles.divider} />
 
           {/* Description */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Description</Text>
+          <MotiView
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ delay: 100, type: 'timing', duration: 500 } as any}
+            style={styles.section}
+          >
+            <Text style={styles.sectionTitle}>About this place</Text>
             <Text style={styles.descriptionText}>
               {showFullDescription
                 ? hotel.description
                 : hotel.description && hotel.description.length > 150
                   ? `${hotel.description.substring(0, 150)}...`
                   : hotel.description || 'No description available.'}
-              {hotel.description && hotel.description.length > 150 && (
-                <Text style={styles.readMoreText} onPress={() => setShowFullDescription(!showFullDescription)}>
-                  {' '}
-                  {showFullDescription ? 'Read less' : 'Read more'}
-                </Text>
-              )}
             </Text>
-          </View>
-
-          {/* Map Section */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Map</Text>
-              <TouchableOpacity onPress={handleOpenMap}>
-                <Text style={styles.openMapText}>Open map</Text>
+            {hotel.description && hotel.description.length > 150 && (
+              <TouchableOpacity onPress={() => setShowFullDescription(!showFullDescription)}>
+                <Text style={styles.readMoreText}>{showFullDescription ? 'Read less' : 'Read more'}</Text>
               </TouchableOpacity>
+            )}
+          </MotiView>
+
+          {/* Facilities */}
+          <MotiView
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ delay: 200, type: 'timing', duration: 500 } as any}
+            style={styles.section}
+          >
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>What this place offers</Text>
+              {hotel.amenities && hotel.amenities.length > 4 && (
+                <TouchableOpacity onPress={() => router.push({ pathname: '/hotel/amenities', params: { amenities: JSON.stringify(hotel.amenities), hotelName: hotel.name } })}>
+                  <Text style={styles.seeAllText}>View all</Text>
+                </TouchableOpacity>
+              )}
             </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 20, gap: 12 }}>
+              {hotel.amenities && hotel.amenities.slice(0, 8).map((amenity, index) => {
+                const amenityStr = String(amenity);
+                const Icon = amenityIcons[amenityStr] || Info;
+                return (
+                  <View key={index} style={styles.amenityChip}>
+                    <View style={styles.amenityIconBox}>
+                      <Icon size={20} color="#4B5563" />
+                    </View>
+                    <Text style={styles.amenityText}>{amenityStr}</Text>
+                  </View>
+                )
+              })}
+            </ScrollView>
+          </MotiView>
+
+          {/* Room Selection */}
+          <MotiView
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ delay: 300, type: 'timing', duration: 500 } as any}
+            style={styles.section}
+          >
+            <Text style={styles.sectionTitle}>Choose your room</Text>
+            <View style={{ gap: 16 }}>
+              {hotel.rooms && hotel.rooms.map((room) => (
+                <RoomCard
+                  key={room.id}
+                  room={room}
+                  onSelect={setSelectedRoom}
+                  isSelected={selectedRoom?.id === room.id}
+                />
+              ))}
+              {(!hotel.rooms || hotel.rooms.length === 0) && (
+                <Text style={styles.noDataText}>No rooms available at the moment.</Text>
+              )}
+            </View>
+          </MotiView>
+
+          {/* Map */}
+          <MotiView
+            style={styles.section}
+            from={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 400, type: 'timing', duration: 500 } as any}
+          >
+            <Text style={styles.sectionTitle}>Location</Text>
             <View style={styles.mapContainer}>
               <MapView
                 style={styles.map}
@@ -466,113 +491,61 @@ export default function HotelDetail() {
                 initialRegion={{
                   latitude: hotel.latitude || 28.6139,
                   longitude: hotel.longitude || 77.209,
-                  latitudeDelta: 0.01,
-                  longitudeDelta: 0.01,
+                  latitudeDelta: 0.005,
+                  longitudeDelta: 0.005,
                 }}
                 scrollEnabled={false}
                 zoomEnabled={false}
-                pitchEnabled={false}
-                rotateEnabled={false}
               >
                 <Marker
                   coordinate={{
                     latitude: hotel.latitude || 28.6139,
                     longitude: hotel.longitude || 77.209,
                   }}
-                  title={hotel.name}
-                  description={hotel.address}
-                />
-              </MapView>
-              <TouchableOpacity style={styles.mapOverlay} onPress={handleOpenMap} activeOpacity={0.9} />
-            </View>
-          </View>
-
-          {/* Ratings & Reviews */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Ratings & Reviews</Text>
-              {reviews.length > 0 && (
-                <TouchableOpacity>
-                  <Text style={styles.seeAllText}>See all</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {/* Rating Summary */}
-            <View style={styles.ratingSummary}>
-              <View style={styles.ratingScoreContainer}>
-                <Text style={styles.ratingScore}>{displayRating.toFixed(1)}</Text>
-                <View style={styles.ratingStarsSmall}>
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      size={14}
-                      color="#FFB800"
-                      fill={i < Math.floor(displayRating) ? '#FFB800' : 'none'}
-                      strokeWidth={0}
-                    />
-                  ))}
-                </View>
-                <Text style={styles.ratingCount}>{displayReviewCount} reviews</Text>
-              </View>
-            </View>
-
-            {/* Reviews List */}
-            {reviewsLoading ? (
-              <ActivityIndicator size="small" color="#00BFA6" style={{ marginTop: 20 }} />
-            ) : reviews.length > 0 ? (
-              <View style={styles.reviewsList}>
-                {reviews.map((review) => (
-                  <View key={review.id} style={styles.reviewItem}>
-                    <View style={styles.reviewHeader}>
-                      <View style={styles.reviewUserIcon}>
-                        <User size={20} color="#666" strokeWidth={2} />
-                      </View>
-                      <View style={styles.reviewUserInfo}>
-                        <Text style={styles.reviewUserName}>{review?.userEmail?.split("@")[0] || 'Anonymous'}</Text>
-                        <View style={styles.reviewRatingRow}>
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              size={12}
-                              color="#FFB800"
-                              fill={i < review.rating ? '#FFB800' : 'none'}
-                              strokeWidth={0}
-                            />
-                          ))}
-                          <Text style={styles.reviewDate}>• {formatDate(review.createdAt)}</Text>
-                        </View>
-                      </View>
-                    </View>
-                    <Text style={styles.reviewComment} numberOfLines={3}>
-                      {review.comment}
-                    </Text>
+                >
+                  <View style={styles.customMarker}>
+                    <MapPin size={24} color="#FFF" fill="#111827" />
                   </View>
-                ))}
-              </View>
-            ) : (
-              <Text style={styles.noDataText}>No reviews yet</Text>
-            )}
+                </Marker>
+              </MapView>
+              <TouchableOpacity style={styles.mapOverlay} onPress={handleOpenMap}>
+                <View style={styles.viewMapButton}>
+                  <Text style={styles.viewMapText}>Get Directions</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </MotiView>
+
+        </View>
+      </Animated.ScrollView>
+
+      {/* Floating Bottom Bar */}
+      <MotiView
+        from={{ translateY: 100 }}
+        animate={{ translateY: 0 }}
+        transition={{ delay: 600, type: 'spring', damping: 20 } as any}
+        style={styles.bottomContainer}
+      >
+        <View style={styles.bottomBarContent}>
+          <View style={styles.priceSection}>
+            <View style={styles.priceRow}>
+              <Text style={styles.priceCurrency}>₹</Text>
+              <Text style={styles.priceValue}>{minPrice}</Text>
+            </View>
+            <Text style={styles.priceLabel}>Total price for 1 night</Text>
           </View>
 
-          {/* Spacer for bottom button */}
-          <View style={{ height: 80 }} />
+          <TouchableOpacity
+            style={styles.bookButton}
+            onPress={handleBookNow}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.bookButtonText}>Book Now</Text>
+            <ChevronRight size={20} color="#FFF" />
+          </TouchableOpacity>
         </View>
-      </ScrollView>
+      </MotiView>
 
-      {/* Bottom Booking Bar */}
-      <View style={styles.bottomBar}>
-        <View style={styles.priceContainer}>
-          <Text style={styles.priceLabel}>Price</Text>
-          <Text style={styles.price}>
-            ₹{minPrice}
-            <Text style={styles.priceUnit}> /night</Text>
-          </Text>
-        </View>
-        <TouchableOpacity style={styles.bookButton} onPress={handleBookNow} activeOpacity={0.8}>
-          <Text style={styles.bookButtonText}>Book Now</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
@@ -580,154 +553,173 @@ export default function HotelDetail() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F9FAFB',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#F9FAFB',
   },
   errorText: {
     fontSize: 16,
-    color: '#666',
+    color: '#6B7280',
+    fontFamily: Platform.select({ ios: 'System', android: 'Roboto' }),
   },
-  imageContainer: {
-    height: IMAGE_HEIGHT,
-    position: 'relative',
-    backgroundColor: '#f0f0f0',
-  },
-  mainImage: {
-    width: '100%',
-    height: '100%',
+
+  // Header Styles
+  headerBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    zIndex: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
   headerButtons: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
+    zIndex: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? 40 : 0,
+    paddingHorizontal: 20,
+    paddingTop: 10,
   },
-  headerButton: {
+  headerRightButtons: {
+    flexDirection: 'row',
+  },
+  glassButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    backdropFilter: 'blur(10px)',
     justifyContent: 'center',
     alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
-  thumbnailContainer: {
-    position: 'absolute',
-    bottom: 16,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 16,
-  },
-  thumbnail: {
-    width: 70,
-    height: 70,
-    borderRadius: 12,
-    marginRight: 8,
+
+  // Image Parallax
+  imageContainer: {
+    height: IMAGE_HEIGHT,
+    width: '100%',
     overflow: 'hidden',
-    borderWidth: 3,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
   },
-  thumbnailActive: {
-    borderColor: '#fff',
-  },
-  thumbnailImage: {
+  parallaxImage: {
     width: '100%',
     height: '100%',
   },
-  thumbnailOverlay: {
+  mainImage: {
+    width: '100%',
+    height: '100%',
+  },
+  imageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  galleryIndicator: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  thumbnailOverlayText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  contentContainer: {
-    padding: 20,
-    backgroundColor: '#fff',
-  },
-  titleRow: {
+    bottom: 24,
+    left: 20,
+    right: 20,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 10,
+    justifyContent: 'center',
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  activeDot: {
+    backgroundColor: '#FFF',
+    width: 12,
+  },
+  inactiveDot: {
+    backgroundColor: 'rgba(255,255,255,0.5)',
+  },
+  dotSmall: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+  },
+
+  // Content
+  contentContainer: {
+    backgroundColor: '#F9FAFB',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    marginTop: -32,
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    minHeight: height - IMAGE_HEIGHT,
+  },
+  mainInfo: {
+    marginBottom: 20,
   },
   hotelName: {
-    flex: 1,
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginRight: 12,
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 8,
     letterSpacing: -0.5,
-  },
-  favoriteButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FFF5F5',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  favoriteButtonActive: {
-    backgroundColor: '#FF4757',
   },
   locationRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+    alignItems: 'center',
     gap: 6,
+    marginBottom: 12,
   },
   locationText: {
-    fontSize: 13,
-    color: '#666',
+    fontSize: 15,
+    color: '#6B7280',
     flex: 1,
-    lineHeight: 18,
   },
-  ratingRow: {
+  ratingBadgeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
-    gap: 3,
+    gap: 8,
   },
-  ratingText: {
-    fontSize: 15,
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  ratingValue: {
+    fontSize: 14,
     fontWeight: '700',
-    color: '#1A1A1A',
-    marginLeft: 6,
+    color: '#B45309',
   },
-  reviewsText: {
-    fontSize: 13,
-    color: '#999',
-    marginLeft: 4,
+  reviewCountText: {
+    color: '#6B7280',
+    fontSize: 14,
   },
+  divider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 10,
+  },
+
+  // Sections
   section: {
-    marginBottom: 24,
+    marginBottom: 32,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -736,214 +728,169 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#111827',
+    marginBottom: 12,
   },
   seeAllText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#00BFA6',
+    color: '#111827',
   },
-  openMapText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#0066FF',
-  },
-  facilitiesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  facilityItem: {
-    alignItems: 'center',
-    width: (width - 64) / 4,
-  },
-  facilityIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 16,
-    backgroundColor: '#E8F8F5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  facilityText: {
-    fontSize: 11,
-    color: '#333',
-    textAlign: 'center',
-    lineHeight: 14,
-    textTransform: 'capitalize',
-  },
-  noDataText: {
-    fontSize: 14,
-    color: '#999',
-    fontStyle: 'italic',
-  },
+
+  // Description
   descriptionText: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 22,
+    fontSize: 15,
+    lineHeight: 24,
+    color: '#4B5563',
   },
   readMoreText: {
-    color: '#00BFA6',
+    fontSize: 15,
     fontWeight: '600',
+    color: '#111827',
+    marginTop: 6,
   },
+
+  // Amenities
+  amenityChip: {
+    alignItems: 'center',
+    width: 70,
+  },
+  amenityIconBox: {
+    width: 60,
+    height: 60,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  amenityText: {
+    fontSize: 11,
+    color: '#4B5563',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+
+  // Map
   mapContainer: {
     height: 200,
-    borderRadius: 16,
+    borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: '#f0f0f0',
     position: 'relative',
+    backgroundColor: '#E5E7EB',
   },
   map: {
-    width: '100%',
-    height: '100%',
+    ...StyleSheet.absoluteFillObject,
+  },
+  customMarker: {
+    padding: 4,
+    backgroundColor: '#111827',
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#fff',
   },
   mapOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  ratingSummary: {
-    backgroundColor: '#F8F9FA',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  ratingScoreContainer: {
-    alignItems: 'center',
-  },
-  ratingScore: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 8,
-  },
-  ratingStarsSmall: {
-    flexDirection: 'row',
-    gap: 4,
-    marginBottom: 6,
-  },
-  ratingCount: {
-    fontSize: 13,
-    color: '#666',
-  },
-  reviewsList: {
-    gap: 16,
-  },
-  reviewItem: {
-    backgroundColor: '#F8F9FA',
-    padding: 16,
-    borderRadius: 12,
-  },
-  reviewHeader: {
-    flexDirection: 'row',
-    marginBottom: 12,
-    gap: 12,
-  },
-  reviewUserIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#E8F8F5',
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  reviewUserInfo: {
-    flex: 1,
+  viewMapButton: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  reviewUserName: {
-    fontSize: 15,
+  viewMapText: {
     fontWeight: '600',
-    color: '#1A1A1A',
-    marginBottom: 4,
+    color: '#111827',
   },
-  reviewRatingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  reviewDate: {
-    fontSize: 12,
-    color: '#999',
-    marginLeft: 6,
-  },
-  reviewComment: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-  },
-  bottomBar: {
+
+  // Bottom Bar
+  bottomContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: Platform.OS === 'ios' ? 30 : 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  bottomBarContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: Platform.OS === 'ios' ? 30 : 16,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 12,
-      },
-    }),
+    gap: 20,
   },
-  priceContainer: {
+  priceSection: {
     flex: 1,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  priceCurrency: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    marginRight: 2,
+  },
+  priceValue: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#111827',
   },
   priceLabel: {
     fontSize: 12,
-    color: '#999',
-    marginBottom: 4,
-    fontWeight: '500',
-  },
-  price: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    letterSpacing: -0.5,
-  },
-  priceUnit: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#666',
+    color: '#6B7280',
+    marginTop: 2,
   },
   bookButton: {
-    backgroundColor: '#00BFA6',
-    paddingHorizontal: 40,
-    paddingVertical: 16,
-    borderRadius: 28,
-    marginLeft: 16,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#00BFA6',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 6,
-      },
-    }),
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#111827',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    gap: 8,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   bookButtonText: {
-    color: '#fff',
+    color: '#FFF',
     fontSize: 16,
     fontWeight: '700',
-    letterSpacing: 0.5,
+  },
+  noDataText: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginVertical: 10,
   },
 });

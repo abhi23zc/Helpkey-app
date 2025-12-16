@@ -119,7 +119,7 @@ export default function MapView({ hotels, userLocation, onHotelPress }: MapViewP
 
   const validHotels = hotelsWithCoords.filter((h) => h.latitude && h.longitude);
 
-  console.log('MAP DEBUG - Total hotels:', hotels.length, 'Valid:', validHotels.length);
+
 
   return (
     <View style={styles.container}>

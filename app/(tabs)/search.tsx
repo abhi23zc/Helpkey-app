@@ -1,27 +1,32 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Platform, 
-  ScrollView, 
-  StyleSheet, 
-  Text, 
+import {
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
   View,
   TouchableOpacity,
-  Image,
   Dimensions,
   FlatList,
   ActivityIndicator,
   RefreshControl,
   BackHandler,
+  StatusBar,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, MapPin, Star, Heart, Clock, Wifi, Car, X, Search as SearchIcon } from 'lucide-react-native';
+import { ArrowLeft, MapPin, Star, Heart, Clock, Wifi, Car, X, Search as SearchIcon, RotateCcw, Moon } from 'lucide-react-native';
 import { router } from 'expo-router';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MotiView, MotiText } from 'moti';
+
 import InlineLocationSearch from '../../components/InlineLocationSearch';
 import { Hotel } from '../../types/hotel';
-import { 
-  getSearchHistory, 
-  addToSearchHistory, 
-  getRecentlyViewed, 
+import {
+  getSearchHistory,
+  addToSearchHistory,
+  getRecentlyViewed,
   addToRecentlyViewed,
   getFavorites,
   toggleFavorite as toggleFavoriteService,
@@ -31,31 +36,7 @@ import {
 } from '../../services/simpleSearchService';
 
 const { width, height } = Dimensions.get('window');
-
-// Responsive breakpoints
 const isTablet = width >= 768;
-const isLargeScreen = width >= 1024;
-
-// Responsive dimensions
-const getResponsiveDimensions = () => {
-  const cardWidth = isLargeScreen ? width * 0.4 : isTablet ? width * 0.5 : width * 0.7;
-  const cardHeight = isTablet ? 220 : 180;
-  const horizontalPadding = isTablet ? 32 : 20;
-  const sectionSpacing = isTablet ? 32 : 24;
-  
-  return {
-    cardWidth,
-    cardHeight,
-    horizontalPadding,
-    sectionSpacing,
-    fontSize: {
-      title: isTablet ? 24 : 20,
-      subtitle: isTablet ? 18 : 16,
-      body: isTablet ? 16 : 14,
-      caption: isTablet ? 14 : 12,
-    }
-  };
-};
 
 // Helper function to safely get numeric values
 const getSafeNumber = (value: any, defaultValue: number = 0): number => {
@@ -72,9 +53,7 @@ const getSafeNumber = (value: any, defaultValue: number = 0): number => {
 // Helper function to create mock location from search term
 const createMockLocationFromSearchTerm = (cityName: string) => {
   const cityCoordinates: { [key: string]: { lat: number; lng: number; fullName: string } } = {
-    'kanpur': { lat: 26.4499, lng: 80.3319, fullName: 'Kanpur, Uttar Pradesh, India' },
-    'maksooda bad': { lat: 26.4499, lng: 80.3319, fullName: 'Maksooda Bad, Uttar Pradesh, India' },
-    'maksooda': { lat: 26.4499, lng: 80.3319, fullName: 'Maksooda Bad, Uttar Pradesh, India' },
+    'kanpur': { lat: 26.43640985331962, lng: 80.31590396508177, fullName: 'Kanpur, Uttar Pradesh, India' },
     'delhi': { lat: 28.6139, lng: 77.2090, fullName: 'Delhi, Delhi, India' },
     'mumbai': { lat: 19.0760, lng: 72.8777, fullName: 'Mumbai, Maharashtra, India' },
     'bangalore': { lat: 12.9716, lng: 77.5946, fullName: 'Bangalore, Karnataka, India' },
@@ -82,19 +61,15 @@ const createMockLocationFromSearchTerm = (cityName: string) => {
     'kolkata': { lat: 22.5726, lng: 88.3639, fullName: 'Kolkata, West Bengal, India' },
     'hyderabad': { lat: 17.3850, lng: 78.4867, fullName: 'Hyderabad, Telangana, India' },
     'pune': { lat: 18.5204, lng: 73.8567, fullName: 'Pune, Maharashtra, India' },
-    'ahmedabad': { lat: 23.0225, lng: 72.5714, fullName: 'Ahmedabad, Gujarat, India' },
-    'jaipur': { lat: 26.9124, lng: 75.7873, fullName: 'Jaipur, Rajasthan, India' },
-    'lucknow': { lat: 26.8467, lng: 80.9462, fullName: 'Lucknow, Uttar Pradesh, India' },
-    'agra': { lat: 27.1767, lng: 78.0081, fullName: 'Agra, Uttar Pradesh, India' },
-    'varanasi': { lat: 25.3176, lng: 82.9739, fullName: 'Varanasi, Uttar Pradesh, India' },
+    'goa': { lat: 15.2993, lng: 74.1240, fullName: 'Goa, India' },
     'bali': { lat: -8.3405, lng: 115.0920, fullName: 'Bali, Indonesia' },
     'jakarta': { lat: -6.2088, lng: 106.8456, fullName: 'Jakarta, Indonesia' },
     'uluwatu': { lat: -8.8290, lng: 115.0844, fullName: 'Uluwatu, Bali, Indonesia' },
   };
-  
+
   const normalizedCity = cityName.toLowerCase().trim();
   const cityData = cityCoordinates[normalizedCity];
-  
+
   if (cityData) {
     return {
       description: cityData.fullName,
@@ -103,14 +78,13 @@ const createMockLocationFromSearchTerm = (cityName: string) => {
       longitude: cityData.lng,
     };
   }
-  
+
   return null;
 };
 
 export default function Search() {
   const insets = useSafeAreaInsets();
-  const dimensions = getResponsiveDimensions();
-  
+
   // State management
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [recommendations, setRecommendations] = useState<Hotel[]>([]);
@@ -118,7 +92,7 @@ export default function Search() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  
+
   // Location search state
   const [selectedLocation, setSelectedLocation] = useState<{
     description: string;
@@ -133,46 +107,35 @@ export default function Search() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('Loading search data...');
-      
-      // Load data sequentially to better handle errors
+
       try {
         const historyData = await getSearchHistory();
-        console.log('Search history loaded:', historyData.length);
         setSearchHistory(historyData);
       } catch (error) {
-        console.error('Error loading search history:', error);
-        setSearchHistory(['Bali', 'Jakarta', 'Uluwatu']); // Fallback data
+        setSearchHistory(['Bali', 'Goa', 'Mumbai']);
       }
-      
+
       try {
         const recommendationsData = await getRecommendedHotels(10);
-        console.log('Recommendations loaded:', recommendationsData.length);
         setRecommendations(recommendationsData);
       } catch (error) {
-        console.error('Error loading recommendations:', error);
-        // Fallback will be handled in the service
+        console.error(error);
       }
-      
+
       try {
         const recentData = await getRecentlyViewed();
-        console.log('Recent data loaded:', recentData.length);
         setRecentlyViewed(recentData);
       } catch (error) {
-        console.error('Error loading recent data:', error);
         setRecentlyViewed([]);
       }
-      
+
       try {
         const favoritesData = await getFavorites();
-        console.log('Favorites loaded:', favoritesData.length);
         setFavorites(favoritesData);
       } catch (error) {
-        console.error('Error loading favorites:', error);
         setFavorites([]);
       }
-      
-      console.log('All data loaded successfully');
+
     } catch (error) {
       console.error('Error loading search data:', error);
     } finally {
@@ -192,17 +155,20 @@ export default function Search() {
     loadData();
   }, [loadData]);
 
+
+
   // Handle Android hardware back button
   useEffect(() => {
     const backAction = () => {
-      handleBackPress();
-      return true; // Prevent default behavior
+      if (selectedLocation) {
+        handleClearLocation();
+        return true;
+      }
+      return false;
     };
-
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
-
     return () => backHandler.remove();
-  }, [selectedLocation]); // Re-run when selectedLocation changes
+  }, [selectedLocation]);
 
   // Handle favorite toggle
   const handleToggleFavorite = async (hotelId: string) => {
@@ -215,35 +181,18 @@ export default function Search() {
       }
     } catch (error) {
       console.error('Error toggling favorite:', error);
-      // Don't show alert for now, just log the error
     }
   };
 
   // Handle search tag selection
   const handleSearchTagPress = async (searchTerm: string) => {
     try {
-      console.log('Search tag pressed:', searchTerm);
       await addToSearchHistory(searchTerm);
-      
-      // Check if the search term looks like a location (contains comma or "India")
-      if (searchTerm.includes(',') || searchTerm.toLowerCase().includes('india')) {
-        // Try to parse location from search term
-        const locationParts = searchTerm.split(',');
-        const cityName = locationParts[0].trim();
-        
-        // Create a mock location object for common cities
-        const mockLocation = createMockLocationFromSearchTerm(cityName);
-        
-        if (mockLocation) {
-          // Trigger location search directly
-          await handleLocationSelect(mockLocation);
-        } else {
-          // Fallback: just show the search term in the search bar
-          console.log('Could not parse location, showing as search term');
-        }
+      const mockLocation = createMockLocationFromSearchTerm(searchTerm);
+      if (mockLocation) {
+        await handleLocationSelect(mockLocation);
       } else {
-        // For non-location searches, you could implement hotel name search here
-        console.log('Non-location search term:', searchTerm);
+        // Just simple search handling placeholder
       }
     } catch (error) {
       console.error('Error handling search tag press:', error);
@@ -253,21 +202,25 @@ export default function Search() {
   // Handle location selection
   const handleLocationSelect = async (location: any) => {
     try {
-      console.log('Selected location:', location);
+      console.log('Search screen - Location selected:', location);
+      
+      // Save location to shared storage
+      try {
+        const { saveSelectedLocation } = await import('../../services/locationStorage');
+        await saveSelectedLocation(location);
+      } catch (error) {
+        console.error('Error saving location:', error);
+      }
+      
       await addToSearchHistory(location.description);
-      
-      // Set selected location and search for nearby hotels
       setSelectedLocation(location);
-      
+
       if (location.latitude && location.longitude) {
-        console.log(`Searching for hotels near ${location.description} (${location.latitude}, ${location.longitude})`);
         setSearchingNearby(true);
         const nearby = await searchHotelsByLocation(location.latitude, location.longitude, 50);
-        console.log(`Found ${nearby.length} nearby hotels`);
         setNearbyHotels(nearby);
         setSearchingNearby(false);
       } else {
-        console.log('No coordinates provided for location');
         setSearchingNearby(false);
       }
     } catch (error) {
@@ -278,31 +231,58 @@ export default function Search() {
 
   // Handle search input change
   const handleSearchChange = (query: string) => {
-    // If query is empty and we have a selected location, clear it
     if (!query.trim() && selectedLocation) {
       handleClearLocation();
     }
-    console.log('Search query changed:', query);
   };
 
   // Handle clearing location search
-  const handleClearLocation = () => {
+  const handleClearLocation = async () => {
+    try {
+      // Clear from storage
+      const { clearSelectedLocation } = await import('../../services/locationStorage');
+      await clearSelectedLocation();
+    } catch (error) {
+      console.error('Error clearing stored location:', error);
+    }
+    
     setSelectedLocation(null);
     setNearbyHotels([]);
     setSearchingNearby(false);
   };
 
+  // Load selected location from storage when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      const loadSelectedLocation = async () => {
+        try {
+          const { getSelectedLocation, isLocationRecent } = await import('../../services/locationStorage');
+          const storedLocation = await getSelectedLocation();
+          
+          if (storedLocation && isLocationRecent(storedLocation)) {
+            console.log('Loading stored location on focus:', storedLocation);
+            // Check if this is a different location than currently selected
+            if (!selectedLocation || selectedLocation.placeId !== storedLocation.placeId) {
+              await handleLocationSelect(storedLocation);
+            }
+          }
+        } catch (error) {
+          console.error('Error loading selected location:', error);
+        }
+      };
+
+      loadSelectedLocation();
+    }, [selectedLocation])
+  );
+
   // Handle back button press
   const handleBackPress = () => {
     if (selectedLocation) {
-      // If we're showing search results, go back to the main search view
       handleClearLocation();
     } else {
-      // Otherwise, navigate back to the previous screen
       if (router.canGoBack()) {
         router.back();
       } else {
-        // Fallback to home if no previous screen
         router.push('/(tabs)/home');
       }
     }
@@ -310,297 +290,118 @@ export default function Search() {
 
   // Handle hotel card press
   const handleHotelPress = async (hotel: Hotel) => {
-    try {
-      await addToRecentlyViewed(hotel);
-      // Navigate to hotel details
-      router.push(`/hotel/${hotel.id}`);
-    } catch (error) {
-      console.error('Error handling hotel press:', error);
-    }
+    await addToRecentlyViewed(hotel);
+    router.push(`/hotel/${hotel.id}`);
   };
 
-  // Render functions
   const renderSearchTag = (search: string, index: number) => (
-    <TouchableOpacity 
-      key={index} 
-      style={[styles.searchTag, { paddingHorizontal: dimensions.horizontalPadding * 0.8 }]} 
-      activeOpacity={0.6}
-      onPress={() => {
-        console.log('Search tag clicked:', search);
-        handleSearchTagPress(search);
-      }}
+    <TouchableOpacity
+      key={index}
+      style={styles.searchTag}
+      activeOpacity={0.7}
+      onPress={() => handleSearchTagPress(search)}
     >
-      <Text style={[styles.searchTagText, { fontSize: dimensions.fontSize.body }]}>{search}</Text>
+      <MotiView
+        from={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: 'spring', delay: index * 50 } as any}
+      >
+        <Text style={styles.searchTagText}>{search}</Text>
+      </MotiView>
     </TouchableOpacity>
   );
 
   const renderRecommendationCard = ({ item }: { item: Hotel }) => (
-    <TouchableOpacity 
-      style={[styles.recommendationCard, { 
-        width: dimensions.cardWidth,
-        marginRight: isTablet ? 20 : 16 
-      }]}
-      activeOpacity={0.9}
-      onPress={() => handleHotelPress(item)}
+    <MotiView
+      from={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ type: 'timing', duration: 500 } as any}
     >
-      <View style={styles.imageContainer}>
-        <Image 
-          source={{ uri: item.image }} 
-          style={[styles.cardImage, { height: dimensions.cardHeight }]} 
-          resizeMode="cover"
+      <TouchableOpacity
+        style={styles.recommendationCard}
+        activeOpacity={0.9}
+        onPress={() => handleHotelPress(item)}
+      >
+        <Image
+          source={{ uri: item.image }}
+          style={styles.cardImage}
+          contentFit="cover"
+          transition={300}
         />
-        <TouchableOpacity 
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.6)']}
+          style={styles.cardGradient}
+        />
+
+        <TouchableOpacity
           style={styles.favoriteButton}
           onPress={() => handleToggleFavorite(item.id)}
-          activeOpacity={0.7}
         >
-          <Heart 
-            size={isTablet ? 24 : 20} 
-            color={favorites.includes(item.id) ? '#FF6B6B' : '#fff'} 
-            fill={favorites.includes(item.id) ? '#FF6B6B' : 'transparent'}
+          <Heart
+            size={20}
+            color={favorites.includes(item.id) ? '#EF4444' : '#FFF'}
+            fill={favorites.includes(item.id) ? '#EF4444' : 'transparent'}
           />
         </TouchableOpacity>
-        
-        {/* Rating Badge */}
-        <View style={styles.ratingBadge}>
-          <Star size={12} color="#FFD700" fill="#FFD700" />
-          <Text style={styles.ratingBadgeText}>{getSafeNumber(item.rating, 4.0).toFixed(1)}</Text>
-        </View>
-      </View>
-      
-      <View style={[styles.cardContent, { padding: isTablet ? 20 : 16 }]}>
-        <Text style={[styles.cardTitle, { fontSize: dimensions.fontSize.subtitle }]} numberOfLines={1}>
-          {item.name}
-        </Text>
-        
-        <View style={styles.locationRow}>
-          <MapPin size={isTablet ? 14 : 12} color="#999" />
-          <Text style={[styles.cardLocation, { fontSize: dimensions.fontSize.body }]} numberOfLines={1}>
-            {item.location}
-          </Text>
-        </View>
-        
-        {/* Amenities Row */}
-        <View style={styles.amenitiesRow}>
-          {item.amenities.slice(0, 3).map((amenity, index) => (
-            <View key={index} style={styles.amenityTag}>
-              {amenity.toLowerCase().includes('wifi') ? <Wifi size={10} color="#00BCD4" /> : null}
-              {amenity.toLowerCase().includes('parking') ? <Car size={10} color="#00BCD4" /> : null}
-              {!amenity.toLowerCase().includes('wifi') && !amenity.toLowerCase().includes('parking') ? (
-                <Text style={styles.amenityDot}>•</Text>
-              ) : null}
-              <Text style={styles.amenityText} numberOfLines={1}>
-                {amenity.length > 8 ? amenity.substring(0, 8) + '...' : amenity}
-              </Text>
-            </View>
-          ))}
-        </View>
-        
-        <View style={styles.priceRatingRow}>
-          <View style={styles.priceContainer}>
-            <Text style={styles.cardPrice}>
-              <Text style={[styles.priceAmount, { fontSize: isTablet ? 20 : 18 }]}>
-                ₹{getSafeNumber(item.price)}
-              </Text>
-              <Text style={[styles.priceUnit, { fontSize: dimensions.fontSize.body }]}>
-                /night
-              </Text>
-            </Text>
-            {getSafeNumber(item.originalPrice) > getSafeNumber(item.price) ? (
-              <Text style={styles.originalPrice}>₹{getSafeNumber(item.originalPrice)}</Text>
-            ) : null}
-          </View>
-          
-          <View style={styles.reviewsContainer}>
-            <Text style={[styles.reviewsText, { fontSize: dimensions.fontSize.caption }]}>
-              ({getSafeNumber(item.reviewCount) || getSafeNumber(item.reviews)} reviews)
-            </Text>
-          </View>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
 
-  // Render vertical hotel list item for search results
-  const renderVerticalHotelItem = ({ item }: { item: Hotel }) => (
-    <TouchableOpacity 
-      style={styles.verticalHotelItem}
-      activeOpacity={0.9}
-      onPress={() => handleHotelPress(item)}
-    >
-      <View style={styles.verticalImageContainer}>
-        <Image 
-          source={{ uri: item.image }} 
-          style={styles.verticalHotelImage} 
-          resizeMode="cover"
-        />
-        
-        {/* Overlay Content */}
-        <View style={styles.imageOverlay}>
-          {/* Top Row - Rating and Favorite */}
-          <View style={styles.imageTopRow}>
-            <View style={styles.verticalRatingBadge}>
-              <Star size={12} color="#FFD700" fill="#FFD700" />
-              <Text style={styles.verticalRatingText}>{getSafeNumber(item.rating, 4.0).toFixed(1)}</Text>
-            </View>
-            
-            <TouchableOpacity 
-              style={styles.verticalFavoriteButton}
-              onPress={() => handleToggleFavorite(item.id)}
-              activeOpacity={0.7}
-            >
-              <Heart 
-                size={20} 
-                color={favorites.includes(item.id) ? '#FF6B6B' : '#fff'} 
-                fill={favorites.includes(item.id) ? '#FF6B6B' : 'transparent'}
-              />
-            </TouchableOpacity>
+        <View style={styles.cardContentOverlay}>
+          <View style={styles.ratingBadge}>
+            <Star size={12} color="#FBBF24" fill="#FBBF24" />
+            <Text style={styles.ratingText}>{getSafeNumber(item.rating, 4.5).toFixed(1)}</Text>
           </View>
-          
-          {/* Bottom Row - Distance */}
-          {item.distance ? (
-            <View style={styles.imageBottomRow}>
-              <View style={styles.distanceBadge}>
-                <MapPin size={10} color="#fff" />
-                <Text style={styles.distanceText}>{item.distance.toFixed(1)} km away</Text>
-              </View>
-            </View>
-          ) : null}
-        </View>
-      </View>
-      
-      <View style={styles.verticalHotelContent}>
-        <View style={styles.verticalHotelHeader}>
-          <View style={styles.hotelTitleContainer}>
-            <Text style={styles.verticalHotelTitle} numberOfLines={2}>
-              {item.name}
-            </Text>
-            <View style={styles.verticalLocationRow}>
-              <MapPin size={12} color="#999" />
-              <Text style={styles.verticalLocation} numberOfLines={1}>
-                {item.location}
-              </Text>
-            </View>
+
+          <Text style={styles.cardTitle} numberOfLines={1}>{item.name}</Text>
+          <View style={styles.locationRow}>
+            <MapPin size={12} color="#E5E7EB" />
+            <Text style={styles.cardLocation} numberOfLines={1}>{item.location}</Text>
           </View>
-          
-          <View style={styles.verticalPriceContainer}>
-            <Text style={styles.verticalPrice}>
-              <Text style={styles.verticalPriceAmount}>₹{getSafeNumber(item.price)}</Text>
-              <Text style={styles.verticalPriceUnit}>/night</Text>
-            </Text>
-            {getSafeNumber(item.originalPrice) > getSafeNumber(item.price) ? (
-              <Text style={styles.verticalOriginalPrice}>₹{getSafeNumber(item.originalPrice)}</Text>
-            ) : null}
+
+          <View style={styles.priceRow}>
+            <Text style={styles.priceAmount}>₹{getSafeNumber(item.price)}</Text>
+            <Text style={styles.priceUnit}>/night</Text>
           </View>
         </View>
-        
-        {/* Booking Types and Amenities */}
-        <View style={styles.infoRow}>
-          {/* Booking Type Badges */}
-          <View style={styles.bookingTypesContainer}>
-            {(item as any).hasNightly ? (
-              <View style={styles.bookingTypeBadge}>
-                <Clock size={10} color="#00BCD4" />
-                <Text style={styles.bookingTypeText}>Nightly</Text>
-              </View>
-            ) : null}
-            {(item as any).hasHourly ? (
-              <View style={styles.bookingTypeBadge}>
-                <Clock size={10} color="#FF6B35" />
-                <Text style={[styles.bookingTypeText, { color: '#FF6B35' }]}>Hourly</Text>
-              </View>
-            ) : null}
-          </View>
-          
-          {/* Top Amenities */}
-          <View style={styles.verticalAmenitiesRow}>
-            {item.amenities.slice(0, 2).map((amenity, index) => (
-              <View key={index} style={styles.verticalAmenityTag}>
-                {amenity.toLowerCase().includes('wifi') ? <Wifi size={8} color="#00BCD4" /> : null}
-                {amenity.toLowerCase().includes('parking') ? <Car size={8} color="#00BCD4" /> : null}
-                {!amenity.toLowerCase().includes('wifi') && !amenity.toLowerCase().includes('parking') ? (
-                  <Text style={styles.amenityDot}>•</Text>
-                ) : null}
-                <Text style={styles.verticalAmenityText} numberOfLines={1}>
-                  {amenity.length > 8 ? amenity.substring(0, 8) + '...' : amenity}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </View>
-        
-        <View style={styles.verticalBottomRow}>
-          <View style={styles.distanceInfoContainer}>
-            {item.distance ? (
-              <Text style={styles.distanceInfoText}>
-                {item.distance.toFixed(1)} km from your location
-              </Text>
-            ) : (
-              <Text style={styles.distanceInfoText}>
-                {getSafeNumber(item.reviewCount) || getSafeNumber(item.reviews)} reviews
-              </Text>
-            )}
-          </View>
-          
-          <TouchableOpacity style={styles.bookNowButton} activeOpacity={0.8}>
-            <Text style={styles.bookNowText}>Book Now</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </MotiView>
   );
 
   const renderRecentlyViewedItem = ({ item }: { item: RecentlyViewedItem }) => (
-    <TouchableOpacity 
-      style={[styles.recentItem, { 
-        marginHorizontal: dimensions.horizontalPadding,
-        marginBottom: isTablet ? 20 : 16 
-      }]} 
-      activeOpacity={0.7}
-      onPress={() => console.log('Navigate to hotel:', item.hotelName)}
+    <TouchableOpacity
+      style={styles.recentItem}
+      activeOpacity={0.8}
+      onPress={() => handleHotelPress({ ...item, id: item.id } as any)}
     >
-      <View style={styles.recentImageContainer}>
-        <Image 
-          source={{ uri: item.image }} 
-          style={[styles.recentImage, { 
-            width: isTablet ? 100 : 80, 
-            height: isTablet ? 100 : 80 
-          }]} 
-          resizeMode="cover"
-        />
-        <View style={styles.recentRatingBadge}>
-          <Star size={10} color="#FFD700" fill="#FFD700" />
-          <Text style={styles.recentRatingText}>{getSafeNumber(item.rating, 4.0).toFixed(1)}</Text>
+      <Image
+        source={{ uri: item.image }}
+        style={styles.recentImage}
+        contentFit="cover"
+        transition={300}
+      />
+      <View style={styles.recentContent}>
+        <View style={styles.recentHeader}>
+          <Text style={styles.recentTitle} numberOfLines={1}>{item.hotelName}</Text>
+          <View style={styles.recentRating}>
+            <Star size={10} color="#FBBF24" fill="#FBBF24" />
+            <Text style={styles.recentRatingText}>{getSafeNumber(item.rating, 4.5).toFixed(1)}</Text>
+          </View>
         </View>
-      </View>
-      
-      <View style={[styles.recentContent, { padding: isTablet ? 16 : 12 }]}>
-        <Text style={[styles.recentTitle, { fontSize: dimensions.fontSize.subtitle }]} numberOfLines={1}>
-          {item.hotelName}
-        </Text>
-        
-        <View style={styles.locationRow}>
-          <MapPin size={isTablet ? 14 : 12} color="#999" />
-          <Text style={[styles.recentLocation, { fontSize: dimensions.fontSize.caption }]} numberOfLines={1}>
-            {item.location}
-          </Text>
+
+        <View style={styles.recentLocationRow}>
+          <MapPin size={12} color="#9CA3AF" />
+          <Text style={styles.recentLocation} numberOfLines={1}>{item.location}</Text>
         </View>
-        
-        <View style={styles.recentTimeRow}>
-          <Clock size={12} color="#999" />
-          <Text style={styles.recentTimeText}>
-            {new Date(item.timestamp).toLocaleDateString()}
-          </Text>
-        </View>
-        
-        <View style={styles.recentPriceRow}>
+
+        <View style={styles.recentFooter}>
+          <View style={styles.recentAmenities}>
+            {['Wifi', 'AC'].map((amenity, idx) => (
+              <View key={idx} style={styles.amenityChip}>
+                <Text style={styles.amenityChipText}>{amenity}</Text>
+              </View>
+            ))}
+          </View>
           <Text style={styles.recentPrice}>
-            <Text style={[styles.priceAmount, { fontSize: isTablet ? 18 : 16 }]}>
-              ₹{getSafeNumber(item.price)}
-            </Text>
-            <Text style={[styles.priceUnit, { fontSize: dimensions.fontSize.caption }]}>
-              /night
-            </Text>
+            <Text style={styles.recentPriceAmount}>₹{getSafeNumber(item.price)}</Text>
+            <Text style={styles.recentPriceUnit}>/night</Text>
           </Text>
         </View>
       </View>
@@ -611,207 +412,179 @@ export default function Search() {
   if (loading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#00BCD4" />
-          <Text style={[styles.loadingText, { fontSize: dimensions.fontSize.body }]}>
-            Loading search data...
-          </Text>
-        </View>
+        <ActivityIndicator size="large" color="#111827" />
       </View>
     );
   }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header with Integrated Search */}
-      <View style={[styles.header, { paddingHorizontal: dimensions.horizontalPadding }]}>
-        <TouchableOpacity 
-          style={[
-            styles.backButton,
-            selectedLocation && styles.backButtonActive
-          ]} 
-          activeOpacity={0.7}
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+
+      {/* Search Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backIcon}
           onPress={handleBackPress}
         >
-          <ArrowLeft 
-            size={isTablet ? 28 : 24} 
-            color={selectedLocation ? "#00BCD4" : "#333"} 
-          />
+          <ArrowLeft size={24} color="#111827" />
         </TouchableOpacity>
-        
-        <View style={styles.searchBarContainer}>
+        <View style={styles.flex1}>
           <InlineLocationSearch
             onLocationSelect={handleLocationSelect}
             onSearchChange={handleSearchChange}
             onClear={handleClearLocation}
-            googleMapsApiKey="AIzaSyCayIVJJi7Q-kncORA2HSavMdPIIHB35Z0" 
+            googleMapsApiKey="AIzaSyCayIVJJi7Q-kncORA2HSavMdPIIHB35Z0"
             placeholder="Search hotel or location"
           />
         </View>
       </View>
 
-      {/* Content Area */}
+      {/* Main Content */}
       {selectedLocation ? (
-        // Location Search Results View
-        <View style={styles.searchResultsContainer}>
-          {/* Location Header */}
-          <View style={styles.locationHeader}>
-            <View style={styles.locationInfo}>
-              <MapPin size={20} color="#00BCD4" />
-              <View style={styles.locationTextContainer}>
-                <Text style={styles.locationTitle} numberOfLines={1}>
-                  {selectedLocation.description}
-                </Text>
-                <Text style={styles.locationSubtitle}>
-                  {nearbyHotels.length} hotels found
-                </Text>
-              </View>
-            </View>
-            <TouchableOpacity 
-              style={styles.clearLocationButton}
-              onPress={handleClearLocation}
-              activeOpacity={0.7}
-            >
-              <X size={20} color="#666" />
-            </TouchableOpacity>
+        <View style={styles.resultsContainer}>
+          <View style={styles.resultsHeader}>
+            <Text style={styles.resultsTitle}>Stays in {selectedLocation.description.split(',')[0]}</Text>
+            <Text style={styles.resultsSubtitle}>{nearbyHotels.length} places found</Text>
           </View>
 
-          {/* Hotels List */}
           {searchingNearby ? (
-            <View style={styles.searchingContainer}>
-              <ActivityIndicator size="large" color="#00BCD4" />
-              <Text style={styles.searchingText}>Finding nearby hotels...</Text>
-            </View>
+            <ActivityIndicator color="#111827" style={{ marginTop: 40 }} />
           ) : (
             <FlatList
               data={nearbyHotels}
-              renderItem={renderVerticalHotelItem}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.resultCard} activeOpacity={0.9} onPress={() => handleHotelPress(item)}>
+                  <Image source={{ uri: item.image }} style={styles.resultImage} contentFit="cover" transition={300} />
+                  <View style={styles.resultContent}>
+                    <View style={styles.resultHeader}>
+                      <Text style={styles.resultName} numberOfLines={1}>{item.name}</Text>
+                      {getSafeNumber(item.rating) > 0 && (
+                        <View style={styles.ratingBadgeSM}>
+                          <Star size={10} color="#D97706" fill="#D97706" />
+                          <Text style={styles.ratingTextSM}>{getSafeNumber(item.rating).toFixed(1)}</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    <View style={styles.addressRow}>
+                      <MapPin size={12} color="#6B7280" />
+                      <Text style={styles.resultLocation} numberOfLines={1}>{item.address || item.location}</Text>
+                    </View>
+
+                    {item.amenities && item.amenities.length > 0 && (
+                      <View style={styles.amenitiesRow}>
+                        {item.amenities.slice(0, 3).map((amenity, index) => (
+                          <View key={index} style={styles.amenityBadge}>
+                            <Text style={styles.amenityText} numberOfLines={1}>
+                              {amenity.replace(/-/g, ' ')}
+                            </Text>
+                          </View>
+                        ))}
+                        {item.amenities.length > 3 && (
+                          <Text style={styles.moreAmenities}>+{item.amenities.length - 3}</Text>
+                        )}
+                      </View>
+                    )}
+
+                    {/* Availability Badges */}
+                    <View style={styles.availabilityRow}>
+                      {item.hasHourly && (
+                        <View style={styles.hourlyBadge}>
+                          <Clock size={10} color="#111827" />
+                          <Text style={styles.hourlyText}>Hourly</Text>
+                        </View>
+                      )}
+                      {item.hasNightly && (
+                        <View style={styles.nightlyBadge}>
+                          <Moon size={10} color="#111827" />
+                          <Text style={styles.nightlyText}>Nightly</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    <View style={styles.divider} />
+
+                    <View style={styles.priceFooter}>
+                      <View style={styles.priceInfo}>
+                        <Text style={styles.fromText}>Starts from</Text>
+                        <Text style={styles.resultPrice}>₹{item.price}<Text style={styles.resultPriceUnit}>/night</Text></Text>
+                      </View>
+                      <View style={styles.viewBtn}>
+                        <Text style={styles.viewBtnText}>View</Text>
+                      </View>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              )}
               keyExtractor={(item) => item.id}
+              contentContainerStyle={{ padding: 20, gap: 16 }}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.verticalHotelsList}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={onRefresh}
-                  colors={['#00BCD4']}
-                  tintColor="#00BCD4"
-                />
-              }
-              ListEmptyComponent={
-                <View style={styles.noHotelsContainer}>
-                  <MapPin size={64} color="#E0E0E0" />
-                  <Text style={styles.noHotelsTitle}>No hotels found</Text>
-                  <Text style={styles.noHotelsSubtitle}>
-                    Try searching for a different location or expand your search radius
-                  </Text>
-                </View>
-              }
             />
           )}
         </View>
       ) : (
-        // Default Home View
-        <ScrollView 
-          style={styles.scrollView}
-          contentContainerStyle={{ 
-            paddingBottom: Platform.OS === 'ios' ? 120 : 100,
-            minHeight: height - insets.top - 100
-          }}
+        <ScrollView
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 100 }}
           refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={['#00BCD4']}
-              tintColor="#00BCD4"
-            />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#111827" />
           }
         >
-        {/* Latest Search Section */}
-        {searchHistory.length > 0 && (
-          <View style={[styles.section, { 
-            marginTop: dimensions.sectionSpacing,
-            paddingHorizontal: dimensions.horizontalPadding 
-          }]}>
-            <Text style={[styles.sectionTitle, { fontSize: dimensions.fontSize.title }]}>
-              Latest Search
-            </Text>
-            <View style={styles.searchTagsContainer}>
-              {searchHistory.map(renderSearchTag)}
+          {/* Latest Search */}
+          {searchHistory.length > 0 && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { paddingHorizontal: 20 }]}>Latest Search</Text>
+              <View style={styles.tagsWrapper}>
+                {searchHistory.map(renderSearchTag)}
+              </View>
             </View>
-          </View>
-        )}
+          )}
 
-        {/* Recommendations Section */}
-        {recommendations.length > 0 && (
-          <View style={[styles.section, { marginTop: dimensions.sectionSpacing }]}>
-            <View style={[styles.sectionHeader, { paddingHorizontal: dimensions.horizontalPadding }]}>
-              <Text style={[styles.sectionTitle, { fontSize: dimensions.fontSize.title }]}>
-                Recommendations
-              </Text>
-              <TouchableOpacity activeOpacity={0.7}>
-                <Text style={[styles.seeAllText, { fontSize: dimensions.fontSize.subtitle }]}>
-                  See all
-                </Text>
-              </TouchableOpacity>
+          {/* Recommendations */}
+          {recommendations.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Recommendations</Text>
+                <TouchableOpacity>
+                  <Text style={styles.seeAll}>See all</Text>
+                </TouchableOpacity>
+              </View>
+              <FlatList
+                horizontal
+                data={recommendations}
+                renderItem={renderRecommendationCard}
+                keyExtractor={(item) => item.id}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 20, gap: 16 }}
+                snapToInterval={Math.min(width * 0.75, 320) + 16}
+                decelerationRate="fast"
+              />
             </View>
-            <FlatList
-              data={recommendations}
-              renderItem={renderRecommendationCard}
-              keyExtractor={(item) => item.id}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={[styles.recommendationsContainer, { 
-                paddingLeft: dimensions.horizontalPadding 
-              }]}
-              snapToInterval={dimensions.cardWidth + (isTablet ? 20 : 16)}
-              decelerationRate="fast"
-            />
-          </View>
-        )}
+          )}
 
-        {/* Recently Viewed Section */}
-        {recentlyViewed.length > 0 && (
-          <View style={[styles.section, { marginTop: dimensions.sectionSpacing }]}>
-            <Text style={[styles.sectionTitle, { 
-              fontSize: dimensions.fontSize.title,
-              paddingHorizontal: dimensions.horizontalPadding 
-            }]}>
-              Recently Viewed
-            </Text>
-            <FlatList
-              data={recentlyViewed}
-              renderItem={renderRecentlyViewedItem}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={false}
-            />
-          </View>
-        )}
+          {/* Recently Viewed */}
+          {recentlyViewed.length > 0 && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { marginHorizontal: 20, marginBottom: 12 }]}>Recently Viewed</Text>
+              <View style={{ paddingHorizontal: 20, gap: 16 }}>
+                {recentlyViewed.map(item => (
+                  <View key={item.id}>
+                    {renderRecentlyViewedItem({ item })}
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
 
-        {/* Empty State */}
-        {searchHistory.length === 0 && recommendations.length === 0 && recentlyViewed.length === 0 && (
-          <View style={styles.emptyContainer}>
-            <SearchIcon size={isTablet ? 80 : 64} color="#E0E0E0" />
-            <Text style={[styles.emptyTitle, { fontSize: dimensions.fontSize.title }]}>
-              Start Exploring
-            </Text>
-            <Text style={[styles.emptySubtitle, { fontSize: dimensions.fontSize.body }]}>
-              Search for hotels and destinations to see personalized recommendations
-            </Text>
-            <TouchableOpacity 
-              style={styles.exploreButton}
-              onPress={() => {
-                // Focus on the search input to start searching
-                console.log('Start searching button pressed');
-              }}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.exploreButtonText, { fontSize: dimensions.fontSize.subtitle }]}>
-                Start Searching
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
+          {/* Empty State */}
+          {!searchHistory.length && !recommendations.length && !recentlyViewed.length && (
+            <View style={styles.emptyState}>
+              <SearchIcon size={50} color="#D1D5DB" />
+              <Text style={styles.emptyTitle}>Start Exploring</Text>
+              <Text style={styles.emptySubtitle}>Search for destinations, hotels, and more.</Text>
+            </View>
+          )}
         </ScrollView>
       )}
     </View>
@@ -821,622 +594,461 @@ export default function Search() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
   },
-  loadingContainer: {
+  flex1: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 16,
-  },
-  loadingText: {
-    color: '#666',
-    fontWeight: '500',
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingVertical: isTablet ? 16 : 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-    gap: isTablet ? 16 : 12,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    gap: 12,
+    backgroundColor: '#FFF',
   },
-  backButton: {
-    padding: isTablet ? 12 : 8,
-    marginLeft: isTablet ? -12 : -8,
-    marginTop: isTablet ? 8 : 4,
-    borderRadius: isTablet ? 12 : 8,
-  },
-  backButtonActive: {
-    backgroundColor: '#E8F8F5',
-  },
-  searchBarContainer: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
+  backIcon: {
+    padding: 4,
   },
   section: {
-    marginBottom: isTablet ? 8 : 0,
+    paddingTop: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: isTablet ? 20 : 16,
+    paddingHorizontal: 20,
+    marginBottom: 16,
   },
   sectionTitle: {
+    fontSize: 18,
     fontWeight: '700',
-    color: '#333',
-    marginBottom: isTablet ? 20 : 16,
+    color: '#111827',
   },
-  seeAllText: {
-    color: '#00BCD4',
+  seeAll: {
+    fontSize: 14,
+    color: '#111827', // Black
     fontWeight: '600',
   },
-  searchTagsContainer: {
+
+  // Tags
+  tagsWrapper: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: isTablet ? 16 : 12,
+    paddingHorizontal: 20,
+    gap: 10,
+    marginTop: 12,
   },
   searchTag: {
-    backgroundColor: '#E6F7FF',
-    paddingVertical: isTablet ? 12 : 8,
-    borderRadius: isTablet ? 25 : 20,
+    backgroundColor: '#F3F4F6', // Gray 50
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#B3E5FC',
-    shadowColor: '#00BCD4',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderColor: '#E5E7EB', // Gray 200
   },
   searchTagText: {
-    color: '#00BCD4',
-    fontWeight: '500',
+    color: '#111827', // Black
+    fontWeight: '600',
+    fontSize: 13,
   },
-  recommendationsContainer: {
-    paddingRight: isTablet ? 32 : 20,
-  },
+
+  // Recommendation Card
   recommendationCard: {
-    backgroundColor: '#fff',
-    borderRadius: isTablet ? 20 : 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: isTablet ? 4 : 2,
-    },
-    shadowOpacity: isTablet ? 0.15 : 0.1,
-    shadowRadius: isTablet ? 12 : 8,
-    elevation: isTablet ? 6 : 4,
-  },
-  imageContainer: {
+    width: width * 0.75,
+    maxWidth: 320,
+    height: 250,
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: '#F3F4F6',
     position: 'relative',
   },
   cardImage: {
     width: '100%',
-    borderTopLeftRadius: isTablet ? 20 : 16,
-    borderTopRightRadius: isTablet ? 20 : 16,
-    backgroundColor: '#f5f5f5',
+    height: '100%',
+  },
+  cardGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 120,
   },
   favoriteButton: {
     position: 'absolute',
-    top: isTablet ? 16 : 12,
-    right: isTablet ? 16 : 12,
-    width: isTablet ? 44 : 36,
-    height: isTablet ? 44 : 36,
-    borderRadius: isTablet ? 22 : 18,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    top: 12,
+    right: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.3)',
     alignItems: 'center',
     justifyContent: 'center',
+    backdropFilter: 'blur(4px)',
+  },
+  cardContentOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
   },
   ratingBadge: {
-    position: 'absolute',
-    top: isTablet ? 16 : 12,
-    left: isTablet ? 16 : 12,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginBottom: 8,
     gap: 4,
   },
-  ratingBadgeText: {
-    color: '#fff',
+  ratingText: {
+    color: '#FFF',
     fontSize: 12,
-    fontWeight: '600',
-  },
-  cardContent: {
-    // Dynamic padding applied in component
+    fontWeight: '700',
   },
   cardTitle: {
+    color: '#FFF',
+    fontSize: 18,
     fontWeight: '700',
-    color: '#333',
-    marginBottom: isTablet ? 8 : 6,
+    marginBottom: 4,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  cardLocation: {
+    color: '#E5E7EB',
+    fontSize: 13,
   },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: isTablet ? 6 : 4,
-    marginBottom: isTablet ? 16 : 12,
-  },
-  cardLocation: {
-    color: '#999',
-    flex: 1,
-  },
-  amenitiesRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
-    flexWrap: 'wrap',
-  },
-  amenityTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f0f9ff',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-    gap: 2,
-  },
-  amenityDot: {
-    fontSize: 8,
-    color: '#00BCD4',
-  },
-  amenityText: {
-    fontSize: 10,
-    color: '#00BCD4',
-    fontWeight: '500',
-  },
-  priceRatingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  priceContainer: {
-    flex: 1,
-  },
-  cardPrice: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  priceAmount: {
-    fontWeight: '700',
-    color: '#00BCD4',
-  },
-  priceUnit: {
-    color: '#999',
-    fontWeight: '400',
-  },
-  originalPrice: {
-    fontSize: 12,
-    color: '#999',
-    textDecorationLine: 'line-through',
-    marginTop: 2,
-  },
-  reviewsContainer: {
-    alignItems: 'flex-end',
-  },
-  reviewsText: {
-    color: '#666',
-    fontWeight: '500',
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: isTablet ? 6 : 4,
-  },
-  ratingText: {
-    fontWeight: '600',
-    color: '#333',
-  },
-  recentItem: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: isTablet ? 16 : 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: isTablet ? 2 : 1,
-    },
-    shadowOpacity: isTablet ? 0.08 : 0.05,
-    shadowRadius: isTablet ? 6 : 4,
-    elevation: isTablet ? 3 : 2,
-    overflow: 'hidden',
-  },
-  recentImageContainer: {
-    position: 'relative',
-  },
-  recentImage: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: isTablet ? 12 : 8,
-  },
-  recentRatingBadge: {
-    position: 'absolute',
-    top: 6,
-    left: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-    gap: 2,
-  },
-  recentRatingText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  recentTimeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 4,
     marginBottom: 8,
   },
-  recentTimeText: {
-    fontSize: 11,
-    color: '#999',
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
+  },
+  priceAmount: {
+    color: '#FFFFFF', // White
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  priceUnit: {
+    color: '#D1D5DB',
+    fontSize: 12,
+  },
+
+  // Recently Viewed
+  recentItem: {
+    flexDirection: 'row',
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 12,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2, // Android shadow
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  recentImage: {
+    width: 90,
+    height: 90,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
   },
   recentContent: {
     flex: 1,
     justifyContent: 'space-between',
+    paddingVertical: 2,
+  },
+  recentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   recentTitle: {
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: isTablet ? 6 : 4,
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+    flex: 1,
+    marginRight: 8,
+  },
+  recentRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  recentRatingText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#92400E',
+  },
+  recentLocationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   recentLocation: {
-    color: '#999',
-    flex: 1,
+    fontSize: 12,
+    color: '#6B7280',
   },
-  recentPriceRow: {
+  recentFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: isTablet ? 12 : 8,
+  },
+  recentAmenities: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  amenityChip: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  amenityChipText: {
+    fontSize: 10,
+    color: '#4B5563',
+    fontWeight: '500',
   },
   recentPrice: {
-    flexDirection: 'row',
     alignItems: 'baseline',
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: isTablet ? 64 : 32,
-    paddingVertical: isTablet ? 80 : 60,
-    minHeight: height * 0.5,
-  },
-  emptyTitle: {
+  recentPriceAmount: {
+    fontSize: 16,
     fontWeight: '700',
-    color: '#333',
-    marginTop: isTablet ? 24 : 16,
-    marginBottom: isTablet ? 16 : 12,
-    textAlign: 'center',
+    color: '#111827', // Black
   },
-  emptySubtitle: {
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: isTablet ? 26 : 22,
-    marginBottom: isTablet ? 32 : 24,
+  recentPriceUnit: {
+    fontSize: 10,
+    color: '#6B7280',
   },
-  exploreButton: {
-    backgroundColor: '#00BCD4',
-    paddingHorizontal: isTablet ? 32 : 24,
-    paddingVertical: isTablet ? 16 : 12,
-    borderRadius: isTablet ? 30 : 25,
-    shadowColor: '#00BCD4',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  exploreButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  
-  // Location Search Results Styles
-  searchResultsContainer: {
+
+  // Results Interface
+  resultsContainer: {
     flex: 1,
-    backgroundColor: '#fff',
   },
-  locationHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: isTablet ? 32 : 20,
-    paddingVertical: isTablet ? 20 : 16,
-    backgroundColor: '#f8f9fa',
+  resultsHeader: {
+    padding: 20,
+    backgroundColor: '#F9FAFB',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#F3F4F6',
   },
-  locationInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: 12,
+  resultsTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111827',
   },
-  locationTextContainer: {
-    flex: 1,
+  resultsSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 4,
   },
-  locationTitle: {
-    fontSize: isTablet ? 18 : 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 2,
-  },
-  locationSubtitle: {
-    fontSize: isTablet ? 14 : 12,
-    color: '#666',
-  },
-  clearLocationButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: '#fff',
+  resultCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginBottom: 4,
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+  },
+  resultImage: {
+    width: '100%',
+    height: 180,
+  },
+  resultContent: {
+    padding: 16,
+  },
+  resultHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 4,
+  },
+  resultName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+    flex: 1,
+    marginRight: 8,
+  },
+  ratingBadgeSM: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  ratingTextSM: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#D97706',
+  },
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 12,
+  },
+  resultLocation: {
+    fontSize: 14,
+    color: '#6B7280',
+    flex: 1,
+  },
+
+  // Amenities
+  amenitiesRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  amenityBadge: {
+    backgroundColor: '#F3F4F6', // Gray 50
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  amenityText: {
+    fontSize: 11,
+    color: '#111827', // Black
+    fontWeight: '500',
+    textTransform: 'capitalize',
+  },
+  moreAmenities: {
+    fontSize: 11,
+    color: '#6B7280',
+    alignSelf: 'center',
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+    marginBottom: 12,
+  },
+
+  // Availability
+  availabilityRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  hourlyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#F3F4F6', // Gray 50
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  hourlyText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  nightlyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#F3F4F6', // Gray 50
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  nightlyText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#111827',
+  },
+
+  // Footer
+  priceFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  priceInfo: {
+    flex: 1,
+  },
+  fromText: {
+    fontSize: 11,
+    color: '#6B7280',
+    marginBottom: 2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    fontWeight: '500',
+  },
+  resultPrice: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111827', // Black
+  },
+  resultPriceUnit: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: '#6B7280',
+  },
+  viewBtn: {
+    backgroundColor: '#111827', // Black
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    shadowColor: '#111827',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
     elevation: 2,
   },
-  searchingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-    gap: 16,
-  },
-  searchingText: {
-    fontSize: isTablet ? 18 : 16,
-    color: '#666',
-    fontWeight: '500',
-  },
-  
-  // Vertical Hotel List Styles
-  verticalHotelsList: {
-    paddingHorizontal: isTablet ? 24 : 16,
-    paddingVertical: isTablet ? 16 : 12,
-  },
-  verticalHotelItem: {
-    backgroundColor: '#fff',
-    borderRadius: isTablet ? 20 : 16,
-    marginBottom: isTablet ? 24 : 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 6,
-    overflow: 'hidden',
-  },
-  verticalImageContainer: {
-    position: 'relative',
-    width: '100%',
-    height: isTablet ? 220 : 180,
-  },
-  verticalHotelImage: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#f5f5f5',
-  },
-  imageOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'space-between',
-    padding: isTablet ? 16 : 12,
-  },
-  imageTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  imageBottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-end',
-  },
-  verticalFavoriteButton: {
-    width: isTablet ? 40 : 36,
-    height: isTablet ? 40 : 36,
-    borderRadius: isTablet ? 20 : 18,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backdropFilter: 'blur(10px)',
-  },
-  verticalRatingBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    paddingHorizontal: isTablet ? 10 : 8,
-    paddingVertical: isTablet ? 6 : 4,
-    borderRadius: isTablet ? 14 : 12,
-    gap: 4,
-  },
-  verticalRatingText: {
-    color: '#fff',
-    fontSize: isTablet ? 13 : 11,
-    fontWeight: '700',
-  },
-  distanceBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#00BCD4',
-    paddingHorizontal: isTablet ? 10 : 8,
-    paddingVertical: isTablet ? 6 : 4,
-    borderRadius: isTablet ? 14 : 12,
-    gap: 4,
-  },
-  distanceText: {
-    color: '#fff',
-    fontSize: isTablet ? 12 : 10,
+  viewBtnText: {
+    color: '#FFF',
+    fontSize: 13,
     fontWeight: '600',
   },
-  verticalHotelContent: {
-    padding: isTablet ? 20 : 16,
-  },
-  verticalHotelHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: isTablet ? 12 : 10,
-  },
-  hotelTitleContainer: {
-    flex: 1,
-    marginRight: 12,
-  },
-  verticalHotelTitle: {
-    fontSize: isTablet ? 20 : 18,
-    fontWeight: '700',
-    color: '#333',
-    marginBottom: 4,
-    lineHeight: isTablet ? 26 : 24,
-  },
-  verticalPriceContainer: {
-    alignItems: 'flex-end',
-  },
-  verticalPrice: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  verticalPriceAmount: {
-    fontSize: isTablet ? 22 : 20,
-    fontWeight: '800',
-    color: '#00BCD4',
-  },
-  verticalPriceUnit: {
-    fontSize: isTablet ? 14 : 12,
-    color: '#666',
-    fontWeight: '500',
-  },
-  verticalOriginalPrice: {
-    fontSize: isTablet ? 14 : 12,
-    color: '#999',
-    textDecorationLine: 'line-through',
-    marginTop: 2,
-  },
-  verticalLocationRow: {
-    flexDirection: 'row',
+
+  // Empty State
+  emptyState: {
     alignItems: 'center',
-    gap: 4,
-  },
-  verticalLocation: {
-    flex: 1,
-    fontSize: isTablet ? 14 : 13,
-    color: '#666',
-    fontWeight: '500',
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: isTablet ? 16 : 14,
-  },
-  bookingTypesContainer: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  bookingTypeBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#E8F8F5',
-    paddingHorizontal: isTablet ? 8 : 6,
-    paddingVertical: isTablet ? 4 : 3,
-    borderRadius: isTablet ? 8 : 6,
-    gap: 3,
-    borderWidth: 1,
-    borderColor: '#B3E5FC',
-  },
-  bookingTypeText: {
-    fontSize: isTablet ? 11 : 9,
-    color: '#00BCD4',
-    fontWeight: '600',
-  },
-  verticalAmenitiesRow: {
-    flexDirection: 'row',
-    gap: isTablet ? 8 : 6,
-    flexWrap: 'wrap',
-  },
-  verticalAmenityTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#E8F8F5',
-    paddingHorizontal: isTablet ? 10 : 8,
-    paddingVertical: isTablet ? 6 : 4,
-    borderRadius: isTablet ? 10 : 8,
-    gap: 4,
-    borderWidth: 1,
-    borderColor: '#B3E5FC',
-  },
-  verticalAmenityText: {
-    fontSize: isTablet ? 12 : 10,
-    color: '#00BCD4',
-    fontWeight: '600',
-  },
-  verticalBottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  distanceInfoContainer: {
-    flex: 1,
-  },
-  distanceInfoText: {
-    fontSize: isTablet ? 14 : 13,
-    color: '#666',
-    fontWeight: '500',
-  },
-  bookNowButton: {
-    backgroundColor: '#00BCD4',
-    paddingHorizontal: isTablet ? 24 : 20,
-    paddingVertical: isTablet ? 12 : 10,
-    borderRadius: isTablet ? 28 : 24,
-    shadowColor: '#00BCD4',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  bookNowText: {
-    color: '#fff',
-    fontSize: isTablet ? 16 : 14,
-    fontWeight: '700',
-  },
-  
-  // No Hotels Found Styles
-  noHotelsContainer: {
-    flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 80,
-    paddingHorizontal: 32,
+    paddingTop: 80,
+    paddingHorizontal: 40,
   },
-  noHotelsTitle: {
-    fontSize: isTablet ? 22 : 18,
-    fontWeight: '700',
-    color: '#333',
+  emptyTitle: {
     marginTop: 16,
-    marginBottom: 8,
-    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
   },
-  noHotelsSubtitle: {
-    fontSize: isTablet ? 16 : 14,
-    color: '#666',
+  emptySubtitle: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#6B7280',
     textAlign: 'center',
-    lineHeight: 20,
   },
 });

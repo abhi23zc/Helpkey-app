@@ -2,7 +2,7 @@ import { useAuth } from '@/context/AuthContext';
 import { db } from '@/config/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Shield, CheckCircle, AlertCircle } from 'lucide-react-native';
+import { ArrowLeft, Shield, CheckCircle, AlertCircle, User, Calendar, MapPin, Lock, Info, Home } from 'lucide-react-native';
 import { useState } from 'react';
 import {
   Alert,
@@ -13,42 +13,47 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  Dimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AadhaarVerificationModal from '@/components/AadhaarVerificationModal';
+import { MotiView } from 'moti';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function VerificationScreen() {
   const router = useRouter();
   const { user, userData } = useAuth();
   const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const isVerified = userData?.aadhaarData?.verified || false;
 
   // Helper function to format date properly
   const formatDate = (dateValue: any) => {
     if (!dateValue) return 'N/A';
-    
+
     try {
       // Handle Firebase Timestamp
       if (dateValue.seconds) {
         return new Date(dateValue.seconds * 1000).toLocaleDateString('en-IN', {
-          day: '2-digit',
-          month: '2-digit',
+          day: 'numeric',
+          month: 'short',
           year: 'numeric'
         });
       }
-      
+
       // Handle Date object or string
       const date = new Date(dateValue);
       if (!isNaN(date.getTime())) {
         return date.toLocaleDateString('en-IN', {
-          day: '2-digit',
-          month: '2-digit',
+          day: 'numeric',
+          month: 'short',
           year: 'numeric'
         });
       }
-      
+
       return 'N/A';
     } catch (error) {
       console.error('Error formatting date:', error);
@@ -92,252 +97,189 @@ export default function VerificationScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar barStyle="dark-content" />
-      
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#1A1A1A" strokeWidth={2} />
+      <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'android' ? 12 : 0) }]}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <ArrowLeft size={24} color="#111827" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Aadhaar Verification</Text>
-        <View style={styles.headerSpacer} />
+        <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }}
+      >
         {!isVerified ? (
-          <>
-            <View style={styles.warningCard}>
-              <AlertCircle size={24} color="#F59E0B" strokeWidth={2} />
-              <View style={styles.warningContent}>
-                <Text style={styles.warningTitle}>Identity Verification Required</Text>
-                <Text style={styles.warningText}>
-                  To enable pre-checkin for your booking, please verify your Aadhaar identity below. This is a one-time process that will make future bookings faster and more convenient.
-                </Text>
+          <MotiView
+            from={{ opacity: 0, translateY: 10 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ type: 'timing', duration: 400 } as any}
+          >
+            <View style={styles.unverifiedContainer}>
+              <View style={styles.iconCircle}>
+                <Shield size={48} color="#0EA5E9" />
               </View>
-            </View>
+              <Text style={styles.unverifiedTitle}>Verify Your Identity</Text>
+              <Text style={styles.unverifiedText}>
+                Complete your Aadhaar verification to unlock fast, secure, and contactless check-ins at hotels.
+              </Text>
 
-            <View style={styles.infoCard}>
-              <View style={styles.infoHeader}>
-                <Shield size={24} color="#00BFA6" strokeWidth={2} />
-                <View style={styles.infoHeaderText}>
-                  <Text style={styles.infoTitle}>Aadhaar Verification</Text>
-                  <Text style={styles.infoSubtitle}>
-                    Verify your Aadhaar to enable pre-checkin for faster hotel bookings
-                  </Text>
+              <View style={styles.benefitsContainer}>
+                <View style={styles.benefitRow}>
+                  <CheckCircle size={20} color="#10B981" />
+                  <Text style={styles.benefitText}>Instant pre-checkin approval</Text>
                 </View>
-              </View>
-
-              <View style={styles.benefitsList}>
-                <Text style={styles.benefitsTitle}>Benefits of Verification:</Text>
-                <View style={styles.benefitItem}>
-                  <CheckCircle size={16} color="#10B981" strokeWidth={2} />
-                  <Text style={styles.benefitText}>Skip check-in queues at hotels</Text>
+                <View style={styles.benefitRow}>
+                  <CheckCircle size={20} color="#10B981" />
+                  <Text style={styles.benefitText}>Secure and encrypted data</Text>
                 </View>
-                <View style={styles.benefitItem}>
-                  <CheckCircle size={16} color="#10B981" strokeWidth={2} />
-                  <Text style={styles.benefitText}>Faster booking process</Text>
-                </View>
-                <View style={styles.benefitItem}>
-                  <CheckCircle size={16} color="#10B981" strokeWidth={2} />
-                  <Text style={styles.benefitText}>Secure identity verification</Text>
-                </View>
-                <View style={styles.benefitItem}>
-                  <CheckCircle size={16} color="#10B981" strokeWidth={2} />
-                  <Text style={styles.benefitText}>Enable pre-checkin for hotel bookings</Text>
+                <View style={styles.benefitRow}>
+                  <CheckCircle size={20} color="#10B981" />
+                  <Text style={styles.benefitText}>No paperwork at front desk</Text>
                 </View>
               </View>
 
               <TouchableOpacity
                 style={styles.verifyButton}
+                activeOpacity={0.9}
                 onPress={() => setShowVerificationModal(true)}
               >
-                <Shield size={20} color="#fff" strokeWidth={2} />
                 <Text style={styles.verifyButtonText}>Verify Aadhaar Now</Text>
               </TouchableOpacity>
-
-              <Text style={styles.helperText}>
-                Complete verification to enable pre-checkin features
-              </Text>
             </View>
-          </>
+          </MotiView>
         ) : (
           <>
-            <View style={styles.verifiedCard}>
-              <View style={styles.verifiedIcon}>
-                <CheckCircle size={64} color="#10B981" strokeWidth={2} />
+            {/* Status Card */}
+            <MotiView
+              from={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: 'timing', duration: 400 } as any}
+              style={styles.statusCard}
+            >
+              <View style={styles.successIconCircle}>
+                <CheckCircle size={40} color="#10B981" strokeWidth={3} />
               </View>
-              <Text style={styles.verifiedTitle}>Aadhaar Verified!</Text>
-              <Text style={styles.verifiedText}>
+              <Text style={styles.statusTitle}>Aadhaar Verified!</Text>
+              <Text style={styles.statusText}>
                 Your identity has been successfully verified. You can now enjoy pre-checkin benefits for all your bookings.
               </Text>
-            </View>
+            </MotiView>
 
-            {/* Verified Details Card */}
-            <View style={styles.detailsCard}>
-              <Text style={styles.detailsCardTitle}>Verified Details</Text>
-              <View style={styles.detailsContent}>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Full Name:</Text>
-                  <Text style={styles.detailValue}>
-                    {userData?.aadhaarData?.fullName || userData?.fullName || 'N/A'}
-                  </Text>
-                </View>
-                {userData?.aadhaarData?.dateOfBirth && (
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Date of Birth:</Text>
-                    <Text style={styles.detailValue}>{userData.aadhaarData.dateOfBirth}</Text>
-                  </View>
-                )}
-                {userData?.aadhaarData?.gender && (
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Gender:</Text>
-                    <Text style={styles.detailValue}>{userData.aadhaarData.gender}</Text>
-                  </View>
-                )}
-                {userData?.aadhaarData?.careOf && (
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Care Of:</Text>
-                    <Text style={styles.detailValue}>{userData.aadhaarData.careOf}</Text>
-                  </View>
-                )}
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Aadhaar Number:</Text>
-                  <Text style={[styles.detailValue, styles.monoFont]}>
-                    XXXX XXXX {userData?.aadhaarData?.aadhaarNumber?.slice(-4) || '****'}
-                  </Text>
-                </View>
-                {userData?.aadhaarData?.verifiedAt && (
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Verified On:</Text>
-                    <Text style={styles.detailValue}>
-                      {formatDate(userData.aadhaarData.verifiedAt)}
-                    </Text>
+            {/* Verification Details */}
+            <MotiView
+              from={{ opacity: 0, translateY: 20 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              transition={{ type: 'timing', duration: 400, delay: 100 } as any}
+              style={styles.detailsCard}
+            >
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>Verified Details</Text>
+                {userData?.aadhaarData?.photo && (
+                  <View style={styles.photoContainer}>
+                    <Image
+                      source={{ uri: `data:image/jpeg;base64,${userData.aadhaarData.photo}` }}
+                      style={styles.userPhoto}
+                    />
                   </View>
                 )}
               </View>
-            </View>
+
+              <View style={styles.divider} />
+
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Full Name</Text>
+                <Text style={styles.infoValue}>{userData?.aadhaarData?.fullName}</Text>
+              </View>
+
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Gender</Text>
+                <Text style={styles.infoValue}>{userData?.aadhaarData?.gender}</Text>
+              </View>
+
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Care Of</Text>
+                <Text style={styles.infoValue}>{userData?.aadhaarData?.careOf}</Text>
+              </View>
+
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Aadhaar Number</Text>
+                <Text style={[styles.infoValue, { fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', letterSpacing: 1 }]}>
+                  XXXX XXXX {userData?.aadhaarData?.aadhaarNumber?.slice(-4)}
+                </Text>
+              </View>
+
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Verified On</Text>
+                <Text style={styles.infoValue}>{formatDate(userData?.aadhaarData?.verifiedAt)}</Text>
+              </View>
+            </MotiView>
 
             {/* Address Card */}
-            {userData?.aadhaarData?.address && (
-              <View style={styles.detailsCard}>
-                <Text style={styles.detailsCardTitle}>Address</Text>
-                <Text style={styles.addressText}>{userData.aadhaarData.address}</Text>
-              </View>
-            )}
-
-            {/* Detailed Address Card */}
             {userData?.aadhaarData?.splitAddress && (
-              <View style={styles.detailsCard}>
-                <Text style={styles.detailsCardTitle}>Detailed Address</Text>
-                <View style={styles.splitAddressGrid}>
-                  {userData.aadhaarData.splitAddress.house && (
-                    <View style={styles.splitAddressItem}>
-                      <Text style={styles.splitAddressLabel}>House:</Text>
-                      <Text style={styles.splitAddressValue}>{userData.aadhaarData.splitAddress.house}</Text>
-                    </View>
-                  )}
-                  {userData.aadhaarData.splitAddress.street && (
-                    <View style={styles.splitAddressItem}>
-                      <Text style={styles.splitAddressLabel}>Street:</Text>
-                      <Text style={styles.splitAddressValue}>{userData.aadhaarData.splitAddress.street}</Text>
-                    </View>
-                  )}
-                  {userData.aadhaarData.splitAddress.locality && (
-                    <View style={styles.splitAddressItem}>
-                      <Text style={styles.splitAddressLabel}>Locality:</Text>
-                      <Text style={styles.splitAddressValue}>{userData.aadhaarData.splitAddress.locality}</Text>
-                    </View>
-                  )}
-                  {userData.aadhaarData.splitAddress.dist && (
-                    <View style={styles.splitAddressItem}>
-                      <Text style={styles.splitAddressLabel}>District:</Text>
-                      <Text style={styles.splitAddressValue}>{userData.aadhaarData.splitAddress.dist}</Text>
-                    </View>
-                  )}
-                  {userData.aadhaarData.splitAddress.state && (
-                    <View style={styles.splitAddressItem}>
-                      <Text style={styles.splitAddressLabel}>State:</Text>
-                      <Text style={styles.splitAddressValue}>{userData.aadhaarData.splitAddress.state}</Text>
-                    </View>
-                  )}
-                  {userData.aadhaarData.splitAddress.pincode && (
-                    <View style={styles.splitAddressItem}>
-                      <Text style={styles.splitAddressLabel}>Pincode:</Text>
-                      <Text style={styles.splitAddressValue}>{userData.aadhaarData.splitAddress.pincode}</Text>
-                    </View>
-                  )}
+              <MotiView
+                from={{ opacity: 0, translateY: 20 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ type: 'timing', duration: 400, delay: 200 } as any}
+                style={styles.detailsCard}
+              >
+                <Text style={styles.cardTitle}>Detailed Address</Text>
+                <View style={styles.divider} />
+
+                <View style={styles.addressGrid}>
+                  <View style={styles.addressItem}>
+                    <Text style={styles.addressLabel}>House</Text>
+                    <Text style={styles.addressValue}>{userData.aadhaarData.splitAddress.house || '-'}</Text>
+                  </View>
+                  <View style={styles.addressItem}>
+                    <Text style={styles.addressLabel}>Street</Text>
+                    <Text style={styles.addressValue}>{userData.aadhaarData.splitAddress.street || '-'}</Text>
+                  </View>
+                  <View style={styles.addressItem}>
+                    <Text style={styles.addressLabel}>Locality</Text>
+                    <Text style={styles.addressValue}>{userData.aadhaarData.splitAddress.locality || '-'}</Text>
+                  </View>
+                  <View style={styles.addressItem}>
+                    <Text style={styles.addressLabel}>District</Text>
+                    <Text style={styles.addressValue}>{userData.aadhaarData.splitAddress.dist || '-'}</Text>
+                  </View>
+                  <View style={styles.addressItem}>
+                    <Text style={styles.addressLabel}>State</Text>
+                    <Text style={styles.addressValue}>{userData.aadhaarData.splitAddress.state || '-'}</Text>
+                  </View>
+                  <View style={styles.addressItem}>
+                    <Text style={styles.addressLabel}>Pincode</Text>
+                    <Text style={styles.addressValue}>{userData.aadhaarData.splitAddress.pincode || '-'}</Text>
+                  </View>
                 </View>
-              </View>
+              </MotiView>
             )}
 
-            {/* Aadhaar Photo Card */}
-            {(userData?.aadhaarData?.photo || userData?.aadhaarData?.rawCashfreeResponse?.photo_link) && (
-              <View style={styles.detailsCard}>
-                <Text style={styles.detailsCardTitle}>Aadhaar Photo</Text>
-                <View style={styles.photoContainer}>
-                  <Image
-                    source={{
-                      uri: `data:image/jpeg;base64,${
-                        userData.aadhaarData.photo || 
-                        userData.aadhaarData.rawCashfreeResponse?.photo_link
-                      }`
-                    }}
-                    style={styles.aadhaarPhoto}
-                    resizeMode="cover"
-                  />
-                </View>
+            {/* Security Info */}
+            <MotiView
+              from={{ opacity: 0, translateY: 20 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              transition={{ type: 'timing', duration: 400, delay: 300 } as any}
+              style={styles.securityCard}
+            >
+              <View style={styles.securityHeader}>
+                <Lock size={16} color="#6B7280" />
+                <Text style={styles.securityTitle}>Data Privacy & Security</Text>
               </View>
-            )}
-
-            {/* Pre-checkin Status Card */}
-            <View style={styles.preCheckinCard}>
-              <View style={styles.preCheckinHeader}>
-                <Shield size={24} color="#10B981" strokeWidth={2} />
-                <Text style={styles.preCheckinTitle}>Pre-checkin Status</Text>
-              </View>
-              <Text style={styles.preCheckinDesc}>
-                Pre-checkin allows you to skip hotel front desk queues with verified identity
+              <Text style={styles.securityText}>
+                Your Aadhaar data is encrypted and securely stored. We only use this information to verify your identity for hotel bookings and regulatory compliance.
+                Your full Aadhaar number is never shared with hotels.
               </Text>
-              <View style={styles.preCheckinBadge}>
-                <Text style={styles.preCheckinBadgeLabel}>Pre-checkin Eligibility:</Text>
-                <View style={styles.preCheckinBadgeValue}>
-                  <Text style={styles.preCheckinBadgeText}>Eligible ✓</Text>
-                </View>
-              </View>
-              <Text style={styles.preCheckinNote}>
-                ✅ You can now enable pre-checkin during hotel bookings for a faster, contactless experience.
-              </Text>
-            </View>
-
-            {/* Security Information Card */}
-            <View style={styles.securityCard}>
-              <Text style={styles.securityTitle}>Security & Privacy</Text>
-              <View style={styles.securityItem}>
-                <Text style={styles.securityBullet}>🔒</Text>
-                <Text style={styles.securityText}>
-                  Your Aadhaar data is encrypted and stored securely following government guidelines
-                </Text>
-              </View>
-              <View style={styles.securityItem}>
-                <Text style={styles.securityBullet}>✅</Text>
-                <Text style={styles.securityText}>
-                  We use government-approved OTP verification for Aadhaar authentication
-                </Text>
-              </View>
-              <View style={styles.securityItem}>
-                <Text style={styles.securityBullet}>👁️</Text>
-                <Text style={styles.securityText}>
-                  Your full Aadhaar number is never displayed - only last 4 digits are shown
-                </Text>
-              </View>
-              <View style={styles.securityItem}>
-                <Text style={styles.securityBullet}>🗑️</Text>
-                <Text style={styles.securityText}>
-                  You can request deletion of your verification data at any time
-                </Text>
-              </View>
-            </View>
+            </MotiView>
           </>
         )}
       </ScrollView>
@@ -350,24 +292,24 @@ export default function VerificationScreen() {
         guestName="Your Identity"
         aadhaarNumber=""
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F3F4F6', // Light gray background
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#fff',
+    paddingBottom: 16,
+    backgroundColor: '#FFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#E5E7EB',
   },
   backButton: {
     padding: 4,
@@ -375,285 +317,225 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1A1A1A',
-    flex: 1,
-    textAlign: 'center',
-  },
-  headerSpacer: {
-    width: 32,
+    color: '#111827',
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-  },
-  warningCard: {
-    flexDirection: 'row',
-    backgroundColor: '#FEF3C7',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: '#F59E0B',
-    gap: 12,
-  },
-  warningContent: {
-    flex: 1,
-  },
-  warningTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#92400E',
-    marginBottom: 6,
-  },
-  warningText: {
-    fontSize: 14,
-    color: '#B45309',
-    lineHeight: 20,
-  },
-  infoCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
     padding: 20,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
   },
-  infoHeader: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
+
+  // Unverified State
+  unverifiedContainer: {
+    backgroundColor: '#FFF',
+    borderRadius: 24,
+    padding: 32,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  infoHeaderText: {
-    flex: 1,
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#E0F2FE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
   },
-  infoTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 4,
-  },
-  infoSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-  },
-  benefitsList: {
-    marginBottom: 20,
-  },
-  benefitsTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1A1A1A',
+  unverifiedTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#111827',
     marginBottom: 12,
+    textAlign: 'center',
   },
-  benefitItem: {
+  unverifiedText: {
+    fontSize: 15,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 22,
+  },
+  benefitsContainer: {
+    width: '100%',
+    gap: 16,
+    marginBottom: 32,
+  },
+  benefitRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
+    gap: 12,
   },
   benefitText: {
     fontSize: 14,
-    color: '#666',
+    color: '#374151',
+    fontWeight: '500',
   },
   verifyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#00BFA6',
+    width: '100%',
+    backgroundColor: '#0EA5E9',
     paddingVertical: 16,
-    borderRadius: 12,
-    gap: 8,
-    marginBottom: 12,
+    borderRadius: 16,
+    alignItems: 'center',
+    shadowColor: '#0EA5E9',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   verifyButtonText: {
-    color: '#fff',
+    color: '#FFF',
     fontSize: 16,
     fontWeight: '700',
   },
-  helperText: {
-    fontSize: 12,
-    color: '#999',
-    textAlign: 'center',
-  },
-  verifiedCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
+
+  // Verified State
+  statusCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 20,
     padding: 24,
     alignItems: 'center',
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#E8E8E8',
-    marginBottom: 16,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  verifiedIcon: {
-    marginBottom: 20,
-  },
-  verifiedTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 12,
-  },
-  verifiedText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  detailsCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-    marginBottom: 16,
-  },
-  detailsCardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 16,
-  },
-  detailsContent: {
-    gap: 12,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  detailLabel: {
-    fontSize: 14,
-    color: '#666',
-    flex: 1,
-  },
-  detailValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    flex: 1,
-    textAlign: 'right',
-  },
-  monoFont: {
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-  },
-  addressText: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 22,
-  },
-  splitAddressGrid: {
-    gap: 12,
-  },
-  splitAddressItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  splitAddressLabel: {
-    fontSize: 14,
-    color: '#666',
-  },
-  splitAddressValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1A1A1A',
-  },
-  preCheckinCard: {
-    backgroundColor: '#D1FAE5',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#6EE7B7',
-    marginBottom: 16,
-  },
-  preCheckinHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
-  },
-  preCheckinTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#065F46',
-  },
-  preCheckinDesc: {
-    fontSize: 14,
-    color: '#047857',
-    lineHeight: 20,
-    marginBottom: 16,
-  },
-  preCheckinBadge: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#6EE7B7',
-    marginBottom: 12,
-  },
-  preCheckinBadgeLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    marginBottom: 8,
-  },
-  preCheckinBadgeValue: {
-    backgroundColor: '#D1FAE5',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
-  },
-  preCheckinBadgeText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#10B981',
-  },
-  preCheckinNote: {
-    fontSize: 13,
-    color: '#047857',
-    lineHeight: 20,
-  },
-  securityCard: {
-    backgroundColor: '#F8F9FA',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-    marginBottom: 20,
-  },
-  securityTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 16,
-  },
-  securityItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-    gap: 8,
-  },
-  securityBullet: {
-    fontSize: 16,
-    marginTop: 2,
-  },
-  securityText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-  },
-  photoContainer: {
+  successIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#ECFDF5',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    marginBottom: 16,
+    borderWidth: 4,
+    borderColor: '#D1FAE5',
   },
-  aadhaarPhoto: {
-    width: 120,
-    height: 120,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#E8E8E8',
+  statusTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  statusText: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+
+  // Details Card
+  detailsCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  photoContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  userPhoto: {
+    width: '100%',
+    height: '100%',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+    marginVertical: 16,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+    textAlign: 'right',
+    flex: 1,
+    marginLeft: 16,
+  },
+
+  // Address Grid
+  addressGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -8,
+  },
+  addressItem: {
+    width: '50%',
+    paddingHorizontal: 8,
+    marginBottom: 16,
+  },
+  addressLabel: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginBottom: 4,
+  },
+  addressValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+  },
+
+  // Security
+  securityCard: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginBottom: 20,
+  },
+  securityHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  securityTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  securityText: {
+    fontSize: 12,
+    color: '#6B7280',
+    lineHeight: 18,
   },
 });

@@ -1,6 +1,7 @@
 // Razorpay Configuration
 export const RAZORPAY_CONFIG = {
-  key_id: 'rzp_live_RkQnwEw618QPs3', // Your Razorpay Test Key ID
+  // key_id: 'rzp_live_RkQnwEw618QPs3', // Your Razorpay Test Key ID
+  key_id:"rzp_test_HQ4tZ6kBqnghIu",
   name: 'HelpKey Hotels',
   description: 'Hotel Booking Payment',
   image: 'https://helpkey.in/logo.png', // Your logo URL

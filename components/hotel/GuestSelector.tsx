@@ -1,24 +1,39 @@
 import { Minus, Plus, User } from 'lucide-react-native';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface GuestSelectorProps {
   visible: boolean;
   guests: number;
   onClose: () => void;
-  onConfirm: (guests: number) => void;
+  onGuestsChange: (count: number) => void;
+  rooms: number;
+  onRoomsChange: (count: number) => void;
 }
 
-export default function GuestSelector({ visible, guests, onClose, onConfirm }: GuestSelectorProps) {
+export default function GuestSelector({
+  visible,
+  guests,
+  onClose,
+  onGuestsChange,
+  rooms,
+  onRoomsChange
+}: GuestSelectorProps) {
   const [selectedGuests, setSelectedGuests] = React.useState(guests);
 
+  useEffect(() => {
+    if (visible) {
+      setSelectedGuests(guests);
+    }
+  }, [visible, guests]);
+
   const handleConfirm = () => {
-    onConfirm(selectedGuests);
+    onGuestsChange(selectedGuests);
     onClose();
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
         <View style={styles.container}>
           <View style={styles.header}>
@@ -31,7 +46,7 @@ export default function GuestSelector({ visible, guests, onClose, onConfirm }: G
           <View style={styles.content}>
             <View style={styles.row}>
               <View style={styles.iconContainer}>
-                <User size={24} color="#00BFA6" />
+                <User size={24} color="#4F46E5" />
               </View>
               <View style={styles.info}>
                 <Text style={styles.label}>Guests</Text>
@@ -43,7 +58,7 @@ export default function GuestSelector({ visible, guests, onClose, onConfirm }: G
                   onPress={() => setSelectedGuests(Math.max(1, selectedGuests - 1))}
                   disabled={selectedGuests <= 1}
                 >
-                  <Minus size={20} color={selectedGuests <= 1 ? '#ccc' : '#00BFA6'} />
+                  <Minus size={20} color={selectedGuests <= 1 ? '#ccc' : '#4F46E5'} />
                 </TouchableOpacity>
                 <Text style={styles.count}>{selectedGuests}</Text>
                 <TouchableOpacity
@@ -51,7 +66,7 @@ export default function GuestSelector({ visible, guests, onClose, onConfirm }: G
                   onPress={() => setSelectedGuests(Math.min(10, selectedGuests + 1))}
                   disabled={selectedGuests >= 10}
                 >
-                  <Plus size={20} color={selectedGuests >= 10 ? '#ccc' : '#00BFA6'} />
+                  <Plus size={20} color={selectedGuests >= 10 ? '#ccc' : '#4F46E5'} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -89,11 +104,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#111827',
   },
   closeButton: {
     fontSize: 24,
-    color: '#666',
+    color: '#6B7280',
   },
   content: {
     padding: 20,
@@ -107,7 +122,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#E8F8F5',
+    backgroundColor: '#EEF2FF',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -118,12 +133,12 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#111827',
     marginBottom: 4,
   },
   sublabel: {
     fontSize: 13,
-    color: '#666',
+    color: '#6B7280',
   },
   controls: {
     flexDirection: 'row',
@@ -134,22 +149,22 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
   },
   count: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#111827',
     minWidth: 30,
     textAlign: 'center',
   },
   confirmButton: {
-    backgroundColor: '#00BFA6',
+    backgroundColor: '#111827',
     marginHorizontal: 20,
     paddingVertical: 16,
-    borderRadius: 28,
+    borderRadius: 14,
     alignItems: 'center',
   },
   confirmButtonText: {

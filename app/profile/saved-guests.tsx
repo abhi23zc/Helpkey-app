@@ -2,7 +2,7 @@ import { useAuth } from '@/context/AuthContext';
 import { db } from '@/config/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Plus, Edit2, Trash2, Shield, Eye } from 'lucide-react-native';
+import { ArrowLeft, Plus, Edit2, Trash2, Shield, Eye, User, Phone, CheckCircle, AlertCircle } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import AadhaarVerificationModal from '@/components/AadhaarVerificationModal';
 import GuestDetailsModal from '@/components/GuestDetailsModal';
@@ -16,9 +16,14 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  Dimensions
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MotiView, AnimatePresence } from 'moti';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface SavedGuest {
   id: string;
@@ -33,6 +38,7 @@ interface SavedGuest {
 export default function SavedGuestsScreen() {
   const router = useRouter();
   const { user, userData } = useAuth();
+  const insets = useSafeAreaInsets();
   const [savedGuests, setSavedGuests] = useState<SavedGuest[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingGuest, setEditingGuest] = useState<SavedGuest | null>(null);
@@ -73,7 +79,7 @@ export default function SavedGuestsScreen() {
 
   const handleSaveGuest = async () => {
     if (!user?.uid) return;
-    
+
     if (!guestForm.firstName.trim() || !guestForm.aadhaarNumber.trim()) {
       Alert.alert('Required', 'First name and Aadhaar number are required');
       return;
@@ -133,7 +139,6 @@ export default function SavedGuestsScreen() {
               const userRef = doc(db, 'users', user.uid);
               await updateDoc(userRef, { savedGuests: updatedGuests });
               setSavedGuests(updatedGuests);
-              Alert.alert('Success', 'Guest deleted successfully');
             } catch (error) {
               console.error('Error deleting guest:', error);
               Alert.alert('Error', 'Failed to delete guest');
@@ -171,30 +176,11 @@ export default function SavedGuestsScreen() {
           photo: verificationData.verificationData?.photo,
           careOf: verificationData.verificationData?.careOf,
           email: verificationData.verificationData?.email,
-          splitAddress: verificationData.verificationData?.splitAddress 
-            ? {
-                country: verificationData.verificationData.splitAddress.country || '',
-                dist: verificationData.verificationData.splitAddress.dist || '',
-                house: verificationData.verificationData.splitAddress.house || '',
-                landmark: verificationData.verificationData.splitAddress.landmark || '',
-                pincode: parseInt(verificationData.verificationData.splitAddress.pincode) || 0,
-                po: verificationData.verificationData.splitAddress.po || '',
-                state: verificationData.verificationData.splitAddress.state || '',
-                street: verificationData.verificationData.splitAddress.street || '',
-                subdist: verificationData.verificationData.splitAddress.subdist || '',
-                vtc: verificationData.verificationData.splitAddress.vtc || '',
-                locality: verificationData.verificationData.splitAddress.locality || '',
-              }
-            : undefined,
-          refId: verificationData.verificationData?.refId,
-          yearOfBirth: verificationData.verificationData?.yearOfBirth,
-          shareCode: verificationData.verificationData?.shareCode,
-          xmlFile: verificationData.verificationData?.xmlFile,
           rawCashfreeResponse: verificationData.verificationData?.rawCashfreeResponse,
         }
       };
 
-      const updatedGuests = savedGuests.map(g => 
+      const updatedGuests = savedGuests.map(g =>
         g.id === verifyingGuest.id ? updatedGuest : g
       );
 
@@ -211,144 +197,158 @@ export default function SavedGuestsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar barStyle="dark-content" />
-      
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#1A1A1A" strokeWidth={2} />
+      <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'android' ? 12 : 0) }]}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <ArrowLeft size={24} color="#111827" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Saved Guests</Text>
-        <TouchableOpacity onPress={handleAddGuest} style={styles.addButton}>
-          <Plus size={24} color="#00BFA6" strokeWidth={2} />
+        <TouchableOpacity
+          onPress={handleAddGuest}
+          style={styles.addButton}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Plus size={24} color="#0EA5E9" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.infoCard}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 100, paddingHorizontal: 20 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <MotiView
+          from={{ opacity: 0, translateY: -10 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: 'timing', duration: 400 } as any}
+          style={styles.infoCard}
+        >
+          <View style={styles.infoIconContainer}>
+            <Shield size={20} color="#0EA5E9" />
+          </View>
           <Text style={styles.infoText}>
-            Save guest information for faster bookings. You can select from saved guests during checkout.
+            Save guest details for faster bookings. Verified guests get pre-checkin benefits.
           </Text>
-        </View>
+        </MotiView>
 
         {savedGuests.length > 0 ? (
-          <View style={styles.guestList}>
-            {savedGuests.map((guest) => (
-              <View key={guest.id} style={styles.guestCard}>
-                <View style={styles.guestHeader}>
-                  <View style={styles.guestInfo}>
-                    <Text style={styles.guestName}>
-                      {guest.firstName} {guest.lastName || ''}
-                    </Text>
-                    {guest.phoneNumber && (
-                      <Text style={styles.guestPhone}>{guest.phoneNumber}</Text>
-                    )}
-                    <Text style={styles.guestAadhaar}>
-                      Aadhaar: XXXX XXXX {guest.aadhaarNumber.slice(-4)}
-                    </Text>
+          <View style={styles.listContainer}>
+            <AnimatePresence>
+              {savedGuests.map((guest, index) => (
+                <MotiView
+                  key={guest.id}
+                  from={{ opacity: 0, translateY: 20 }}
+                  animate={{ opacity: 1, translateY: 0 }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ type: 'timing', duration: 400, delay: index * 100 } as any}
+                  style={styles.guestCard}
+                >
+                  <View style={styles.cardHeader}>
+                    <View style={styles.avatarContainer}>
+                      <User size={24} color="#6B7280" />
+                    </View>
+                    <View style={styles.headerInfo}>
+                      <Text style={styles.guestName}>{guest.firstName} {guest.lastName}</Text>
+                      <Text style={styles.guestAadhaar}>Adhaar: XXXX XXXX {guest.aadhaarNumber.slice(-4)}</Text>
+                    </View>
                     {guest.aadhaarVerified ? (
                       <View style={styles.verifiedBadge}>
-                        <Shield size={12} color="#10B981" strokeWidth={2} />
-                        <Text style={styles.verifiedText}>Verified</Text>
+                        <Shield size={12} color="#15803D" />
+                        <Text style={styles.verifiedBadgeText}>Verified</Text>
                       </View>
                     ) : (
                       <View style={styles.unverifiedBadge}>
-                        <Text style={styles.unverifiedText}>Not Verified</Text>
+                        <AlertCircle size={12} color="#B45309" />
+                        <Text style={styles.unverifiedBadgeText}>Unverified</Text>
                       </View>
                     )}
                   </View>
-                  <View style={styles.guestActions}>
+
+                  <View style={styles.divider} />
+
+                  <View style={styles.cardActions}>
                     <TouchableOpacity
+                      style={styles.actionBtn}
                       onPress={() => handleShowDetails(guest)}
-                      style={[styles.actionButton, styles.viewButton]}
                     >
-                      <Eye size={18} color="#10B981" strokeWidth={2} />
+                      <Eye size={18} color="#4B5563" />
                     </TouchableOpacity>
-                    {!guest.aadhaarVerified && (
-                      <TouchableOpacity
-                        onPress={() => handleVerifyGuest(guest)}
-                        style={[styles.actionButton, styles.verifyButton]}
-                      >
-                        <Shield size={18} color="#00BFA6" strokeWidth={2} />
-                      </TouchableOpacity>
-                    )}
+
                     <TouchableOpacity
+                      style={styles.actionBtn}
                       onPress={() => handleEditGuest(guest)}
-                      style={styles.actionButton}
                     >
-                      <Edit2 size={18} color="#00BFA6" strokeWidth={2} />
+                      <Edit2 size={18} color="#0EA5E9" />
                     </TouchableOpacity>
+
                     <TouchableOpacity
+                      style={styles.actionBtn}
                       onPress={() => handleDeleteGuest(guest.id)}
-                      style={styles.actionButton}
                     >
-                      <Trash2 size={18} color="#EF4444" strokeWidth={2} />
+                      <Trash2 size={18} color="#EF4444" />
                     </TouchableOpacity>
                   </View>
-                </View>
-                {guest.aadhaarVerified && (
-                  <View style={styles.preCheckinInfo}>
-                    <Shield size={16} color="#10B981" strokeWidth={2} />
-                    <Text style={styles.preCheckinText}>Pre-checkin enabled</Text>
-                  </View>
-                )}
-                
-                {/* Verification Actions */}
-                <View style={styles.verificationActions}>
-                  {guest.aadhaarVerified ? (
-                    <View style={styles.verifiedSection}>
-                      <View style={styles.verifiedBanner}>
-                        <View style={styles.verifiedBannerContent}>
-                          <Text style={styles.verifiedBannerTitle}>Identity Verified</Text>
-                          <Text style={styles.verifiedBannerSubtitle}>Pre-checkin enabled</Text>
+
+                  {/* Verification Status Banner */}
+                  <View style={[
+                    styles.statusBanner,
+                    guest.aadhaarVerified ? styles.statusBannerVerified : styles.statusBannerUnverified
+                  ]}>
+                    {guest.aadhaarVerified ? (
+                      <>
+                        <View style={styles.statusContent}>
+                          <Text style={styles.statusTitle}>Ready for Pre-checkin</Text>
+                          <Text style={styles.statusSubtitle}>Identity verified successfully</Text>
                         </View>
-                        <Shield size={20} color="#10B981" strokeWidth={2} />
-                      </View>
-                      <TouchableOpacity
-                        style={styles.viewDetailsButton}
-                        onPress={() => handleShowDetails(guest)}
-                      >
-                        <Eye size={16} color="#666" strokeWidth={2} />
-                        <Text style={styles.viewDetailsText}>View Full Details</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <View style={styles.unverifiedSection}>
-                      <TouchableOpacity
-                        style={styles.verifyAadhaarButton}
-                        onPress={() => handleVerifyGuest(guest)}
-                      >
-                        <Shield size={16} color="#fff" strokeWidth={2} />
-                        <Text style={styles.verifyAadhaarText}>Verify Aadhaar</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.viewDetailsButton}
-                        onPress={() => handleShowDetails(guest)}
-                      >
-                        <Eye size={16} color="#666" strokeWidth={2} />
-                        <Text style={styles.viewDetailsText}>View Details</Text>
-                      </TouchableOpacity>
-                      <Text style={styles.verifyNote}>Verify to enable pre-checkin</Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-            ))}
+                        <Shield size={20} color="#15803D" />
+                      </>
+                    ) : (
+                      <>
+                        <View style={styles.statusContent}>
+                          <Text style={styles.statusTitleUnverified}>Verify Identity</Text>
+                          <Text style={styles.statusSubtitleUnverified}>Enable pre-checkin benefits</Text>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.verifyBtn}
+                          onPress={() => handleVerifyGuest(guest)}
+                        >
+                          <Text style={styles.verifyBtnText}>Verify</Text>
+                        </TouchableOpacity>
+                      </>
+                    )}
+                  </View>
+                </MotiView>
+              ))}
+            </AnimatePresence>
           </View>
         ) : (
-          <View style={styles.emptyState}>
-            <View style={styles.emptyIcon}>
-              <Plus size={48} color="#CCC" strokeWidth={2} />
+          <MotiView
+            from={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: 'timing', duration: 400 } as any}
+            style={styles.emptyState}
+          >
+            <View style={styles.emptyIconCircle}>
+              <User size={48} color="#9CA3AF" />
             </View>
-            <Text style={styles.emptyTitle}>No saved guests</Text>
+            <Text style={styles.emptyTitle}>No Saved Guests</Text>
             <Text style={styles.emptyText}>
-              Add guest information to speed up your booking process
+              Add guests to speed up your booking process. Verifying them allows for faster check-ins.
             </Text>
-            <TouchableOpacity onPress={handleAddGuest} style={styles.emptyButton}>
-              <Text style={styles.emptyButtonText}>Add Your First Guest</Text>
+            <TouchableOpacity
+              style={styles.addFirstGuestBtn}
+              onPress={handleAddGuest}
+            >
+              <Plus size={20} color="#FFF" />
+              <Text style={styles.addFirstGuestText}>Add Your First Guest</Text>
             </TouchableOpacity>
-          </View>
+          </MotiView>
         )}
       </ScrollView>
 
@@ -378,53 +378,57 @@ export default function SavedGuestsScreen() {
       {/* Add/Edit Guest Modal */}
       {showAddModal && (
         <View style={styles.modalOverlay}>
-          <View style={styles.modal}>
+          <MotiView
+
+            transition={{ type: 'spring', damping: 15 } as any}
+            style={styles.modalContainer}
+          >
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
-                {editingGuest ? 'Edit Guest' : 'Add New Guest'}
+                {editingGuest ? 'Edit Guest Details' : 'Add New Guest'}
               </Text>
-              <TouchableOpacity onPress={() => setShowAddModal(false)}>
-                <Text style={styles.modalClose}>✕</Text>
+              <TouchableOpacity onPress={() => setShowAddModal(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <Text style={styles.closeModalText}>✕</Text>
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>First Name *</Text>
+            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>First Name <Text style={{ color: '#EF4444' }}>*</Text></Text>
                 <TextInput
                   style={styles.input}
                   value={guestForm.firstName}
-                  onChangeText={(text) => setGuestForm({ ...guestForm, firstName: text })}
-                  placeholder="Enter first name"
-                  placeholderTextColor="#999"
+                  onChangeText={(t) => setGuestForm({ ...guestForm, firstName: t })}
+                  placeholder="e.g. Rahul"
+                  placeholderTextColor="#9CA3AF"
                 />
               </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Last Name (Optional)</Text>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Last Name</Text>
                 <TextInput
                   style={styles.input}
                   value={guestForm.lastName}
-                  onChangeText={(text) => setGuestForm({ ...guestForm, lastName: text })}
-                  placeholder="Enter last name"
-                  placeholderTextColor="#999"
+                  onChangeText={(t) => setGuestForm({ ...guestForm, lastName: t })}
+                  placeholder="e.g. Sharma"
+                  placeholderTextColor="#9CA3AF"
                 />
               </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Phone Number (Optional)</Text>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Phone Number</Text>
                 <TextInput
                   style={styles.input}
                   value={guestForm.phoneNumber}
-                  onChangeText={(text) => setGuestForm({ ...guestForm, phoneNumber: text })}
+                  onChangeText={(t) => setGuestForm({ ...guestForm, phoneNumber: t })}
                   placeholder="+91 XXXXX XXXXX"
-                  placeholderTextColor="#999"
+                  placeholderTextColor="#9CA3AF"
                   keyboardType="phone-pad"
                 />
               </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Aadhaar Number *</Text>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Aadhaar Number <Text style={{ color: '#EF4444' }}>*</Text></Text>
                 <TextInput
                   style={styles.input}
                   value={guestForm.aadhaarNumber}
@@ -434,56 +438,46 @@ export default function SavedGuestsScreen() {
                     setGuestForm({ ...guestForm, aadhaarNumber: formatted });
                   }}
                   placeholder="XXXX XXXX XXXX"
-                  placeholderTextColor="#999"
+                  placeholderTextColor="#9CA3AF"
                   keyboardType="number-pad"
-                  maxLength={14}
                 />
-                <Text style={styles.helperText}>Enter 12-digit Aadhaar number</Text>
+                <Text style={styles.helperText}>Used for secure identity verification</Text>
               </View>
 
-              <View style={styles.modalActions}>
-                <TouchableOpacity
-                  onPress={() => setShowAddModal(false)}
-                  style={styles.cancelButton}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={handleSaveGuest}
-                  style={styles.saveButton}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Text style={styles.saveButtonText}>
-                      {editingGuest ? 'Update' : 'Add Guest'}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                style={styles.saveBtn}
+                onPress={handleSaveGuest}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator color="#FFF" />
+                ) : (
+                  <Text style={styles.saveBtnText}>{editingGuest ? 'Update Guest' : 'Save Guest'}</Text>
+                )}
+              </TouchableOpacity>
             </ScrollView>
-          </View>
+          </MotiView>
         </View>
       )}
-    </SafeAreaView>
+
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F3F4F6',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#fff',
+    paddingBottom: 16,
+    backgroundColor: '#FFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#E5E7EB',
   },
   backButton: {
     padding: 4,
@@ -491,315 +485,296 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1A1A1A',
-    flex: 1,
-    textAlign: 'center',
+    color: '#111827',
   },
   addButton: {
     padding: 4,
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
+
+  // Info Card
   infoCard: {
-    backgroundColor: '#E8F5F3',
-    borderRadius: 12,
-    padding: 16,
     marginTop: 20,
-    marginBottom: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: '#00BFA6',
+    marginBottom: 24,
+    backgroundColor: '#E0F2FE',
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+  },
+  infoIconContainer: {
+    backgroundColor: '#FFF',
+    padding: 8,
+    borderRadius: 10,
   },
   infoText: {
+    flex: 1,
     fontSize: 14,
-    color: '#666',
+    color: '#0369A1',
     lineHeight: 20,
   },
-  guestList: {
+
+  // List
+  listContainer: {
     gap: 16,
-    paddingBottom: 20,
   },
   guestCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: '#FFF',
+    borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E8E8E8',
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+    marginBottom: 10,
   },
-  guestHeader: {
+  cardHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
   },
-  guestInfo: {
+  avatarContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerInfo: {
     flex: 1,
   },
   guestName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 4,
-  },
-  guestPhone: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
+    color: '#111827',
+    marginBottom: 2,
   },
   guestAadhaar: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
+    fontSize: 13,
+    color: '#6B7280',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   verifiedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#D1FAE5',
+    gap: 4,
+    backgroundColor: '#DCFCE7',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-    gap: 4,
+    borderRadius: 99,
   },
-  verifiedText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#10B981',
+  verifiedBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#15803D',
   },
   unverifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     backgroundColor: '#FEF3C7',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
+    borderRadius: 99,
   },
-  unverifiedText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#F59E0B',
+  unverifiedBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#B45309',
   },
-  guestActions: {
+
+  divider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+    marginVertical: 12,
+  },
+
+  cardActions: {
     flexDirection: 'row',
-    gap: 8,
+    justifyContent: 'flex-end',
+    gap: 12,
   },
-  actionButton: {
+  actionBtn: {
     padding: 8,
+    backgroundColor: '#F9FAFB',
     borderRadius: 8,
-    backgroundColor: '#F8F9FA',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
-  verifyButton: {
-    backgroundColor: '#E8F5F3',
-  },
-  viewButton: {
-    backgroundColor: '#D1FAE5',
-  },
-  preCheckinInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#D1FAE5',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    gap: 6,
-    marginTop: 12,
-  },
-  preCheckinText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#10B981',
-  },
-  verificationActions: {
-    borderTopWidth: 1,
-    borderTopColor: '#E8E8E8',
-    paddingTop: 12,
-    marginTop: 12,
-  },
-  verifiedSection: {
-    gap: 8,
-  },
-  verifiedBanner: {
+
+  statusBanner: {
+    marginTop: 16,
+    padding: 12,
+    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#D1FAE5',
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#6EE7B7',
   },
-  verifiedBannerContent: {
+  statusBannerVerified: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#DCFCE7',
+  },
+  statusBannerUnverified: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  statusContent: {
     flex: 1,
   },
-  verifiedBannerTitle: {
-    fontSize: 14,
+  statusTitle: {
+    fontSize: 13,
     fontWeight: '700',
-    color: '#065F46',
+    color: '#15803D',
   },
-  verifiedBannerSubtitle: {
+  statusSubtitle: {
     fontSize: 12,
-    color: '#047857',
-    marginTop: 2,
+    color: '#166534',
   },
-  unverifiedSection: {
-    gap: 8,
-  },
-  verifyAadhaarButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#00BFA6',
-    paddingVertical: 12,
-    borderRadius: 12,
-    gap: 6,
-  },
-  verifyAadhaarText: {
-    fontSize: 14,
+  statusTitleUnverified: {
+    fontSize: 13,
     fontWeight: '700',
-    color: '#fff',
+    color: '#475569',
   },
-  viewDetailsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F8F9FA',
-    paddingVertical: 12,
-    borderRadius: 12,
-    gap: 6,
+  statusSubtitleUnverified: {
+    fontSize: 12,
+    color: '#64748B',
   },
-  viewDetailsText: {
-    fontSize: 14,
+  verifyBtn: {
+    backgroundColor: '#0EA5E9',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  verifyBtnText: {
+    color: '#FFF',
+    fontSize: 12,
     fontWeight: '600',
-    color: '#666',
   },
-  verifyNote: {
-    fontSize: 12,
-    color: '#999',
-    textAlign: 'center',
-  },
+
+  // Empty State
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 60,
+    justifyContent: 'center',
+    marginTop: 60,
   },
-  emptyIcon: {
+  emptyIconCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 8,
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 10,
   },
   emptyText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 15,
+    color: '#6B7280',
     textAlign: 'center',
-    marginBottom: 24,
     paddingHorizontal: 40,
+    marginBottom: 30,
+    lineHeight: 22,
   },
-  emptyButton: {
-    backgroundColor: '#00BFA6',
+  addFirstGuestBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#0EA5E9',
+    paddingVertical: 14,
     paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 24,
+    borderRadius: 100,
   },
-  emptyButtonText: {
-    color: '#fff',
+  addFirstGuestText: {
+    color: '#FFF',
     fontSize: 16,
     fontWeight: '700',
   },
+
+  // Modal
   modalOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     zIndex: 1000,
+    justifyContent: 'flex-end',
   },
-  modal: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    width: '90%',
+  modalContainer: {
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: 40,
     maxHeight: '80%',
-    overflow: 'hidden',
   },
   modalHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
+    borderBottomColor: '#F3F4F6',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#111827',
   },
-  modalClose: {
-    fontSize: 24,
-    color: '#666',
+  closeModalText: {
+    fontSize: 22,
+    color: '#9CA3AF',
   },
-  modalContent: {
-    padding: 20,
+  modalBody: {
+    padding: 24,
   },
-  inputGroup: {
-    marginBottom: 16,
+  formGroup: {
+    marginBottom: 20,
   },
-  inputLabel: {
+  label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#374151',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 14,
-    color: '#1A1A1A',
+    backgroundColor: '#F9FAFB',
     borderWidth: 1,
-    borderColor: '#E8E8E8',
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    color: '#111827',
   },
   helperText: {
     fontSize: 12,
-    color: '#999',
-    marginTop: 4,
+    color: '#9CA3AF',
+    marginTop: 6,
   },
-  modalActions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: '#F8F9FA',
+  saveBtn: {
+    backgroundColor: '#0EA5E9',
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: 'center',
+    marginTop: 10,
   },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#666',
-  },
-  saveButton: {
-    flex: 1,
-    backgroundColor: '#00BFA6',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  saveButtonText: {
+  saveBtnText: {
+    color: '#FFF',
     fontSize: 16,
     fontWeight: '700',
-    color: '#fff',
   },
 });

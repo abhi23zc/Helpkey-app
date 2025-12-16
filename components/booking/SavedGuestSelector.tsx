@@ -20,14 +20,14 @@ interface SavedGuest {
 
 interface SavedGuestSelectorProps {
   visible: boolean;
-  savedGuests: SavedGuest[];
+  guests: SavedGuest[];
   onSelect: (guest: SavedGuest) => void;
   onClose: () => void;
 }
 
 export default function SavedGuestSelector({
   visible,
-  savedGuests,
+  guests,
   onSelect,
   onClose
 }: SavedGuestSelectorProps) {
@@ -35,7 +35,7 @@ export default function SavedGuestSelector({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
@@ -48,8 +48,8 @@ export default function SavedGuestSelector({
           </View>
 
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            {savedGuests.length > 0 ? (
-              savedGuests.map((guest) => (
+            {guests && guests.length > 0 ? (
+              guests.map((guest) => (
                 <TouchableOpacity
                   key={guest.id}
                   style={styles.guestCard}
@@ -116,28 +116,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
+    borderBottomColor: '#F0F0F0',
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#111827',
   },
   closeButton: {
     fontSize: 24,
-    color: '#666',
+    color: '#6B7280',
   },
   content: {
     padding: 20,
     maxHeight: 400,
   },
   guestCard: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F9FAFB', // Light gray
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E8E8E8',
+    borderColor: '#E5E7EB',
   },
   guestInfo: {
     flex: 1,
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   guestName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#111827',
     flex: 1,
   },
   verifiedBadge: {
@@ -170,12 +170,12 @@ const styles = StyleSheet.create({
   },
   guestPhone: {
     fontSize: 14,
-    color: '#666',
+    color: '#6B7280',
     marginBottom: 4,
   },
   guestAadhaar: {
     fontSize: 14,
-    color: '#666',
+    color: '#6B7280',
   },
   emptyState: {
     alignItems: 'center',
@@ -184,25 +184,25 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#666',
+    color: '#4B5563',
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#999',
+    color: '#9CA3AF',
     textAlign: 'center',
   },
   cancelButton: {
     margin: 20,
     marginTop: 0,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F3F4F6',
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: 'center',
   },
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#666',
+    color: '#4B5563',
   },
 });

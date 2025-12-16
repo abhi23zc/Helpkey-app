@@ -71,4 +71,6 @@ export interface Hotel {
   distance?: number;
   available?: boolean;
   hotelAdmin?: string;
+  hasHourly?: boolean;
+  hasNightly?: boolean;
 }

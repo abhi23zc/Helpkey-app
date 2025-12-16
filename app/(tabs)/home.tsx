@@ -1,7 +1,6 @@
 import { SlidersHorizontal } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   FlatList,
   ScrollView,
@@ -24,22 +23,14 @@ import { Hotel } from '@/types/hotel';
 
 // Components
 import DealCard from '@/components/home/DealCard';
-import DestinationItem from '@/components/home/DestinationItem';
 import FiltersPanel from '@/components/home/FiltersPanel';
 import GradientHeader from '@/components/home/GradientHeader';
 import HotelCard from '@/components/home/HotelCard';
+import { HorizontalHotelSkeleton } from '@/components/home/SkeletonLoader';
 import LocationPermissionModal from '@/components/home/LocationPermissionModal';
 import MapView from '@/components/home/MapView';
 import SectionHeader from '@/components/home/SectionHeader';
-
-const popularDestinations = [
-  { id: '1', name: 'Gurgaon', image: 'https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=200' },
-  { id: '2', name: 'Coimbatore', image: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=200' },
-  { id: '3', name: 'New Delhi', image: 'https://images.unsplash.com/photo-1587474260584-136574528ed5?w=200' },
-  { id: '4', name: 'Kolkata', image: 'https://images.unsplash.com/photo-1558431382-27e303142255?w=200' },
-  { id: '5', name: 'Goa', image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=200' },
-  { id: '6', name: 'Jaipur', image: 'https://images.unsplash.com/photo-1477587458883-47145ed94245?w=200' },
-];
+import LocationSearchInput from '@/components/home/LocationSearchInput';
 
 const commonAmenities = [
   'Free WiFi',
@@ -75,6 +66,7 @@ export default function Home() {
   const [allHotels, setAllHotels] = useState<Hotel[]>([]);
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Location
@@ -114,11 +106,46 @@ export default function Home() {
     initLocation();
   }, []);
 
-  // Fetch hotels with rooms
+  // Fetch hotels with rooms and caching
   useEffect(() => {
     const fetchHotels = async () => {
-      setLoading(true);
       try {
+        // Try to get hotels from cache first
+        const { getHotelsFromCache, saveHotelsToCache } = await import('../../services/hotelCache');
+        const cachedHotels = await getHotelsFromCache();
+        
+        if (cachedHotels && cachedHotels.length > 0) {
+          console.log('Using cached hotels');
+          // Use cached data immediately for better UX
+          setAllHotels(cachedHotels);
+          
+          // Calculate distance for cached hotels if location is available
+          if (userLocation) {
+            const hotelsWithDistance = cachedHotels.map(hotel => {
+              if (hotel.latitude && hotel.longitude) {
+                return {
+                  ...hotel,
+                  distance: calculateDistance(
+                    userLocation.latitude,
+                    userLocation.longitude,
+                    hotel.latitude,
+                    hotel.longitude
+                  )
+                };
+              }
+              return hotel;
+            });
+            setAllHotels(hotelsWithDistance);
+          }
+          
+          setLoading(false);
+          setInitialLoad(false);
+          return; // Use cache, don't fetch from network
+        }
+        
+        // No cache or expired, fetch from network
+        setLoading(true);
+        console.log('Fetching hotels from network');
         const fetchedHotels = await fetchHotelsWithRooms();
 
         // Calculate distance if location is available
@@ -142,13 +169,18 @@ export default function Home() {
           if (maxPrice > 2000) {
             setPriceRange([0, newMaxPrice]);
           }
+          
+          // Cache the fetched hotels
+          await saveHotelsToCache(fetchedHotels);
         }
 
         setAllHotels(fetchedHotels);
         setLoading(false);
+        setInitialLoad(false);
       } catch (error) {
         console.error('Error fetching hotels:', error);
         setLoading(false);
+        setInitialLoad(false);
       }
     };
 
@@ -261,9 +293,44 @@ export default function Home() {
   };
 
   const handleLocationPress = () => {
-    if (!locationEnabled) {
-      setShowLocationModal(true);
+    setShowLocationModal(true);
+  };
+
+  const handleSearchPress = () => {
+    setShowLocationModal(true);
+  };
+
+  const handleLocationSelect = async (location: {
+    description: string;
+    placeId: string;
+    latitude?: number;
+    longitude?: number;
+  }) => {
+    console.log('Location selected:', location);
+    
+    // Save location to shared storage
+    try {
+      const { saveSelectedLocation } = await import('../../services/locationStorage');
+      await saveSelectedLocation(location);
+    } catch (error) {
+      console.error('Error saving location:', error);
     }
+    
+    // Update user location if coordinates are provided
+    if (location.latitude && location.longitude) {
+      setUserLocation({
+        latitude: location.latitude,
+        longitude: location.longitude,
+        city: location.description.split(',')[0],
+        region: location.description,
+      });
+      setLocationEnabled(true);
+    }
+    
+    // Close the modal
+    setShowLocationModal(false);
+    
+    // Stay on home screen - user can manually navigate to search if needed
   };
 
   const userName =
@@ -303,6 +370,7 @@ export default function Home() {
           onSearchChange={setSearchQuery}
           userLocation={locationText}
           onLocationPress={handleLocationPress}
+          onSearchPress={handleSearchPress}
         />
 
         {/* Filter Section */}
@@ -321,6 +389,13 @@ export default function Home() {
               {priceRange[1].toLocaleString('en-IN')}
             </Text>
           </View>
+
+          <LocationSearchInput 
+            visible={showLocationModal} 
+            onClose={() => setShowLocationModal(false)} 
+            onLocationSelect={handleLocationSelect} 
+            googleMapsApiKey='AIzaSyCayIVJJi7Q-kncORA2HSavMdPIIHB35Z0'
+          />
 
           {/* Filter Chips */}
           <ScrollView
@@ -393,18 +468,7 @@ export default function Home() {
           onApply={() => setShowFilters(false)}
         />
 
-        {/* Popular Destinations */}
-        <View style={styles.section}>
-          <SectionHeader title="Popular destinations" onSeeAllPress={() => { }} />
-          <FlatList
-            data={popularDestinations}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <DestinationItem {...item} />}
-            contentContainerStyle={styles.destinationsScroll}
-          />
-        </View>
+
 
         {/* Hotels Count Banner */}
         <View style={styles.bannerContainer}>
@@ -414,12 +478,30 @@ export default function Home() {
           </Text>
         </View>
 
+
+
         {/* Loading State */}
         {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#0066FF" />
-            <Text style={styles.loadingText}>Loading hotels...</Text>
-          </View>
+          <>
+            <View style={styles.section}>
+              <View style={styles.loadingHeader}>
+                <Text style={styles.loadingTitle}>Hotels near you</Text>
+              </View>
+              <HorizontalHotelSkeleton count={3} />
+            </View>
+            <View style={styles.section}>
+              <View style={styles.loadingHeader}>
+                <Text style={styles.loadingTitle}>Hourly Hotels</Text>
+              </View>
+              <HorizontalHotelSkeleton count={3} />
+            </View>
+            <View style={styles.section}>
+              <View style={styles.loadingHeader}>
+                <Text style={styles.loadingTitle}>Nightly Hotels</Text>
+              </View>
+              <HorizontalHotelSkeleton count={3} />
+            </View>
+          </>
         ) : (
           <>
             {/* Hotels Near You */}
@@ -473,8 +555,8 @@ export default function Home() {
               </View>
             )}
 
-            {/* Empty State */}
-            {hotels.length === 0 && (
+            {/* Empty State - Only show if not loading and initial load is complete and no hotels */}
+            {!loading && !initialLoad && hotels.length === 0 && (
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>No hotels found</Text>
                 <Text style={styles.emptySubtext}>Try adjusting your filters</Text>
@@ -504,7 +586,7 @@ export default function Home() {
               <MapView
                 hotels={hotels}
                 userLocation={userLocation}
-                onHotelPress={(hotelId) => {
+                onHotelPress={(_hotelId) => {
                   // Navigate to hotel detail
                   // console.log('Navigate to hotel:', hotelId);
                 }}
@@ -628,5 +710,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#f0f0f0',
+  },
+  loadingHeader: {
+    paddingHorizontal: 20,
+    paddingBottom: 8,
+  },
+  loadingTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#333',
   },
 });
