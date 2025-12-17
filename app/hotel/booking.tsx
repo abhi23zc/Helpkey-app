@@ -1,6 +1,9 @@
 import GuestSelector from '@/components/hotel/GuestSelector';
 import TravelerTypeSelector from '@/components/booking/TravelerTypeSelector';
+import DynamicTravelerTypeSelector from '@/components/booking/DynamicTravelerTypeSelector';
+import DynamicPreferences from '@/components/booking/DynamicPreferences';
 import SavedGuestSelector from '@/components/booking/SavedGuestSelector';
+import AadhaarVerificationButton from '@/components/booking/AadhaarVerificationButton';
 import { CustomerPreferences } from '@/types/booking';
 import { useAuth } from '@/context/AuthContext';
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
@@ -18,7 +21,9 @@ import {
   Briefcase,
   Users as UsersIcon,
   Heart,
-  UserPlus
+  UserPlus,
+  X,
+  CheckCircle
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
@@ -131,6 +136,7 @@ export default function BookingScreen() {
   const [guests, setGuests] = useState(1);
   const [showGuestSelector, setShowGuestSelector] = useState(false);
   const [showTravelerTypeSelector, setShowTravelerTypeSelector] = useState(false);
+  const [showDynamicTravelerTypeSelector, setShowDynamicTravelerTypeSelector] = useState(false);
   const [additionalRequest, setAdditionalRequest] = useState('');
 
   // Predefined request options
@@ -178,6 +184,94 @@ export default function BookingScreen() {
 
   // Customer preferences
   const [customerPreferences, setCustomerPreferences] = useState<CustomerPreferences>({});
+  const [preferencesPrice, setPreferencesPrice] = useState<number>(0);
+  const [preferencesPriceBreakdown, setPreferencesPriceBreakdown] = useState<Array<{ label: string; price: number; quantity?: number }>>([]);
+
+  // Pre-checkin verification helpers
+  const checkCustomerVerified = () => {
+    return userData?.aadhaarData?.verified === true;
+  };
+
+  const checkAllGuestsVerified = () => {
+    return guestInfoList.every(guest => guest.aadhaarVerified === true);
+  };
+
+  const checkAllVerificationComplete = () => {
+    const customerVerified = checkCustomerVerified();
+    const allGuestsVerified = checkAllGuestsVerified();
+    return customerVerified && allGuestsVerified;
+  };
+
+  const getVerificationStatus = () => {
+    const customerVerified = checkCustomerVerified();
+    const allGuestsVerified = checkAllGuestsVerified();
+    const unverifiedGuests = guestInfoList.filter(guest => !guest.aadhaarVerified);
+    
+    return {
+      customerVerified,
+      allGuestsVerified,
+      unverifiedGuests,
+      allComplete: customerVerified && allGuestsVerified
+    };
+  };
+
+  const handlePreCheckinToggle = (enabled: boolean) => {
+    if (enabled) {
+      const verificationStatus = getVerificationStatus();
+      
+      if (!verificationStatus.customerVerified) {
+        Alert.alert(
+          'Aadhaar Verification Required',
+          'Your Aadhaar verification is required to enable pre-checkin. Please verify your identity in your profile first.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      
+      if (!verificationStatus.allGuestsVerified) {
+        const unverifiedNames = verificationStatus.unverifiedGuests
+          .map(guest => `${guest.firstName} ${guest.lastName || ''}`.trim())
+          .join(', ');
+        Alert.alert(
+          'Guest Verification Required',
+          `The following guests need Aadhaar verification to enable pre-checkin: ${unverifiedNames}. Please verify all guest Aadhaar numbers first.`,
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      
+      if (verificationStatus.allComplete) {
+        setCustomerPreferences(prev => ({ ...prev, preCheckinEnabled: true }));
+      }
+    } else {
+      setCustomerPreferences(prev => ({ ...prev, preCheckinEnabled: false }));
+    }
+  };
+
+  const handleGuestVerificationComplete = (guestIndex: number, verificationData: any) => {
+    const updatedGuests = [...guestInfoList];
+    updatedGuests[guestIndex] = {
+      ...updatedGuests[guestIndex],
+      aadhaarVerified: true,
+      aadhaarData: verificationData,
+      aadhaarNumber: verificationData.aadhaarNumber,
+    };
+    setGuestInfoList(updatedGuests);
+    
+    Alert.alert(
+      'Verification Successful',
+      `${updatedGuests[guestIndex].firstName} ${updatedGuests[guestIndex].lastName}'s Aadhaar has been verified successfully.`,
+      [{ text: 'OK' }]
+    );
+  };
+
+  const handleCustomerVerification = () => {
+    Alert.alert(
+      'Customer Verification',
+      'This would redirect you to your profile to complete Aadhaar verification. Please complete your verification in the Profile section.',
+      [{ text: 'OK' }]
+    );
+  };
 
   // Guest information for each guest
   const [guestInfoList, setGuestInfoList] = useState<GuestInfo[]>([
@@ -202,10 +296,10 @@ export default function BookingScreen() {
 
   const calculateTotalPrice = () => {
     if (bookingType === 'hourly' && selectedHourlyRate) {
-      return selectedHourlyRate.price;
+      return selectedHourlyRate.price + preferencesPrice;
     }
     const nights = calculateNights();
-    return (roomData?.price || 0) * nights;
+    return (roomData?.price || 0) * nights + preferencesPrice;
   };
 
   const calculateTaxes = () => {
@@ -331,15 +425,22 @@ export default function BookingScreen() {
     updatedGuests[selectingGuestIndex] = {
       firstName: guest.firstName,
       lastName: guest.lastName || '',
-      email: selectingGuestIndex === 0 ? updatedGuests[0].email : '',
+      email: selectingGuestIndex === 0 ? updatedGuests[selectingGuestIndex].email : '',
       phone: guest.phoneNumber || '',
       aadhaarNumber: guest.aadhaarNumber,
-      specialRequests: '',
+      specialRequests: updatedGuests[selectingGuestIndex].specialRequests || '',
       aadhaarVerified: guest.aadhaarVerified || false,
       aadhaarData: guest.aadhaarData,
     };
     setGuestInfoList(updatedGuests);
     setShowSavedGuestSelector(false);
+    
+    // Show success message
+    Alert.alert(
+      'Guest Selected',
+      `${guest.firstName} ${guest.lastName || ''} has been selected for Guest ${selectingGuestIndex + 1}.${guest.aadhaarVerified ? ' Aadhaar verification is already complete.' : ' Please complete Aadhaar verification.'}`,
+      [{ text: 'OK' }]
+    );
   };
 
   // Handle Android back button
@@ -375,6 +476,16 @@ export default function BookingScreen() {
     setCurrentStep(2);
   };
 
+  const handleDynamicTravelerTypeSelect = (typeId: string) => {
+    setCustomerPreferences({
+      ...customerPreferences,
+      travelerTypeId: typeId,
+      dynamicPreferences: {}, // Reset preferences when type changes
+    });
+    setShowDynamicTravelerTypeSelector(false);
+    setCurrentStep(2);
+  };
+
   const handleNext = () => {
     if (currentStep === 1) {
       if (!checkInDate) {
@@ -396,8 +507,8 @@ export default function BookingScreen() {
         Alert.alert('Required', 'Please select number of guests');
         return;
       }
-      // Skip traveler type for now for better UX flow, or implement a better modal
-      setShowTravelerTypeSelector(true);
+      // Show dynamic traveler type selector
+      setShowDynamicTravelerTypeSelector(true);
     } else if (currentStep === 2) {
       if (!validateGuestInfo()) return;
       setCurrentStep(3);
@@ -426,6 +537,8 @@ export default function BookingScreen() {
         totalAmount: calculateTotalAmount().toString(),
         totalPrice: calculateTotalPrice().toString(),
         taxesAndFees: calculateTaxes().toString(),
+        preferencesPrice: preferencesPrice.toString(),
+        preferencesPriceBreakdown: JSON.stringify(preferencesPriceBreakdown),
         nights: bookingType === 'nightly' ? calculateNights().toString() : '0',
         bookingType: bookingType,
         hourlyDuration: bookingType === 'hourly' && selectedHourlyRate ? selectedHourlyRate.hours.toString() : undefined,
@@ -552,11 +665,27 @@ export default function BookingScreen() {
         <View key={index} style={styles.cardContainer}>
           <View style={styles.cardHeaderRow}>
             <Text style={styles.sectionTitle}>{index === 0 ? 'Primary Guest' : `Guest ${index + 1}`}</Text>
-            {index === 0 && savedGuests.length > 0 && (
-              <TouchableOpacity onPress={() => { setSelectingGuestIndex(0); setShowSavedGuestSelector(true); }}>
-                <Text style={styles.linkText}>Select Saved</Text>
-              </TouchableOpacity>
-            )}
+            <View style={styles.cardHeaderActions}>
+              {savedGuests.length > 0 && (
+                <TouchableOpacity onPress={() => { setSelectingGuestIndex(index); setShowSavedGuestSelector(true); }}>
+                  <Text style={styles.linkText}>Select Saved</Text>
+                </TouchableOpacity>
+              )}
+              {!guest.aadhaarVerified && guest.firstName && guest.lastName && (
+                <AadhaarVerificationButton
+                  guestIndex={index}
+                  guestName={`${guest.firstName} ${guest.lastName}`}
+                  onVerificationComplete={(data) => handleGuestVerificationComplete(index, data)}
+                  style={styles.smallVerifyButton}
+                />
+              )}
+              {guest.aadhaarVerified && (
+                <View style={styles.verifiedBadge}>
+                  <Check size={12} color="#059669" />
+                  <Text style={styles.verifiedText}>Verified</Text>
+                </View>
+              )}
+            </View>
           </View>
           <View style={styles.formGap}>
             <View style={styles.inputGroup}>
@@ -577,29 +706,84 @@ export default function BookingScreen() {
                 onChangeText={(text) => updateGuestInfo(index, 'lastName', text)}
               />
             </View>
+            {/* Phone field for all guests */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabelSmall}>Phone Number</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="+91 9876543210"
+                keyboardType="phone-pad"
+                value={guest.phone}
+                onChangeText={(text) => updateGuestInfo(index, 'phone', text)}
+              />
+            </View>
+
+            {/* Email field only for primary guest */}
             {index === 0 && (
-              <>
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabelSmall}>Email Address</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="name@example.com"
-                    keyboardType="email-address"
-                    value={guest.email}
-                    onChangeText={(text) => updateGuestInfo(index, 'email', text)}
-                  />
-                </View>
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabelSmall}>Phone Number</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="+91 9876543210"
-                    keyboardType="phone-pad"
-                    value={guest.phone}
-                    onChangeText={(text) => updateGuestInfo(index, 'phone', text)}
-                  />
-                </View>
-              </>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabelSmall}>Email Address</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="name@example.com"
+                  keyboardType="email-address"
+                  value={guest.email}
+                  onChangeText={(text) => updateGuestInfo(index, 'email', text)}
+                />
+              </View>
+            )}
+
+            {/* Aadhaar number field for all guests */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabelSmall}>Aadhaar Number *</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="XXXX XXXX XXXX"
+                keyboardType="numeric"
+                value={guest.aadhaarNumber}
+                onChangeText={(text) => {
+                  // Format Aadhaar number with spaces
+                  const value = text.replace(/\D/g, '').slice(0, 12);
+                  const formatted = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+                  updateGuestInfo(index, 'aadhaarNumber', formatted);
+                }}
+                maxLength={14} // 12 digits + 2 spaces
+              />
+              <Text style={styles.inputHelperText}>
+                Enter 12-digit Aadhaar number for identity verification
+              </Text>
+              
+              {/* Verification status and button */}
+              <View style={styles.guestVerificationStatusContainer}>
+                {guest.aadhaarVerified ? (
+                  <View style={styles.verificationSuccessContainer}>
+                    <Check size={14} color="#059669" />
+                    <Text style={styles.verificationSuccessText}>Aadhaar Verified</Text>
+                  </View>
+                ) : (
+                  guest.firstName && guest.lastName && guest.aadhaarNumber && guest.aadhaarNumber.replace(/\s/g, '').length === 12 && (
+                    <AadhaarVerificationButton
+                      guestIndex={index}
+                      guestName={`${guest.firstName} ${guest.lastName}`}
+                      onVerificationComplete={(data) => handleGuestVerificationComplete(index, data)}
+                      style={styles.guestVerificationButton}
+                    />
+                  )
+                )}
+              </View>
+            </View>
+
+            {/* Special requests only for primary guest */}
+            {index === 0 && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabelSmall}>Special Requests</Text>
+                <TextInput
+                  style={[styles.textInput, { height: 80, textAlignVertical: 'top' }]}
+                  multiline
+                  placeholder="Any special needs or preferences..."
+                  value={guest.specialRequests}
+                  onChangeText={(text) => updateGuestInfo(index, 'specialRequests', text)}
+                />
+              </View>
             )}
           </View>
         </View>
@@ -609,8 +793,44 @@ export default function BookingScreen() {
 
   const renderPreferences = () => (
     <MotiView from={{ opacity: 0, translateX: 20 }} animate={{ opacity: 1, translateX: 0 }}>
+      {/* Traveler Type Selection */}
       <View style={styles.cardContainer}>
-        <Text style={styles.sectionTitle}>Make Your Stay Special</Text>
+        <Text style={styles.sectionTitle}>Room Preferences</Text>
+        <Text style={styles.subtext}>Select your traveler type to customize preferences</Text>
+        
+        <TouchableOpacity
+          style={styles.travelerTypeButton}
+          onPress={() => setShowDynamicTravelerTypeSelector(true)}
+        >
+          <Text style={styles.travelerTypeButtonText}>
+            {customerPreferences.travelerTypeId ? 'Change Traveler Type' : 'Select Traveler Type'}
+          </Text>
+          <ChevronRight size={20} color="#9CA3AF" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Dynamic Preferences - Show when traveler type is selected */}
+      {customerPreferences.travelerTypeId && (
+        <DynamicPreferences
+          travelerTypeId={customerPreferences.travelerTypeId}
+          preferences={customerPreferences.dynamicPreferences || {}}
+          onPreferencesChange={(prefs, totalPrice, breakdown) => {
+            setCustomerPreferences(prev => ({ 
+              ...prev, 
+              dynamicPreferences: prefs 
+            }));
+            if (totalPrice !== undefined) {
+              setPreferencesPrice(totalPrice);
+            }
+            if (breakdown) {
+              setPreferencesPriceBreakdown(breakdown);
+            }
+          }}
+        />
+      )}
+
+      <View style={styles.cardContainer}>
+        <Text style={styles.sectionTitle}>Additional Requests</Text>
         <Text style={styles.subtext}>Select any special requests (subject to availability)</Text>
         <View style={styles.chipsContainer}>
           {predefinedRequests.map((req, idx) => {
@@ -635,8 +855,191 @@ export default function BookingScreen() {
           />
         </View>
       </View>
+
+      {/* Pre-checkin Section */}
+      <View style={styles.cardContainer}>
+        <Text style={styles.sectionTitle}>Pre-Checkin Option</Text>
+        <Text style={styles.subtext}>Skip the front desk and go directly to your room</Text>
+        
+        {/* Verification Status */}
+        <View style={styles.verificationStatusContainer}>
+          <View style={styles.verificationItem}>
+            <View style={styles.verificationIconContainer}>
+              {checkCustomerVerified() ? (
+                <Check size={16} color="#059669" />
+              ) : (
+                <X size={16} color="#DC2626" />
+              )}
+            </View>
+            <Text style={[styles.verificationText, checkCustomerVerified() && styles.verificationTextSuccess]}>
+              Your Aadhaar Verification
+            </Text>
+            {!checkCustomerVerified() && (
+              <TouchableOpacity style={styles.verifyButton} onPress={handleCustomerVerification}>
+                <Text style={styles.verifyButtonText}>Verify</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <View style={styles.verificationItem}>
+            <View style={styles.verificationIconContainer}>
+              {checkAllGuestsVerified() ? (
+                <Check size={16} color="#059669" />
+              ) : (
+                <X size={16} color="#DC2626" />
+              )}
+            </View>
+            <Text style={[styles.verificationText, checkAllGuestsVerified() && styles.verificationTextSuccess]}>
+              All Guests Aadhaar Verification
+            </Text>
+            {!checkAllGuestsVerified() && (
+              <TouchableOpacity 
+                style={styles.verifyButton} 
+                onPress={() => {
+                  const unverifiedGuests = guestInfoList
+                    .map((guest, index) => ({ guest, index }))
+                    .filter(({ guest }) => !guest.aadhaarVerified);
+                  
+                  if (unverifiedGuests.length > 0) {
+                    const { guest, index } = unverifiedGuests[0];
+                    Alert.alert(
+                      'Guest Verification',
+                      `Verify Aadhaar for ${guest.firstName} ${guest.lastName}`,
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        { 
+                          text: 'Verify', 
+                          onPress: () => {
+                            // Simulate verification for demo
+                            handleGuestVerificationComplete(index, {
+                              aadhaarNumber: '1234567890XX',
+                              fullName: `${guest.firstName} ${guest.lastName}`,
+                              verified: true,
+                              verifiedAt: new Date(),
+                              dateOfBirth: '01/01/1990',
+                              address: 'Sample Address, City, State - 123456',
+                              phoneNumber: guest.phone || '+91 9876543210'
+                            });
+                          }
+                        }
+                      ]
+                    );
+                  }
+                }}
+              >
+                <Text style={styles.verifyButtonText}>Verify Guests</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* Pre-checkin Toggle */}
+        <View style={[styles.preCheckinToggleContainer, !checkAllVerificationComplete() && styles.preCheckinDisabled]}>
+          <TouchableOpacity
+            style={styles.preCheckinToggle}
+            onPress={() => handlePreCheckinToggle(!customerPreferences.preCheckinEnabled)}
+            disabled={!checkAllVerificationComplete()}
+          >
+            <View style={styles.preCheckinContent}>
+              <View style={styles.preCheckinIcon}>
+                <UserPlus size={20} color={customerPreferences.preCheckinEnabled ? "#059669" : "#6B7280"} />
+              </View>
+              <View style={styles.preCheckinTextContainer}>
+                <Text style={[styles.preCheckinTitle, customerPreferences.preCheckinEnabled && styles.preCheckinTitleActive]}>
+                  Enable Pre-Checkin
+                </Text>
+                <Text style={styles.preCheckinDescription}>
+                  Skip front desk verification and go directly to your room
+                </Text>
+              </View>
+            </View>
+            <View style={[styles.toggleSwitch, customerPreferences.preCheckinEnabled && styles.toggleSwitchActive]}>
+              <View style={[styles.toggleKnob, customerPreferences.preCheckinEnabled && styles.toggleKnobActive]} />
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {customerPreferences.preCheckinEnabled && (
+          <View style={styles.preCheckinSuccessContainer}>
+            <CheckCircle size={16} color="#059669" />
+            <Text style={styles.preCheckinSuccessText}>
+              Pre-checkin activated! You'll receive confirmation details after booking.
+            </Text>
+          </View>
+        )}
+
+        {!checkAllVerificationComplete() && (
+          <View style={styles.preCheckinWarningContainer}>
+            <Text style={styles.preCheckinWarningText}>
+              Complete Aadhaar verification for all guests to enable pre-checkin
+            </Text>
+          </View>
+        )}
+      </View>
     </MotiView>
   );
+
+  // Helper function to render dynamic preferences summary
+  const renderDynamicPreferencesSummary = () => {
+    if (!customerPreferences.dynamicPreferences || Object.keys(customerPreferences.dynamicPreferences).length === 0) {
+      return null;
+    }
+
+    const preferences = customerPreferences.dynamicPreferences;
+    const hasAnyPreferences = Object.values(preferences).some(category => 
+      category && Object.values(category).some(value => 
+        value !== null && value !== undefined && value !== '' && 
+        (Array.isArray(value) ? value.length > 0 : true)
+      )
+    );
+
+    if (!hasAnyPreferences) {
+      return null;
+    }
+
+    return (
+      <View style={styles.cardContainer}>
+        <Text style={styles.sectionTitle}>Selected Preferences</Text>
+        {Object.entries(preferences).map(([categoryId, categoryPrefs]) => {
+          if (!categoryPrefs || Object.keys(categoryPrefs).length === 0) return null;
+          
+          const hasValidPrefs = Object.values(categoryPrefs).some(value => 
+            value !== null && value !== undefined && value !== '' && 
+            (Array.isArray(value) ? value.length > 0 : true)
+          );
+          
+          if (!hasValidPrefs) return null;
+
+          return (
+            <View key={categoryId} style={styles.preferenceCategoryContainer}>
+              <Text style={styles.preferenceCategoryTitle}>
+                {categoryId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+              </Text>
+              {Object.entries(categoryPrefs).map(([optionId, value]) => {
+                if (value === null || value === undefined || value === '' || 
+                    (Array.isArray(value) && value.length === 0)) {
+                  return null;
+                }
+
+                return (
+                  <View key={optionId} style={styles.preferenceItem}>
+                    <Text style={styles.preferenceLabel}>
+                      {optionId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:
+                    </Text>
+                    <Text style={styles.preferenceValue}>
+                      {Array.isArray(value) ? value.join(', ') : 
+                       typeof value === 'boolean' ? (value ? 'Yes' : 'No') : 
+                       value.toString()}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          );
+        })}
+      </View>
+    );
+  };
 
   const renderReview = () => (
     <MotiView from={{ opacity: 0, translateX: 20 }} animate={{ opacity: 1, translateX: 0 }}>
@@ -682,14 +1085,64 @@ export default function BookingScreen() {
           <Text style={styles.reviewDetailLabel}>Primary Guest</Text>
           <Text style={styles.reviewDetailValue}>{guestInfoList[0].firstName} {guestInfoList[0].lastName}</Text>
         </View>
+        {customerPreferences.preCheckinEnabled && (
+          <View style={styles.reviewDetailRow}>
+            <Text style={styles.reviewDetailLabel}>Check-in Type</Text>
+            <Text style={[styles.reviewDetailValue, { color: '#059669' }]}>Pre-checkin ✓</Text>
+          </View>
+        )}
       </View>
+
+      {/* Dynamic Preferences Summary */}
+      {renderDynamicPreferencesSummary()}
+
+      {/* Pre-checkin Confirmation */}
+      {customerPreferences.preCheckinEnabled && (
+        <View style={styles.cardContainer}>
+          <View style={styles.preCheckinConfirmationHeader}>
+            <CheckCircle size={20} color="#059669" />
+            <Text style={styles.preCheckinConfirmationTitle}>Pre-checkin Activated</Text>
+          </View>
+          <Text style={styles.preCheckinConfirmationText}>
+            Skip the front desk and go directly to your room! You'll receive pre-checkin confirmation details after booking completion.
+          </Text>
+          <View style={styles.preCheckinBenefits}>
+            <View style={styles.preCheckinBenefit}>
+              <Check size={14} color="#059669" />
+              <Text style={styles.preCheckinBenefitText}>No waiting at reception</Text>
+            </View>
+            <View style={styles.preCheckinBenefit}>
+              <Check size={14} color="#059669" />
+              <Text style={styles.preCheckinBenefitText}>Direct room access</Text>
+            </View>
+            <View style={styles.preCheckinBenefit}>
+              <Check size={14} color="#059669" />
+              <Text style={styles.preCheckinBenefitText}>Faster check-in process</Text>
+            </View>
+          </View>
+        </View>
+      )}
 
       <View style={styles.cardContainer}>
         <Text style={styles.sectionTitle}>Price Breakdown</Text>
         <View style={styles.priceRowItem}>
-          <Text style={styles.priceLabel}>Room Charges</Text>
-          <Text style={styles.priceValue}>₹{calculateTotalPrice()}</Text>
+          <Text style={styles.priceLabel}>
+            Room Charges {bookingType === 'hourly' 
+              ? `(${selectedHourlyRate?.hours || 0} hrs)` 
+              : `(${calculateNights()} nights)`}
+          </Text>
+          <Text style={styles.priceValue}>
+            ₹{bookingType === 'hourly' && selectedHourlyRate 
+              ? selectedHourlyRate.price 
+              : (roomData?.price || 0) * calculateNights()}
+          </Text>
         </View>
+        {preferencesPrice > 0 && (
+          <View style={styles.priceRowItem}>
+            <Text style={styles.priceLabel}>Preferences & Add-ons</Text>
+            <Text style={[styles.priceValue, { color: '#059669' }]}>₹{preferencesPrice}</Text>
+          </View>
+        )}
         <View style={styles.priceRowItem}>
           <Text style={styles.priceLabel}>Taxes & Fees (18%)</Text>
           <Text style={styles.priceValue}>₹{calculateTaxes()}</Text>
@@ -794,6 +1247,14 @@ export default function BookingScreen() {
         onClose={() => setShowSavedGuestSelector(false)}
         guests={savedGuests}
         onSelect={handleSelectSavedGuest}
+        guestIndex={selectingGuestIndex}
+      />
+
+      <DynamicTravelerTypeSelector
+        visible={showDynamicTravelerTypeSelector}
+        onClose={() => setShowDynamicTravelerTypeSelector(false)}
+        selectedType={customerPreferences.travelerTypeId || ''}
+        onSelect={handleDynamicTravelerTypeSelect}
       />
     </SafeAreaView>
   );
@@ -866,9 +1327,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   stepCircleCompleted: {
-    backgroundColor: '#111827', // Black for completed too? Or keep green? User asked for Black & White. Let's stick to Black for active/completed to be safe or maybe Dark Gray.
-    // Actually standard UI often uses Primary color for completed. User said "upper indicators colors make it black and white".
-    // I will use Black for Active/Completed to strictly follow "Black and White".
+    backgroundColor: '#111827',
   },
   stepNumber: {
     fontSize: 12,
@@ -1098,10 +1557,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  cardHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   linkText: {
     color: '#111827',
     fontWeight: '600',
     fontSize: 14,
+  },
+  smallVerifyButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    gap: 4,
+  },
+  verifiedText: {
+    fontSize: 10,
+    color: '#047857',
+    fontWeight: '600',
   },
 
   // Preferences
@@ -1253,6 +1735,192 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
 
+  // Pre-checkin Styles
+  verificationStatusContainer: {
+    marginBottom: 20,
+  },
+  verificationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  verificationIconContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#FFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  verificationText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  verificationTextSuccess: {
+    color: '#059669',
+  },
+  verifyButton: {
+    backgroundColor: '#111827',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  verifyButtonText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  preCheckinToggleContainer: {
+    marginBottom: 16,
+  },
+  preCheckinDisabled: {
+    opacity: 0.5,
+  },
+  preCheckinToggle: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  preCheckinContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  preCheckinIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  preCheckinTextContainer: {
+    flex: 1,
+  },
+  preCheckinTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 2,
+  },
+  preCheckinTitleActive: {
+    color: '#059669',
+  },
+  preCheckinDescription: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  toggleSwitch: {
+    width: 44,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#E5E7EB',
+    padding: 2,
+    alignSelf: 'flex-end',
+  },
+  toggleSwitchActive: {
+    backgroundColor: '#059669',
+  },
+  toggleKnob: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FFF',
+  },
+  toggleKnobActive: {
+    transform: [{ translateX: 20 }],
+  },
+  preCheckinSuccessContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    padding: 12,
+    borderRadius: 12,
+    gap: 8,
+  },
+  preCheckinSuccessText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#047857',
+    fontWeight: '500',
+  },
+  preCheckinWarningContainer: {
+    backgroundColor: '#FEF3C7',
+    padding: 12,
+    borderRadius: 12,
+  },
+  preCheckinWarningText: {
+    fontSize: 12,
+    color: '#92400E',
+    textAlign: 'center',
+  },
+  preCheckinConfirmationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8,
+  },
+  preCheckinConfirmationTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#059669',
+  },
+  preCheckinConfirmationText: {
+    fontSize: 14,
+    color: '#374151',
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  preCheckinBenefits: {
+    gap: 8,
+  },
+  preCheckinBenefit: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  preCheckinBenefitText: {
+    fontSize: 12,
+    color: '#047857',
+    fontWeight: '500',
+  },
+  inputHelperText: {
+    fontSize: 11,
+    color: '#6B7280',
+    marginTop: 4,
+  },
+  guestVerificationStatusContainer: {
+    marginTop: 8,
+  },
+  verificationSuccessContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    gap: 4,
+  },
+  verificationSuccessText: {
+    fontSize: 11,
+    color: '#047857',
+    fontWeight: '600',
+  },
+  guestVerificationButton: {
+    alignSelf: 'flex-start',
+  },
+
   // Footer
   footer: {
     position: 'absolute',
@@ -1293,5 +1961,56 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#FFF',
+  },
+
+  // Traveler Type Button
+  travelerTypeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F3F4F6',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  travelerTypeButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+  },
+
+  // Dynamic Preferences Summary
+  preferenceCategoryContainer: {
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  preferenceCategoryTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 12,
+  },
+  preferenceItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+    paddingHorizontal: 12,
+  },
+  preferenceLabel: {
+    fontSize: 14,
+    color: '#6B7280',
+    flex: 1,
+    marginRight: 12,
+  },
+  preferenceValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+    flex: 1,
+    textAlign: 'right',
   },
 });

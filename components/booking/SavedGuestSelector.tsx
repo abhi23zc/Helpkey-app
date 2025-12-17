@@ -23,13 +23,15 @@ interface SavedGuestSelectorProps {
   guests: SavedGuest[];
   onSelect: (guest: SavedGuest) => void;
   onClose: () => void;
+  guestIndex?: number;
 }
 
 export default function SavedGuestSelector({
   visible,
   guests,
   onSelect,
-  onClose
+  onClose,
+  guestIndex = 0
 }: SavedGuestSelectorProps) {
   return (
     <Modal
@@ -41,7 +43,12 @@ export default function SavedGuestSelector({
       <View style={styles.overlay}>
         <View style={styles.modal}>
           <View style={styles.header}>
-            <Text style={styles.title}>Select Saved Guest</Text>
+            <View>
+              <Text style={styles.title}>Select Saved Guest</Text>
+              <Text style={styles.subtitle}>
+                For {guestIndex === 0 ? 'Primary Guest' : `Guest ${guestIndex + 1}`}
+              </Text>
+            </View>
             <TouchableOpacity onPress={onClose}>
               <Text style={styles.closeButton}>✕</Text>
             </TouchableOpacity>
@@ -52,10 +59,12 @@ export default function SavedGuestSelector({
               guests.map((guest) => (
                 <TouchableOpacity
                   key={guest.id}
-                  style={styles.guestCard}
+                  style={[
+                    styles.guestCard,
+                    guest.aadhaarVerified ? styles.guestCardVerified : styles.guestCardUnverified
+                  ]}
                   onPress={() => {
                     onSelect(guest);
-                    onClose();
                   }}
                 >
                   <View style={styles.guestInfo}>
@@ -63,19 +72,38 @@ export default function SavedGuestSelector({
                       <Text style={styles.guestName}>
                         {guest.firstName} {guest.lastName || ''}
                       </Text>
-                      {guest.aadhaarVerified && (
-                        <View style={styles.verifiedBadge}>
-                          <Shield size={12} color="#10B981" strokeWidth={2} />
-                          <Text style={styles.verifiedText}>Verified</Text>
-                        </View>
-                      )}
+                      <View style={[
+                        styles.verificationBadge,
+                        guest.aadhaarVerified ? styles.verifiedBadge : styles.unverifiedBadge
+                      ]}>
+                        <Shield size={12} color={guest.aadhaarVerified ? "#059669" : "#DC2626"} strokeWidth={2} />
+                        <Text style={[
+                          styles.verificationText,
+                          guest.aadhaarVerified ? styles.verifiedText : styles.unverifiedText
+                        ]}>
+                          {guest.aadhaarVerified ? 'Verified' : 'Not Verified'}
+                        </Text>
+                      </View>
                     </View>
-                    {guest.phoneNumber && (
-                      <Text style={styles.guestPhone}>{guest.phoneNumber}</Text>
+                    
+                    <View style={styles.guestDetails}>
+                      {guest.phoneNumber && (
+                        <Text style={styles.guestPhone}>📱 {guest.phoneNumber}</Text>
+                      )}
+                      <Text style={styles.guestAadhaar}>
+                        🆔 Aadhaar: XXXX XXXX {guest.aadhaarNumber.slice(-4)}
+                      </Text>
+                    </View>
+
+                    {guest.aadhaarVerified ? (
+                      <View style={styles.benefitContainer}>
+                        <Text style={styles.benefitText}>✅ Ready for pre-checkin</Text>
+                      </View>
+                    ) : (
+                      <View style={styles.warningContainer}>
+                        <Text style={styles.warningText}>⚠️ Verification required for pre-checkin</Text>
+                      </View>
                     )}
-                    <Text style={styles.guestAadhaar}>
-                      Aadhaar: XXXX XXXX {guest.aadhaarNumber.slice(-4)}
-                    </Text>
                   </View>
                 </TouchableOpacity>
               ))
@@ -123,6 +151,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#111827',
   },
+  subtitle: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginTop: 2,
+  },
   closeButton: {
     fontSize: 24,
     color: '#6B7280',
@@ -132,12 +165,23 @@ const styles = StyleSheet.create({
     maxHeight: 400,
   },
   guestCard: {
-    backgroundColor: '#F9FAFB', // Light gray
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderWidth: 2,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+  },
+  guestCardVerified: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+  },
+  guestCardUnverified: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
   },
   guestInfo: {
     flex: 1,
@@ -146,7 +190,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   guestName: {
     fontSize: 16,
@@ -154,28 +198,67 @@ const styles = StyleSheet.create({
     color: '#111827',
     flex: 1,
   },
-  verifiedBadge: {
+  verificationBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#D1FAE5',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 8,
     gap: 4,
   },
-  verifiedText: {
+  verifiedBadge: {
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#059669',
+  },
+  unverifiedBadge: {
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#DC2626',
+  },
+  verificationText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#10B981',
+  },
+  verifiedText: {
+    color: '#059669',
+  },
+  unverifiedText: {
+    color: '#DC2626',
+  },
+  guestDetails: {
+    marginBottom: 12,
   },
   guestPhone: {
-    fontSize: 14,
-    color: '#6B7280',
+    fontSize: 13,
+    color: '#374151',
     marginBottom: 4,
   },
   guestAadhaar: {
-    fontSize: 14,
-    color: '#6B7280',
+    fontSize: 13,
+    color: '#374151',
+  },
+  benefitContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  benefitText: {
+    fontSize: 11,
+    color: '#047857',
+    fontWeight: '500',
+  },
+  warningContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  warningText: {
+    fontSize: 11,
+    color: '#B91C1C',
+    fontWeight: '500',
   },
   emptyState: {
     alignItems: 'center',

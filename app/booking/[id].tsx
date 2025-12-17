@@ -3,6 +3,8 @@ import { getBookingById } from '@/services/bookingService';
 import PreferencesDisplay from '@/components/booking/PreferencesDisplay';
 import CancelBookingModal from '@/components/booking/CancelBookingModal';
 import RefundRequestModal from '@/components/booking/RefundRequestModal';
+import useNotificationHandler from '@/hooks/useNotificationHandler';
+import { useNotifications } from '@/hooks/useNotifications';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { db } from '@/config/firebase';
 import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
@@ -64,6 +66,8 @@ interface BookingDetails {
   userId: string;
   userEmail: string;
   hotelAdmin?: string;
+  preCheckinStatus?: string;
+  preCheckinId?: string;
   hotelDetails: {
     hotelId: string;
     name: string;
@@ -104,7 +108,16 @@ interface BookingDetails {
     paymentId: string | null;
     signature: string | null;
   };
-  customerPreferences: any;
+  paymentMode?: string;
+  preferencesPrice?: number;
+  preferencesPriceBreakdown?: Array<{ label: string; price: number; quantity?: number }>;
+  customerPreferences: {
+    preCheckinEnabled?: boolean;
+    travelerType?: string;
+    travelerTypeId?: string;
+    dynamicPreferences?: Record<string, any>;
+    [key: string]: any;
+  };
   customerVerification: any;
   createdAt: any;
 }
@@ -114,6 +127,11 @@ export default function BookingDetailsScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { user } = useAuth();
+  
+  // Notification hooks
+  const { sendNotification } = useNotifications(); // WhatsApp notifications
+  const { sendCompleteCancellationNotifications } = useNotificationHandler(); // Push notifications
+  
   const [booking, setBooking] = useState<BookingDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState<'details' | 'room' | 'guest' | 'payment'>('details');
@@ -170,11 +188,12 @@ export default function BookingDetailsScreen() {
   };
 
   const handleCancelBooking = async (reason: string) => {
-    // ... (Existing logic for handleCancelBooking)
-    // For brevity, skipping the full implementation as it's not visual
-    // Assuming existing logic is preserved if not modified here.
     try {
       if (!booking) return;
+      
+      console.log('🚫 Cancelling booking:', booking.reference);
+      
+      // Update booking status in Firebase
       const bookingRef = doc(db, 'bookings', booking.id);
       await updateDoc(bookingRef, {
         status: 'cancelled',
@@ -182,11 +201,57 @@ export default function BookingDetailsScreen() {
         cancelledAt: new Date().toISOString(),
         cancelledBy: user?.uid || 'user',
       });
+      
+      // Update local state
       setBooking({ ...booking, status: 'cancelled' });
-      // await sendUserCancellationNotification(booking, reason); // Assuming this function exists or is imported
-      Alert.alert('Booking Cancelled', 'Your booking has been cancelled successfully.');
+      
+      // Send notifications (WhatsApp + Push)
+      try {
+        console.log('📧 Sending cancellation notifications...');
+        
+        // Prepare notification data
+        const notificationData = {
+          bookingId: booking.reference,
+          hotelId: booking.hotelId,
+          hotelName: booking.hotelDetails.name,
+          guestName: booking.guestInfo?.[0] ? `${booking.guestInfo[0].firstName} ${booking.guestInfo[0].lastName}` : 'Guest',
+          guestPhone: booking.guestInfo?.[0]?.phone || user?.phoneNumber || '',
+          amount: booking.totalAmount,
+          checkinDate: booking.checkIn,
+          checkoutDate: booking.checkOut,
+          roomType: booking.roomDetails.type,
+          nights: booking.nights,
+          hotelAdmin: booking.hotelAdmin,
+          cancellationReason: reason,
+        };
+        
+        // Send WhatsApp notifications (existing system)
+        await sendNotification({ 
+          type: 'booking_cancelled', 
+          data: { ...notificationData, reason } 
+        });
+        
+        await sendNotification({ 
+          type: 'admin_booking_cancelled_by_user', 
+          data: { ...notificationData, reason } 
+        });
+        
+        // Send Push notifications (new system)
+        const pushSuccess = await sendCompleteCancellationNotifications(notificationData);
+        console.log('📱 Push notifications result:', pushSuccess);
+        
+        console.log('✅ All cancellation notifications sent successfully');
+        
+      } catch (notificationError) {
+        console.error('❌ Error sending cancellation notifications:', notificationError);
+        // Don't fail the cancellation if notifications fail
+      }
+      
+      Alert.alert('Booking Cancelled', 'Your booking has been cancelled successfully. You and the hotel will receive notifications.');
+      
     } catch (e) {
-      console.error(e);
+      console.error('❌ Error cancelling booking:', e);
+      Alert.alert('Error', 'Failed to cancel booking. Please try again.');
     }
   };
 
@@ -277,6 +342,62 @@ export default function BookingDetailsScreen() {
               </Text>
             </View>
           </MotiView>
+
+          {/* Pre-checkin Status */}
+          {booking.customerPreferences?.preCheckinEnabled && (
+            <MotiView
+              from={{ opacity: 0, translateY: -10 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              transition={{ type: 'timing', duration: 500, delay: 100 } as any}
+              style={styles.preCheckinBanner}
+            >
+              <View style={styles.preCheckinHeader}>
+                <View style={styles.preCheckinIconContainer}>
+                  <ShieldCheck size={20} color="#059669" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.preCheckinTitle}>Pre-checkin Activated</Text>
+                  <Text style={styles.preCheckinSubtitle}>
+                    {booking.preCheckinStatus === 'confirmed' 
+                      ? 'Skip the front desk and go directly to your room!'
+                      : 'Setting up your pre-checkin access...'}
+                  </Text>
+                </View>
+                {booking.preCheckinStatus === 'confirmed' && (
+                  <View style={styles.preCheckinBadge}>
+                    <CheckCircle size={16} color="#059669" />
+                    <Text style={styles.preCheckinBadgeText}>Confirmed</Text>
+                  </View>
+                )}
+              </View>
+              
+              {booking.preCheckinId && (
+                <View style={styles.preCheckinDetails}>
+                  <View style={styles.preCheckinDetailRow}>
+                    <Receipt size={14} color="#047857" />
+                    <Text style={styles.preCheckinDetailText}>
+                      Pre-checkin ID: {booking.preCheckinId}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              <View style={styles.preCheckinBenefits}>
+                <View style={styles.preCheckinBenefit}>
+                  <CheckCircle size={12} color="#059669" />
+                  <Text style={styles.preCheckinBenefitText}>No waiting at reception</Text>
+                </View>
+                <View style={styles.preCheckinBenefit}>
+                  <CheckCircle size={12} color="#059669" />
+                  <Text style={styles.preCheckinBenefitText}>Direct room access</Text>
+                </View>
+                <View style={styles.preCheckinBenefit}>
+                  <CheckCircle size={12} color="#059669" />
+                  <Text style={styles.preCheckinBenefitText}>Faster check-in process</Text>
+                </View>
+              </View>
+            </MotiView>
+          )}
 
           {/* Hotel Card */}
           <TouchableOpacity
@@ -390,29 +511,183 @@ export default function BookingDetailsScreen() {
                   <Text style={styles.guestValue}>{booking.guestInfo[0]?.email}</Text>
                 </View>
               </View>
+              
+              {/* Aadhaar Verification Status */}
+              {booking.guestVerifications && booking.guestVerifications.length > 0 && (
+                <>
+                  <View style={styles.divider} />
+                  <View style={styles.guestRow}>
+                    <View style={[styles.guestIcon, { backgroundColor: booking.guestVerifications[0]?.verified ? '#ECFDF5' : '#FEF2F2' }]}>
+                      <ShieldCheck size={20} color={booking.guestVerifications[0]?.verified ? '#059669' : '#DC2626'} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.guestLabel}>Aadhaar Verification</Text>
+                      <Text style={[styles.guestValue, { color: booking.guestVerifications[0]?.verified ? '#059669' : '#DC2626' }]}>
+                        {booking.guestVerifications[0]?.verified ? 'Verified' : 'Not Verified'}
+                      </Text>
+                      {booking.guestVerifications[0]?.aadhaarNumber && (
+                        <Text style={styles.guestSubValue}>
+                          XXXX XXXX {booking.guestVerifications[0].aadhaarNumber.slice(-4)}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                </>
+              )}
             </View>
           </View>
+
+          {/* Guest Verification Details */}
+          {booking.guestVerifications && booking.guestVerifications.length > 0 && booking.guestVerifications[0]?.verified && booking.guestVerifications[0]?.verificationDetails && (
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionHeader}>Verification Details</Text>
+              <View style={styles.verificationCard}>
+                <View style={styles.verificationHeader}>
+                  <ShieldCheck size={18} color="#059669" />
+                  <Text style={styles.verificationTitle}>Aadhaar Verified Successfully</Text>
+                </View>
+                
+                <View style={styles.verificationGrid}>
+                  <View style={styles.verificationItem}>
+                    <Text style={styles.verificationLabel}>Full Name</Text>
+                    <Text style={styles.verificationValue}>
+                      {booking.guestVerifications[0].verificationDetails.fullName || 'N/A'}
+                    </Text>
+                  </View>
+                  <View style={styles.verificationItem}>
+                    <Text style={styles.verificationLabel}>Date of Birth</Text>
+                    <Text style={styles.verificationValue}>
+                      {booking.guestVerifications[0].verificationDetails.rawCashfreeResponse?.dob || 'N/A'}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.verificationGrid}>
+                  <View style={styles.verificationItem}>
+                    <Text style={styles.verificationLabel}>Gender</Text>
+                    <Text style={styles.verificationValue}>
+                      {booking.guestVerifications[0].verificationDetails.gender === 'M' ? 'Male' : 
+                       booking.guestVerifications[0].verificationDetails.gender === 'F' ? 'Female' : 'N/A'}
+                    </Text>
+                  </View>
+                  <View style={styles.verificationItem}>
+                    <Text style={styles.verificationLabel}>Reference ID</Text>
+                    <Text style={styles.verificationValue}>
+                      {booking.guestVerifications[0].verificationDetails.refId || 'N/A'}
+                    </Text>
+                  </View>
+                </View>
+
+                {booking.guestVerifications[0].verificationDetails.address && (
+                  <View style={styles.verificationAddressContainer}>
+                    <Text style={styles.verificationLabel}>Address</Text>
+                    <Text style={styles.verificationAddressText}>
+                      {booking.guestVerifications[0].verificationDetails.address}
+                    </Text>
+                  </View>
+                )}
+
+                <View style={styles.verificationFooter}>
+                  <Text style={styles.verificationFooterText}>
+                    Verified on {booking.guestVerifications[0].verificationDetails.verifiedAt ? 
+                      new Date(booking.guestVerifications[0].verificationDetails.verifiedAt.seconds * 1000).toLocaleDateString('en-IN') : 
+                      'N/A'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* Booking Preferences */}
+          {booking.customerPreferences && (
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionHeader}>Booking Preferences</Text>
+              
+              {/* Use PreferencesDisplay component for dynamic preferences */}
+              <PreferencesDisplay preferences={booking.customerPreferences} />
+              
+              {/* Fallback for basic preferences if no dynamic preferences */}
+              {!booking.customerPreferences.dynamicPreferences && (
+                <View style={styles.preferencesCard}>
+                  {booking.customerPreferences.travelerType && (
+                    <View style={styles.preferenceRow}>
+                      <Text style={styles.preferenceLabel}>Traveler Type</Text>
+                      <Text style={styles.preferenceValue}>
+                        {booking.customerPreferences.travelerType.charAt(0).toUpperCase() + 
+                         booking.customerPreferences.travelerType.slice(1)}
+                      </Text>
+                    </View>
+                  )}
+                  
+                  {booking.customerPreferences.preCheckinEnabled && (
+                    <View style={styles.preferenceRow}>
+                      <Text style={styles.preferenceLabel}>Pre-checkin</Text>
+                      <View style={styles.preferenceEnabledBadge}>
+                        <CheckCircle size={12} color="#059669" />
+                        <Text style={styles.preferenceEnabledText}>Enabled</Text>
+                      </View>
+                    </View>
+                  )}
+                </View>
+              )}
+            </View>
+          )}
 
           {/* Payment Summary */}
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionHeader}>Payment Breakdown</Text>
             <View style={styles.paymentCard}>
               <View style={styles.paymentRow}>
-                <Text style={styles.paymentRowLabel}>Room Rate</Text>
-                <Text style={styles.paymentRowValue}>₹{booking.unitPrice}</Text>
+                <Text style={styles.paymentRowLabel}>
+                  Room Rate {booking.bookingType === 'hourly' 
+                    ? `(${booking.hourlyDuration || 0} hrs)` 
+                    : `(${booking.nights} night${booking.nights > 1 ? 's' : ''})`}
+                </Text>
+                <Text style={styles.paymentRowValue}>
+                  ₹{(booking.totalPrice || booking.unitPrice) - (booking.preferencesPrice || 0)}
+                </Text>
               </View>
+              
+              {/* Show detailed preferences breakdown */}
+              {booking.preferencesPriceBreakdown && booking.preferencesPriceBreakdown.length > 0 && (
+                <>
+                  <View style={[styles.divider, { marginVertical: 8 }]} />
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#059669', marginBottom: 8, marginTop: 4 }}>
+                    Preferences & Add-ons
+                  </Text>
+                  {booking.preferencesPriceBreakdown.map((item, index) => (
+                    <View key={index} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6, paddingLeft: 8 }}>
+                      <Text style={{ fontSize: 13, color: '#047857', flex: 1, marginRight: 12 }}>
+                        • {item.label}
+                      </Text>
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: '#059669', textAlign: 'right' }}>
+                        {item.quantity && item.quantity > 1 
+                          ? `₹${item.price} × ${item.quantity} = ₹${item.price * item.quantity}`
+                          : `₹${item.price}`}
+                      </Text>
+                    </View>
+                  ))}
+                  <View style={[styles.divider, { marginVertical: 8 }]} />
+                </>
+              )}
+              
               <View style={styles.paymentRow}>
-                <Text style={styles.paymentRowLabel}>Taxes & Fees</Text>
+                <Text style={styles.paymentRowLabel}>Taxes & Fees (18%)</Text>
                 <Text style={styles.paymentRowValue}>₹{booking.taxesAndFees}</Text>
               </View>
+              
               <View style={[styles.divider, { marginVertical: 12 }]} />
+              
               <View style={styles.paymentRow}>
                 <Text style={styles.totalLabel}>Total Paid</Text>
                 <Text style={styles.totalValue}>₹{booking.totalAmount}</Text>
               </View>
+              
               <View style={styles.paymentMethodRow}>
                 <CreditCard size={14} color="#6B7280" />
-                <Text style={styles.paymentMethodText}>Paid via {booking.paymentInfo?.method || 'Online'}</Text>
+                <Text style={styles.paymentMethodText}>
+                  Paid via {booking.paymentInfo?.method || booking.paymentMode === 'hotel' ? 'Cash at Hotel' : 'Online'}
+                </Text>
               </View>
             </View>
           </View>
@@ -456,18 +731,15 @@ export default function BookingDetailsScreen() {
         visible={showCancelModal}
         onClose={() => setShowCancelModal(false)}
         onConfirm={handleCancelBooking}
-        loading={loading} // passing loading state if needed for modal
+        bookingReference={booking.reference}
       />
 
       <RefundRequestModal
         visible={showRefundModal}
         onClose={() => setShowRefundModal(false)}
         bookingId={booking.id}
-        amount={booking.totalAmount}
-        onSuccess={() => {
-          checkRefundRequest(booking.id);
-          setShowRefundModal(false);
-        }}
+        bookingReference={booking.reference}
+        totalAmount={booking.totalAmount}
       />
 
     </View>
@@ -744,5 +1016,188 @@ const styles = StyleSheet.create({
   refundStatusText: {
     color: '#4B5563',
     fontSize: 13,
+  },
+
+  // Pre-checkin Styles
+  preCheckinBanner: {
+    marginHorizontal: 20,
+    backgroundColor: '#ECFDF5',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  preCheckinHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  preCheckinIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  preCheckinTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#047857',
+  },
+  preCheckinSubtitle: {
+    fontSize: 13,
+    color: '#065F46',
+    marginTop: 2,
+  },
+  preCheckinBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 4,
+  },
+  preCheckinBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#059669',
+  },
+  preCheckinDetails: {
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 8,
+    padding: 8,
+    marginBottom: 12,
+  },
+  preCheckinDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  preCheckinDetailText: {
+    fontSize: 11,
+    color: '#047857',
+    fontWeight: '500',
+  },
+  preCheckinBenefits: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  preCheckinBenefit: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  preCheckinBenefitText: {
+    fontSize: 11,
+    color: '#047857',
+    fontWeight: '500',
+  },
+
+  // Guest Verification Styles
+  guestSubValue: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginTop: 2,
+  },
+  verificationCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  verificationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  verificationTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#047857',
+  },
+  verificationGrid: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12,
+  },
+  verificationItem: {
+    flex: 1,
+  },
+  verificationLabel: {
+    fontSize: 11,
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  verificationValue: {
+    fontSize: 13,
+    color: '#111827',
+    fontWeight: '500',
+  },
+  verificationAddressContainer: {
+    marginTop: 8,
+    padding: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+  },
+  verificationAddressText: {
+    fontSize: 12,
+    color: '#374151',
+    lineHeight: 16,
+  },
+  verificationFooter: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  verificationFooterText: {
+    fontSize: 11,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+
+  // Preferences Styles
+  preferencesCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  preferenceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  preferenceLabel: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  preferenceValue: {
+    fontSize: 14,
+    color: '#111827',
+    fontWeight: '500',
+  },
+  preferenceEnabledBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    gap: 4,
+  },
+  preferenceEnabledText: {
+    fontSize: 12,
+    color: '#047857',
+    fontWeight: '600',
   },
 });

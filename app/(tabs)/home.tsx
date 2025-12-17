@@ -31,6 +31,8 @@ import LocationPermissionModal from '@/components/home/LocationPermissionModal';
 import MapView from '@/components/home/MapView';
 import SectionHeader from '@/components/home/SectionHeader';
 import LocationSearchInput from '@/components/home/LocationSearchInput';
+import TravelerTypeSetup from '@/components/debug/TravelerTypeSetup';
+import PreferencesTest from '@/components/debug/PreferencesTest';
 
 const commonAmenities = [
   'Free WiFi',
@@ -373,6 +375,10 @@ export default function Home() {
           onSearchPress={handleSearchPress}
         />
 
+        {/* Debug Components - Only in Development */}
+        <TravelerTypeSetup />
+        <PreferencesTest />
+
         {/* Filter Section */}
         <View style={styles.filterSection}>
           <TouchableOpacity
@@ -477,6 +483,8 @@ export default function Home() {
             <Text style={styles.bannerHighlight}>20+</Text> cities
           </Text>
         </View>
+
+
 
 
 

@@ -26,7 +26,14 @@ export interface GuestInfo {
 }
 
 export interface CustomerPreferences {
+  // Legacy traveler type (for backward compatibility)
   travelerType?: 'corporate' | 'family' | 'couple' | 'transit' | 'event';
+  
+  // New dynamic preferences structure
+  travelerTypeId?: string; // Firebase document ID
+  dynamicPreferences?: Record<string, any>; // Dynamic preferences from Firebase
+  
+  // Legacy static preferences (kept for backward compatibility)
   businessEssentials?: {
     workspaceSetup?: string[];
     meetingRoomRequired?: boolean;

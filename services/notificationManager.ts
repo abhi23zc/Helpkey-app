@@ -1,10 +1,15 @@
 import whatsappNotificationService from './whatsappNotification';
 import { getAdminPhoneWithFallback } from '../utils/adminPhoneResolver';
+import pushNotificationService, { PushNotificationData } from './pushNotificationService';
 
 export interface NotificationEvent {
   type: 'booking_confirmed' | 'payment_success' | 'checkin_reminder' | 'booking_cancelled' | 'checkout_thankyou' | 'admin_new_booking' | 'admin_booking_cancelled_by_user';
   data: any;
   adminPhone?: string; // Specific hotel admin phone
+  userId?: string; // User ID for push notifications
+  adminUserId?: string; // Admin user ID for push notifications
+  sendPush?: boolean; // Whether to send push notification (default: true)
+  sendWhatsApp?: boolean; // Whether to send WhatsApp notification (default: true)
 }
 
 class NotificationManager {
@@ -15,27 +20,30 @@ class NotificationManager {
 
   async handleEvent(event: NotificationEvent): Promise<boolean> {
     try {
+      const sendPush = event.sendPush !== false; // Default to true
+      const sendWhatsApp = event.sendWhatsApp !== false; // Default to true
+
       switch (event.type) {
         case 'booking_confirmed':
-          return await this.handleBookingConfirmed(event.data);
+          return await this.handleBookingConfirmed(event.data, event.userId, sendPush, sendWhatsApp);
         
         case 'payment_success':
-          return await this.handlePaymentSuccess(event.data);
+          return await this.handlePaymentSuccess(event.data, event.userId, sendPush, sendWhatsApp);
         
         case 'checkin_reminder':
-          return await this.handleCheckinReminder(event.data);
+          return await this.handleCheckinReminder(event.data, event.userId, sendPush, sendWhatsApp);
         
         case 'booking_cancelled':
-          return await this.handleBookingCancelled(event.data);
+          return await this.handleBookingCancelled(event.data, event.userId, sendPush, sendWhatsApp);
         
         case 'checkout_thankyou':
-          return await this.handleCheckoutThankYou(event.data);
+          return await this.handleCheckoutThankYou(event.data, event.userId, sendPush, sendWhatsApp);
         
         case 'admin_new_booking':
-          return await this.handleAdminNewBooking(event.data, event.adminPhone);
+          return await this.handleAdminNewBooking(event.data, event.adminPhone, event.adminUserId, sendPush, sendWhatsApp);
         
         case 'admin_booking_cancelled_by_user':
-          return await this.handleAdminBookingCancelledByUser(event.data, event.adminPhone);
+          return await this.handleAdminBookingCancelledByUser(event.data, event.adminPhone, event.adminUserId, sendPush, sendWhatsApp);
         
         default:
           console.warn('Unknown notification event type:', event.type);
@@ -47,43 +55,194 @@ class NotificationManager {
     }
   }
 
-  private async handleBookingConfirmed(data: any): Promise<boolean> {
-    // Send booking confirmation to guest
-    const success = await whatsappNotificationService.sendBookingConfirmation(data);
-    
+  private async handleBookingConfirmed(data: any, userId?: string, sendPush = true, sendWhatsApp = true): Promise<boolean> {
+    let whatsappSuccess = true;
+    let pushSuccess = true;
+
+    // Send WhatsApp notification to guest
+    if (sendWhatsApp) {
+      whatsappSuccess = await whatsappNotificationService.sendBookingConfirmation(data);
+    }
+
+    // Send push notification to guest
+    if (sendPush && userId) {
+      const template = pushNotificationService.getNotificationTemplate('booking_confirmed', data);
+      pushSuccess = await pushNotificationService.sendPushNotification(userId, {
+        type: 'booking_confirmed',
+        title: template.title,
+        body: template.body,
+        data: template.data,
+        userId,
+        hotelId: data.hotelId,
+        bookingId: data.bookingId,
+      });
+    }
+
     // Note: Hotel admin notification is handled separately via 'admin_new_booking' event
-    // This allows for better control over when and how admin notifications are sent
-    
-    return success;
+    return whatsappSuccess && pushSuccess;
   }
 
-  private async handlePaymentSuccess(data: any): Promise<boolean> {
-    return await whatsappNotificationService.sendPaymentSuccess(data);
+  private async handlePaymentSuccess(data: any, userId?: string, sendPush = true, sendWhatsApp = true): Promise<boolean> {
+    let whatsappSuccess = true;
+    let pushSuccess = true;
+
+    // Send WhatsApp notification
+    if (sendWhatsApp) {
+      whatsappSuccess = await whatsappNotificationService.sendPaymentSuccess(data);
+    }
+
+    // Send push notification
+    if (sendPush && userId) {
+      const template = pushNotificationService.getNotificationTemplate('payment_success', data);
+      pushSuccess = await pushNotificationService.sendPushNotification(userId, {
+        type: 'payment_success',
+        title: template.title,
+        body: template.body,
+        data: template.data,
+        userId,
+        hotelId: data.hotelId,
+        bookingId: data.bookingId,
+      });
+    }
+
+    return whatsappSuccess && pushSuccess;
   }
 
-  private async handleCheckinReminder(data: any): Promise<boolean> {
-    return await whatsappNotificationService.sendCheckinReminder(data);
+  private async handleCheckinReminder(data: any, userId?: string, sendPush = true, sendWhatsApp = true): Promise<boolean> {
+    let whatsappSuccess = true;
+    let pushSuccess = true;
+
+    // Send WhatsApp notification
+    if (sendWhatsApp) {
+      whatsappSuccess = await whatsappNotificationService.sendCheckinReminder(data);
+    }
+
+    // Send push notification
+    if (sendPush && userId) {
+      const template = pushNotificationService.getNotificationTemplate('checkin_reminder', data);
+      pushSuccess = await pushNotificationService.sendPushNotification(userId, {
+        type: 'checkin_reminder',
+        title: template.title,
+        body: template.body,
+        data: template.data,
+        userId,
+        hotelId: data.hotelId,
+        bookingId: data.bookingId,
+      });
+    }
+
+    return whatsappSuccess && pushSuccess;
   }
 
-  private async handleBookingCancelled(data: any): Promise<boolean> {
-    return await whatsappNotificationService.sendBookingCancellation(data);
+  private async handleBookingCancelled(data: any, userId?: string, sendPush = true, sendWhatsApp = true): Promise<boolean> {
+    let whatsappSuccess = true;
+    let pushSuccess = true;
+
+    // Send WhatsApp notification
+    if (sendWhatsApp) {
+      whatsappSuccess = await whatsappNotificationService.sendBookingCancellation(data);
+    }
+
+    // Send push notification
+    if (sendPush && userId) {
+      const template = pushNotificationService.getNotificationTemplate('booking_cancelled', data);
+      pushSuccess = await pushNotificationService.sendPushNotification(userId, {
+        type: 'booking_cancelled',
+        title: template.title,
+        body: template.body,
+        data: template.data,
+        userId,
+        hotelId: data.hotelId,
+        bookingId: data.bookingId,
+      });
+    }
+
+    return whatsappSuccess && pushSuccess;
   }
 
-  private async handleCheckoutThankYou(data: any): Promise<boolean> {
-    return await whatsappNotificationService.sendCheckoutThankYou(data);
+  private async handleCheckoutThankYou(data: any, userId?: string, sendPush = true, sendWhatsApp = true): Promise<boolean> {
+    let whatsappSuccess = true;
+    let pushSuccess = true;
+
+    // Send WhatsApp notification
+    if (sendWhatsApp) {
+      whatsappSuccess = await whatsappNotificationService.sendCheckoutThankYou(data);
+    }
+
+    // Send push notification
+    if (sendPush && userId) {
+      const template = pushNotificationService.getNotificationTemplate('checkout_thankyou', data);
+      pushSuccess = await pushNotificationService.sendPushNotification(userId, {
+        type: 'checkout_thankyou',
+        title: template.title,
+        body: template.body,
+        data: template.data,
+        userId,
+        hotelId: data.hotelId,
+        bookingId: data.bookingId,
+      });
+    }
+
+    return whatsappSuccess && pushSuccess;
   }
 
-  private async handleAdminNewBooking(data: any, adminPhone?: string): Promise<boolean> {
+  private async handleAdminNewBooking(data: any, adminPhone?: string, adminUserId?: string, sendPush = true, sendWhatsApp = true): Promise<boolean> {
     // If admin phone is explicitly provided, use it directly
     if (adminPhone) {
       console.log('📱 Using explicitly provided admin phone:', adminPhone);
-      return await whatsappNotificationService.sendAdminNewBookingAlert(data, adminPhone);
+      
+      let whatsappSuccess = true;
+      let pushSuccess = true;
+
+      // Send WhatsApp notification
+      if (sendWhatsApp) {
+        whatsappSuccess = await whatsappNotificationService.sendAdminNewBookingAlert(data, adminPhone);
+      }
+
+      // Send push notification if admin user ID is provided
+      if (sendPush && adminUserId) {
+        const template = pushNotificationService.getNotificationTemplate('admin_new_booking', data);
+        pushSuccess = await pushNotificationService.sendPushNotification(adminUserId, {
+          type: 'admin_new_booking',
+          title: template.title,
+          body: template.body,
+          data: template.data,
+          userId: adminUserId,
+          hotelId: data.hotelId,
+          bookingId: data.bookingId,
+        });
+      }
+
+      return whatsappSuccess && pushSuccess;
     }
 
     // If hotelAdminPhone is provided in data, use it
     if (data.hotelAdminPhone) {
       console.log('📱 Using admin phone from data:', data.hotelAdminPhone);
-      return await whatsappNotificationService.sendAdminNewBookingAlert(data, data.hotelAdminPhone);
+      
+      let whatsappSuccess = true;
+      let pushSuccess = true;
+
+      // Send WhatsApp notification
+      if (sendWhatsApp) {
+        whatsappSuccess = await whatsappNotificationService.sendAdminNewBookingAlert(data, data.hotelAdminPhone);
+      }
+
+      // Send push notification if admin user ID is provided
+      if (sendPush && adminUserId) {
+        const template = pushNotificationService.getNotificationTemplate('admin_new_booking', data);
+        pushSuccess = await pushNotificationService.sendPushNotification(adminUserId, {
+          type: 'admin_new_booking',
+          title: template.title,
+          body: template.body,
+          data: template.data,
+          userId: adminUserId,
+          hotelId: data.hotelId,
+          bookingId: data.bookingId,
+        });
+      }
+
+      return whatsappSuccess && pushSuccess;
     }
 
     // Fetch admin phone from users collection using hotelId or hotelAdmin ID
@@ -109,14 +268,39 @@ class NotificationManager {
       }
 
       const targetPhone = adminPhoneResult.formattedPhone!;
+      const resolvedAdminUserId = adminPhoneResult.adminData?.id || adminUserId;
+      
       console.log('✅ Admin phone resolved successfully:', targetPhone);
       console.log('👤 Admin details:', {
         name: adminPhoneResult.adminData?.fullName,
         email: adminPhoneResult.adminData?.email,
-        role: adminPhoneResult.adminData?.role
+        role: adminPhoneResult.adminData?.role,
+        userId: resolvedAdminUserId
       });
 
-      return await whatsappNotificationService.sendAdminNewBookingAlert(data, targetPhone);
+      let whatsappSuccess = true;
+      let pushSuccess = true;
+
+      // Send WhatsApp notification
+      if (sendWhatsApp) {
+        whatsappSuccess = await whatsappNotificationService.sendAdminNewBookingAlert(data, targetPhone);
+      }
+
+      // Send push notification
+      if (sendPush && resolvedAdminUserId) {
+        const template = pushNotificationService.getNotificationTemplate('admin_new_booking', data);
+        pushSuccess = await pushNotificationService.sendPushNotification(resolvedAdminUserId, {
+          type: 'admin_new_booking',
+          title: template.title,
+          body: template.body,
+          data: template.data,
+          userId: resolvedAdminUserId,
+          hotelId: data.hotelId,
+          bookingId: data.bookingId,
+        });
+      }
+
+      return whatsappSuccess && pushSuccess;
 
     } catch (error) {
       console.error('❌ Error resolving admin phone:', error);
@@ -124,19 +308,7 @@ class NotificationManager {
     }
   }
 
-  // Notify global system admins (for system-wide issues, not hotel-specific bookings)
-  private async notifyGlobalAdmins(eventType: string, data: any): Promise<void> {
-    console.log('📢 Sending system-wide notification to global admins');
-    for (const adminPhone of this.globalAdminPhones) {
-      try {
-        await whatsappNotificationService.sendAdminNewBookingAlert(data, adminPhone);
-        // Add delay between admin notifications
-        await new Promise(resolve => setTimeout(resolve, 500));
-      } catch (error) {
-        console.error(`Failed to notify global admin ${adminPhone}:`, error);
-      }
-    }
-  }
+
 
   // Schedule reminder notifications (this would typically be handled by a background service)
   async scheduleCheckinReminder(bookingData: any, checkinDate: Date): Promise<void> {
@@ -157,17 +329,63 @@ class NotificationManager {
     }
   }
 
-  private async handleAdminBookingCancelledByUser(data: any, adminPhone?: string): Promise<boolean> {
+  private async handleAdminBookingCancelledByUser(data: any, adminPhone?: string, adminUserId?: string, sendPush = true, sendWhatsApp = true): Promise<boolean> {
     // If admin phone is explicitly provided, use it directly
     if (adminPhone) {
       console.log('📱 Using explicitly provided admin phone for user cancellation:', adminPhone);
-      return await whatsappNotificationService.sendAdminBookingCancelledByUser(data, adminPhone);
+      
+      let whatsappSuccess = true;
+      let pushSuccess = true;
+
+      // Send WhatsApp notification
+      if (sendWhatsApp) {
+        whatsappSuccess = await whatsappNotificationService.sendAdminBookingCancelledByUser(data, adminPhone);
+      }
+
+      // Send push notification if admin user ID is provided
+      if (sendPush && adminUserId) {
+        const template = pushNotificationService.getNotificationTemplate('admin_booking_cancelled_by_user', data);
+        pushSuccess = await pushNotificationService.sendPushNotification(adminUserId, {
+          type: 'admin_booking_cancelled_by_user',
+          title: template.title,
+          body: template.body,
+          data: template.data,
+          userId: adminUserId,
+          hotelId: data.hotelId,
+          bookingId: data.bookingId,
+        });
+      }
+
+      return whatsappSuccess && pushSuccess;
     }
 
     // If hotelAdminPhone is provided in data, use it
     if (data.hotelAdminPhone) {
       console.log('📱 Using admin phone from data for user cancellation:', data.hotelAdminPhone);
-      return await whatsappNotificationService.sendAdminBookingCancelledByUser(data, data.hotelAdminPhone);
+      
+      let whatsappSuccess = true;
+      let pushSuccess = true;
+
+      // Send WhatsApp notification
+      if (sendWhatsApp) {
+        whatsappSuccess = await whatsappNotificationService.sendAdminBookingCancelledByUser(data, data.hotelAdminPhone);
+      }
+
+      // Send push notification if admin user ID is provided
+      if (sendPush && adminUserId) {
+        const template = pushNotificationService.getNotificationTemplate('admin_booking_cancelled_by_user', data);
+        pushSuccess = await pushNotificationService.sendPushNotification(adminUserId, {
+          type: 'admin_booking_cancelled_by_user',
+          title: template.title,
+          body: template.body,
+          data: template.data,
+          userId: adminUserId,
+          hotelId: data.hotelId,
+          bookingId: data.bookingId,
+        });
+      }
+
+      return whatsappSuccess && pushSuccess;
     }
 
     // Fetch admin phone from users collection using hotelId or hotelAdmin ID
@@ -191,9 +409,33 @@ class NotificationManager {
       }
 
       const targetPhone = adminPhoneResult.formattedPhone!;
+      const resolvedAdminUserId = adminPhoneResult.adminData?.id || adminUserId;
+      
       console.log('✅ Admin phone resolved for user cancellation:', targetPhone);
 
-      return await whatsappNotificationService.sendAdminBookingCancelledByUser(data, targetPhone);
+      let whatsappSuccess = true;
+      let pushSuccess = true;
+
+      // Send WhatsApp notification
+      if (sendWhatsApp) {
+        whatsappSuccess = await whatsappNotificationService.sendAdminBookingCancelledByUser(data, targetPhone);
+      }
+
+      // Send push notification
+      if (sendPush && resolvedAdminUserId) {
+        const template = pushNotificationService.getNotificationTemplate('admin_booking_cancelled_by_user', data);
+        pushSuccess = await pushNotificationService.sendPushNotification(resolvedAdminUserId, {
+          type: 'admin_booking_cancelled_by_user',
+          title: template.title,
+          body: template.body,
+          data: template.data,
+          userId: resolvedAdminUserId,
+          hotelId: data.hotelId,
+          bookingId: data.bookingId,
+        });
+      }
+
+      return whatsappSuccess && pushSuccess;
 
     } catch (error) {
       console.error('❌ Error resolving admin phone for user cancellation:', error);

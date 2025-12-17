@@ -16,8 +16,82 @@ interface PreferencesDisplayProps {
   preferences: any;
 }
 
+// Function to render dynamic preferences
+const renderDynamicPreferences = (dynamicPreferences: Record<string, any>) => {
+  const hasAnyPreferences = Object.values(dynamicPreferences).some(category => 
+    category && Object.values(category).some(value => 
+      value !== null && value !== undefined && value !== '' && 
+      (Array.isArray(value) ? value.length > 0 : true)
+    )
+  );
+
+  if (!hasAnyPreferences) {
+    return null;
+  }
+
+  return (
+    <View style={styles.dynamicContainer}>
+      <View style={styles.dynamicHeader}>
+        <CheckCircle size={20} color="#059669" strokeWidth={2} />
+        <Text style={styles.dynamicTitle}>Selected Preferences</Text>
+      </View>
+      
+      {Object.entries(dynamicPreferences).map(([categoryId, categoryPrefs]) => {
+        if (!categoryPrefs || Object.keys(categoryPrefs).length === 0) return null;
+        
+        const hasValidPrefs = Object.values(categoryPrefs).some(value => 
+          value !== null && value !== undefined && value !== '' && 
+          (Array.isArray(value) ? value.length > 0 : true)
+        );
+        
+        if (!hasValidPrefs) return null;
+
+        return (
+          <View key={categoryId} style={styles.dynamicCategory}>
+            <Text style={styles.dynamicCategoryTitle}>
+              {categoryId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            </Text>
+            {Object.entries(categoryPrefs).map(([optionId, value]) => {
+              if (value === null || value === undefined || value === '' || 
+                  (Array.isArray(value) && value.length === 0)) {
+                return null;
+              }
+
+              return (
+                <View key={optionId} style={styles.dynamicPrefItem}>
+                  <CheckCircle size={14} color="#059669" strokeWidth={2} />
+                  <Text style={styles.dynamicPrefText}>
+                    <Text style={styles.dynamicPrefLabel}>
+                      {optionId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:
+                    </Text>
+                    {' '}
+                    {Array.isArray(value) ? value.join(', ') : 
+                     typeof value === 'boolean' ? (value ? 'Yes' : 'No') : 
+                     value.toString()}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        );
+      })}
+    </View>
+  );
+};
+
 export default function PreferencesDisplay({ preferences }: PreferencesDisplayProps) {
-  if (!preferences || !preferences.travelerType) {
+  // Handle both old static preferences and new dynamic preferences
+  if (!preferences || (!preferences.travelerType && !preferences.dynamicPreferences)) {
+    return null;
+  }
+
+  // If we have dynamic preferences, render them
+  if (preferences.dynamicPreferences && Object.keys(preferences.dynamicPreferences).length > 0) {
+    return renderDynamicPreferences(preferences.dynamicPreferences);
+  }
+
+  // Fallback to old static preferences
+  if (!preferences.travelerType) {
     return null;
   }
 
@@ -301,5 +375,52 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
     flex: 1,
     lineHeight: 18,
+  },
+
+  // Dynamic Preferences Styles
+  dynamicContainer: {
+    backgroundColor: '#F0FDF4',
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 12,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+  },
+  dynamicHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  dynamicTitle: {
+    fontSize: isSmallDevice ? 14 : 15,
+    fontWeight: '700',
+    color: '#059669',
+    marginLeft: 8,
+  },
+  dynamicCategory: {
+    marginBottom: 12,
+  },
+  dynamicCategoryTitle: {
+    fontSize: isSmallDevice ? 13 : 14,
+    fontWeight: '700',
+    color: '#047857',
+    marginBottom: 8,
+  },
+  dynamicPrefItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginBottom: 6,
+    paddingLeft: 8,
+  },
+  dynamicPrefText: {
+    fontSize: isSmallDevice ? 12 : 13,
+    color: '#1A1A1A',
+    flex: 1,
+    lineHeight: 18,
+  },
+  dynamicPrefLabel: {
+    fontWeight: '600',
+    color: '#047857',
   },
 });

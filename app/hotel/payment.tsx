@@ -1,5 +1,6 @@
 import { useAuth } from '@/context/AuthContext';
 import { createBooking } from '@/services/bookingService';
+import useNotificationHandler from '@/hooks/useNotificationHandler';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, Lock, ShieldCheck, Wallet, CreditCard, Banknote, CheckCircle, ChevronRight, X } from 'lucide-react-native';
 import { useRef, useState } from 'react';
@@ -32,7 +33,7 @@ import PhoneValidator from '@/utils/phoneValidation';
 export default function PaymentScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const insets = useSafeAreaInsets();
 
   const hotelData = params.hotel ? JSON.parse(params.hotel as string) : null;
@@ -47,6 +48,9 @@ export default function PaymentScreen() {
   const hourlyDuration = params.hourlyDuration ? parseInt(params.hourlyDuration as string) : undefined;
   const totalPrice = parseFloat(params.totalPrice as string) || 0;
   const taxesAndFees = parseFloat(params.taxesAndFees as string) || 0;
+  const preferencesPrice = parseFloat(params.preferencesPrice as string) || 0;
+  const preferencesPriceBreakdown = params.preferencesPriceBreakdown ? JSON.parse(params.preferencesPriceBreakdown as string) : [];
+  const customerPreferences = params.customerPreferences ? JSON.parse(params.customerPreferences as string) : {};
 
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'hotel'>('online');
@@ -57,6 +61,75 @@ export default function PaymentScreen() {
 
   // WhatsApp notification hook
   const { sendNotification } = useNotifications();
+  
+  // Push notification hook
+  const { sendCompleteBookingNotifications } = useNotificationHandler();
+
+  // Helper function for pre-checkin setup
+  const setupPreCheckin = async (bookingReference: string, allGuestInfo: any[], bookingDocId?: string) => {
+    if (!customerPreferences.preCheckinEnabled || !userData?.aadhaarData?.verified) {
+      return;
+    }
+
+    try {
+      console.log('🏨 Setting up pre-checkin for booking:', bookingReference);
+      console.log('🏨 Using document ID:', bookingDocId || 'fallback to reference');
+      console.log('🏨 API URL:', `${API_CONFIG.baseURL}/api/pre-checkin/setup`);
+      console.log('🏨 Request data:', {
+        bookingId: bookingDocId || bookingReference,
+        userId: user?.uid,
+        hotelId: hotelData.id,
+        checkInTime: checkIn?.toISOString(),
+        checkOutTime: checkOut?.toISOString(),
+        guestName: `${allGuestInfo[0]?.firstName || ''} ${allGuestInfo[0]?.lastName || ''}`.trim(),
+        hotelName: hotelData.name,
+        aadhaarVerified: userData?.aadhaarData?.verified,
+      });
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.timeout);
+
+      const preCheckinResponse = await fetch(`${API_CONFIG.baseURL}/api/pre-checkin/setup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          bookingId: bookingDocId || bookingReference,
+          userId: user?.uid || '',
+          hotelId: hotelData.id,
+          checkInTime: checkIn?.toISOString() || '',
+          checkOutTime: checkOut?.toISOString() || '',
+          guestName: `${allGuestInfo[0]?.firstName || ''} ${allGuestInfo[0]?.lastName || ''}`.trim(),
+          guestPhone: allGuestInfo[0]?.phone || user?.phoneNumber || '',
+          guestEmail: allGuestInfo[0]?.email || user?.email || '',
+          hotelName: hotelData.name,
+          aadhaarData: {
+            aadhaarNumber: userData.aadhaarData.aadhaarNumber,
+            fullName: userData.aadhaarData.fullName,
+            verified: userData.aadhaarData.verified,
+          },
+        }),
+      });
+      clearTimeout(timeoutId);
+
+      if (!preCheckinResponse.ok) {
+        throw new Error(`HTTP ${preCheckinResponse.status}: ${preCheckinResponse.statusText}`);
+      }
+
+      const preCheckinData = await preCheckinResponse.json();
+      
+      if (preCheckinData.success) {
+        console.log('🏨 Pre-checkin setup successful:', preCheckinData);
+      } else {
+        console.error('🏨 Pre-checkin setup failed:', preCheckinData.error);
+      }
+    } catch (preCheckinError: any) {
+      console.error('🏨 Error setting up pre-checkin:', preCheckinError.message || preCheckinError);
+      // Don't fail the booking if pre-checkin setup fails
+    }
+  };
 
   // Helper function to format date for notifications
   const formatDateForNotification = (date: Date | null) => {
@@ -161,25 +234,56 @@ export default function PaymentScreen() {
         unitPrice: parseFloat(params.totalPrice as string) / (actualBookingType === 'nightly' ? nights : 1) || roomData.price,
         totalPrice,
         taxesAndFees,
+        preferencesPrice,
+        preferencesPriceBreakdown,
         totalAmount,
         paymentInfo: { method: 'cash', status: 'pending', orderId: null, paymentId: null, signature: null },
+        paymentMode: 'hotel',
         status: 'pending',
         reference: `BK${Math.floor(Math.random() * 1000000)}`,
         customerPreferences: customerPreferences,
         customerVerification: {},
       };
 
-      await createBooking(bookingData);
+      const bookingDocId = await createBooking(bookingData);
 
       try {
         const notificationData = createNotificationData(bookingData.reference, allGuestInfoParam);
+        
+        // Send WhatsApp notifications (existing)
         await sendNotification({ type: 'booking_confirmed', data: notificationData });
         await sendNotification({ type: 'admin_new_booking', data: notificationData });
-      } catch (e) { console.error(e) }
+        
+        // Send Push notifications (NEW)
+        const pushNotificationData = {
+          bookingId: bookingData.reference,
+          hotelId: bookingData.hotelId,
+          hotelName: bookingData.hotelDetails.name,
+          guestName: `${allGuestInfoParam[0]?.firstName || ''} ${allGuestInfoParam[0]?.lastName || ''}`.trim() || 'Guest',
+          guestPhone: allGuestInfoParam[0]?.phone || user?.phoneNumber || '',
+          amount: bookingData.totalAmount,
+          checkinDate: bookingData.checkIn,
+          checkoutDate: bookingData.checkOut,
+          checkinTime: '2:00 PM',
+          roomType: bookingData.roomDetails.type,
+          nights: bookingData.nights,
+          hotelAdmin: bookingData.hotelAdmin,
+        };
+        
+        console.log('📱 Sending push notifications...');
+        const pushSuccess = await sendCompleteBookingNotifications(pushNotificationData);
+        console.log('📱 Push notifications result:', pushSuccess);
+        
+      } catch (e) { 
+        console.error('Notification error:', e);
+      }
+
+      // Setup pre-checkin if enabled
+      await setupPreCheckin(bookingData.reference, allGuestInfoParam, bookingDocId);
 
       Alert.alert(
         'Booking Confirmed!',
-        `Ref: ${bookingData.reference}. Pay at hotel during check-in.`,
+        `Ref: ${bookingData.reference}. Pay at hotel during check-in.${customerPreferences.preCheckinEnabled ? '\n\nPre-checkin activated! You\'ll receive confirmation details shortly.' : ''}`,
         [{ text: 'View Bookings', onPress: () => router.replace('/(tabs)/bookings') }]
       );
     } catch (error) {
@@ -312,17 +416,58 @@ export default function PaymentScreen() {
         unitPrice: parseFloat(params.totalPrice as string) / (actualBookingType === 'nightly' ? nights : 1) || roomData.price,
         totalPrice,
         taxesAndFees,
+        preferencesPrice,
+        preferencesPriceBreakdown,
         totalAmount,
         paymentInfo: { method: 'razorpay', status: 'completed', orderId: verifyData.order_id || orderId, paymentId: verifyData.payment_id || paymentId, signature },
+        paymentMode: 'online',
         status: 'pending',
         reference: `BK${Date.now()}`,
         customerPreferences,
         customerVerification: {}
       };
-      await createBooking(bookingData);
-      // Notifications here...
+      const bookingDocId = await createBooking(bookingData);
+      
+      // Send notifications (WhatsApp + Push)
+      try {
+        const notificationData = createNotificationData(bookingData.reference, allGuestInfoParam);
+        
+        // Send WhatsApp notifications
+        await sendNotification({ type: 'booking_confirmed', data: notificationData });
+        await sendNotification({ type: 'admin_new_booking', data: notificationData });
+        
+        // Send Push notifications
+        const pushNotificationData = {
+          bookingId: bookingData.reference,
+          hotelId: bookingData.hotelId,
+          hotelName: bookingData.hotelDetails.name,
+          guestName: `${allGuestInfoParam[0]?.firstName || ''} ${allGuestInfoParam[0]?.lastName || ''}`.trim() || 'Guest',
+          guestPhone: allGuestInfoParam[0]?.phone || user?.phoneNumber || '',
+          amount: bookingData.totalAmount,
+          checkinDate: bookingData.checkIn,
+          checkoutDate: bookingData.checkOut,
+          checkinTime: '2:00 PM',
+          roomType: bookingData.roomDetails.type,
+          nights: bookingData.nights,
+          hotelAdmin: bookingData.hotelAdmin,
+        };
+        
+        console.log('📱 Sending push notifications (Razorpay)...');
+        const pushSuccess = await sendCompleteBookingNotifications(pushNotificationData);
+        console.log('📱 Push notifications result (Razorpay):', pushSuccess);
+        
+      } catch (e) { 
+        console.error('Notification error (Razorpay):', e);
+      }
 
-      Alert.alert('Payment Successful', 'Booking Confirmed!', [{ text: 'Done', onPress: () => router.replace('/(tabs)/bookings') }]);
+      // Setup pre-checkin if enabled (Razorpay flow)
+      await setupPreCheckin(bookingData.reference, allGuestInfoParam, bookingDocId);
+
+      Alert.alert(
+        'Payment Successful', 
+        `Booking Confirmed!${customerPreferences.preCheckinEnabled ? '\n\nPre-checkin activated! You\'ll receive confirmation details shortly.' : ''}`, 
+        [{ text: 'Done', onPress: () => router.replace('/(tabs)/bookings') }]
+      );
     } catch (e) {
       Alert.alert('Booking Error', 'Payment verification failed. Contact support.');
     } finally {
@@ -458,10 +603,30 @@ export default function PaymentScreen() {
                 {bookingType === 'hourly' ? 'Hourly Rate' : 'Room Rate'}
                 <Text style={styles.priceSubLabel}> ({bookingType === 'hourly' ? `${hourlyDuration} hrs` : `${nights} nights`})</Text>
               </Text>
-              <Text style={styles.priceValue}>₹{totalPrice}</Text>
+              <Text style={styles.priceValue}>₹{totalPrice - preferencesPrice}</Text>
             </View>
+            
+            {/* Show each preference item with its price */}
+            {preferencesPriceBreakdown && preferencesPriceBreakdown.length > 0 && (
+              <>
+                <View style={[styles.divider, { marginVertical: 8 }]} />
+                <Text style={styles.preferencesHeader}>Preferences & Add-ons</Text>
+                {preferencesPriceBreakdown.map((item: any, index: number) => (
+                  <View key={index} style={styles.preferenceItemRow}>
+                    <Text style={styles.preferenceItemLabel}>• {item.label}</Text>
+                    <Text style={styles.preferenceItemValue}>
+                      {item.quantity && item.quantity > 1 
+                        ? `₹${item.price} × ${item.quantity} = ₹${item.price * item.quantity}`
+                        : `₹${item.price}`}
+                    </Text>
+                  </View>
+                ))}
+              </>
+            )}
+            
+            <View style={[styles.divider, { marginVertical: 12 }]} />
             <View style={styles.priceRow}>
-              <Text style={styles.priceLabel}>Taxes & Fees</Text>
+              <Text style={styles.priceLabel}>Taxes & Fees (18%)</Text>
               <Text style={styles.priceValue}>₹{taxesAndFees}</Text>
             </View>
             <View style={styles.divider} />
@@ -471,6 +636,62 @@ export default function PaymentScreen() {
             </View>
           </View>
         </View>
+
+        {/* Selected Preferences */}
+        {customerPreferences.dynamicPreferences && Object.keys(customerPreferences.dynamicPreferences).length > 0 && (
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Selected Preferences</Text>
+            <View style={styles.preferencesCard}>
+              {Object.entries(customerPreferences.dynamicPreferences).map(([categoryId, categoryPrefs]) => {
+                if (!categoryPrefs || Object.keys(categoryPrefs).length === 0) return null;
+                
+                const hasValidPrefs = Object.values(categoryPrefs).some(value => 
+                  value !== null && value !== undefined && value !== '' && 
+                  (Array.isArray(value) ? value.length > 0 : true)
+                );
+                
+                if (!hasValidPrefs) return null;
+
+                return (
+                  <View key={categoryId} style={styles.preferenceCategory}>
+                    <Text style={styles.preferenceCategoryTitle}>
+                      {categoryId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </Text>
+                    {Object.entries(categoryPrefs).map(([optionId, value]) => {
+                      if (value === null || value === undefined || value === '' || 
+                          (Array.isArray(value) && value.length === 0)) {
+                        return null;
+                      }
+
+                      return (
+                        <View key={optionId} style={styles.preferenceItem}>
+                          <Text style={styles.preferenceLabel}>
+                            {optionId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </Text>
+                          <Text style={styles.preferenceValue}>
+                            {Array.isArray(value) ? value.join(', ') : 
+                             typeof value === 'boolean' ? (value ? 'Yes' : 'No') : 
+                             value.toString()}
+                          </Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* Additional Requests */}
+        {additionalRequest && additionalRequest.trim() && (
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Additional Requests</Text>
+            <View style={styles.requestsCard}>
+              <Text style={styles.requestsText}>{additionalRequest}</Text>
+            </View>
+          </View>
+        )}
 
         {/* Policies */}
         <View style={styles.policyContainer}>
@@ -848,6 +1069,86 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#EF4444',
-  }
+  },
+
+  // Preferences Display
+  preferencesCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  preferenceCategory: {
+    marginBottom: 16,
+  },
+  preferenceCategoryTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 8,
+  },
+  preferenceItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 6,
+    paddingLeft: 8,
+  },
+  preferenceLabel: {
+    fontSize: 13,
+    color: '#64748B',
+    flex: 1,
+    marginRight: 12,
+  },
+  preferenceValue: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#334155',
+    flex: 1,
+    textAlign: 'right',
+  },
+
+  // Additional Requests
+  requestsCard: {
+    backgroundColor: '#FEF7CD',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#FDE047',
+  },
+  requestsText: {
+    fontSize: 14,
+    color: '#713F12',
+    lineHeight: 20,
+  },
+
+  // Preference Items
+  preferencesHeader: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#059669',
+    marginBottom: 8,
+    marginTop: 4,
+  },
+  preferenceItemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 6,
+    paddingLeft: 8,
+  },
+  preferenceItemLabel: {
+    fontSize: 13,
+    color: '#047857',
+    flex: 1,
+    marginRight: 12,
+  },
+  preferenceItemValue: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#059669',
+    textAlign: 'right',
+  },
 
 });
