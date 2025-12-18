@@ -31,8 +31,8 @@ import LocationPermissionModal from '@/components/home/LocationPermissionModal';
 import MapView from '@/components/home/MapView';
 import SectionHeader from '@/components/home/SectionHeader';
 import LocationSearchInput from '@/components/home/LocationSearchInput';
-import TravelerTypeSetup from '@/components/debug/TravelerTypeSetup';
 import PreferencesTest from '@/components/debug/PreferencesTest';
+import TravelerTypeSetup from '@/components/debug/TravelerTypeSetup';
 
 const commonAmenities = [
   'Free WiFi',
@@ -115,12 +115,12 @@ export default function Home() {
         // Try to get hotels from cache first
         const { getHotelsFromCache, saveHotelsToCache } = await import('../../services/hotelCache');
         const cachedHotels = await getHotelsFromCache();
-        
+
         if (cachedHotels && cachedHotels.length > 0) {
           console.log('Using cached hotels');
           // Use cached data immediately for better UX
           setAllHotels(cachedHotels);
-          
+
           // Calculate distance for cached hotels if location is available
           if (userLocation) {
             const hotelsWithDistance = cachedHotels.map(hotel => {
@@ -139,12 +139,12 @@ export default function Home() {
             });
             setAllHotels(hotelsWithDistance);
           }
-          
+
           setLoading(false);
           setInitialLoad(false);
           return; // Use cache, don't fetch from network
         }
-        
+
         // No cache or expired, fetch from network
         setLoading(true);
         console.log('Fetching hotels from network');
@@ -171,7 +171,7 @@ export default function Home() {
           if (maxPrice > 2000) {
             setPriceRange([0, newMaxPrice]);
           }
-          
+
           // Cache the fetched hotels
           await saveHotelsToCache(fetchedHotels);
         }
@@ -309,7 +309,7 @@ export default function Home() {
     longitude?: number;
   }) => {
     console.log('Location selected:', location);
-    
+
     // Save location to shared storage
     try {
       const { saveSelectedLocation } = await import('../../services/locationStorage');
@@ -317,7 +317,7 @@ export default function Home() {
     } catch (error) {
       console.error('Error saving location:', error);
     }
-    
+
     // Update user location if coordinates are provided
     if (location.latitude && location.longitude) {
       setUserLocation({
@@ -328,10 +328,10 @@ export default function Home() {
       });
       setLocationEnabled(true);
     }
-    
+
     // Close the modal
     setShowLocationModal(false);
-    
+
     // Stay on home screen - user can manually navigate to search if needed
   };
 
@@ -375,10 +375,6 @@ export default function Home() {
           onSearchPress={handleSearchPress}
         />
 
-        {/* Debug Components - Only in Development */}
-        <TravelerTypeSetup />
-        <PreferencesTest />
-
         {/* Filter Section */}
         <View style={styles.filterSection}>
           <TouchableOpacity
@@ -396,10 +392,10 @@ export default function Home() {
             </Text>
           </View>
 
-          <LocationSearchInput 
-            visible={showLocationModal} 
-            onClose={() => setShowLocationModal(false)} 
-            onLocationSelect={handleLocationSelect} 
+          <LocationSearchInput
+            visible={showLocationModal}
+            onClose={() => setShowLocationModal(false)}
+            onLocationSelect={handleLocationSelect}
             googleMapsApiKey='AIzaSyCayIVJJi7Q-kncORA2HSavMdPIIHB35Z0'
           />
 

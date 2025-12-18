@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { Video, ResizeMode } from 'expo-av';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MotiView, MotiText } from 'moti';
@@ -270,9 +271,16 @@ export default function HotelDetail() {
     );
   }
 
-  // Convert .avif to .jpg for React Native compatibility
+  // Prepare media items (videos + images)
   const rawImages = hotel.images && hotel.images.length > 0 ? hotel.images : [hotel.image];
   const displayImages = rawImages.map(img => img.replace(/\.avif$/, '.jpg'));
+  const displayVideos = hotel.videos || [];
+
+  const mediaItems = [
+    ...displayVideos.map(uri => ({ type: 'video', uri })),
+    ...displayImages.map(uri => ({ type: 'image', uri }))
+  ];
+
   const minPrice = selectedRoom ? selectedRoom.price : (hotel.price || 0);
   const displayRating = averageRating > 0 ? averageRating : hotel.rating;
   const displayReviewCount = totalReviews > 0 ? totalReviews : hotel.reviews || hotel.reviewCount || 0;
@@ -324,11 +332,11 @@ export default function HotelDetail() {
         contentContainerStyle={{ paddingBottom: 120 }}
         bounces={false}
       >
-        {/* Parallax Image Hero */}
+        {/* Parallax Image/Video Hero */}
         <View style={styles.imageContainer}>
           <Animated.View style={[styles.parallaxImage, { transform: [{ translateY: imageTranslateY }] }]}>
             <FlatList
-              data={displayImages}
+              data={mediaItems}
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
@@ -337,14 +345,31 @@ export default function HotelDetail() {
                 const index = Math.round(event.nativeEvent.contentOffset.x / width);
                 setSelectedImageIndex(index);
               }}
-              renderItem={({ item }) => (
-                <Image
-                  source={{ uri: item }}
-                  style={{ width: width, height: '100%' }}
-                  contentFit="cover"
-                  transition={300}
-                />
-              )}
+              renderItem={({ item, index }) => {
+                if (item.type === 'video') {
+                  return (
+                    <View style={{ width, height: '100%' }}>
+                      <Video
+                        source={{ uri: item.uri }}
+                        style={{ width: '100%', height: '100%' }}
+                        resizeMode={ResizeMode.COVER}
+                        shouldPlay={index === selectedImageIndex}
+                        isLooping
+                        isMuted
+                        useNativeControls={false}
+                      />
+                    </View>
+                  );
+                }
+                return (
+                  <Image
+                    source={{ uri: item.uri }}
+                    style={{ width: width, height: '100%' }}
+                    contentFit="cover"
+                    transition={300}
+                  />
+                );
+              }}
             />
             <LinearGradient
               colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.7)']}
@@ -353,20 +378,21 @@ export default function HotelDetail() {
             />
           </Animated.View>
 
-          {/* Image Gallery/Dots */}
+          {/* Media Indicators/Dots */}
           <View style={styles.galleryIndicator}>
-            {displayImages.length > 1 && (
+            {mediaItems.length > 1 && (
               <View style={styles.dotsContainer}>
-                {displayImages.slice(0, 5).map((_, idx) => (
+                {mediaItems.slice(0, 5).map((item, idx) => (
                   <View
                     key={idx}
                     style={[
                       styles.dot,
-                      idx === selectedImageIndex ? styles.activeDot : styles.inactiveDot
+                      idx === selectedImageIndex ? styles.activeDot : styles.inactiveDot,
+                      item.type === 'video' && idx !== selectedImageIndex && { backgroundColor: 'rgba(255, 100, 100, 0.5)' } // Subtle hint for video
                     ]}
                   />
                 ))}
-                {displayImages.length > 5 && <View style={styles.dotSmall} />}
+                {mediaItems.length > 5 && <View style={styles.dotSmall} />}
               </View>
             )}
           </View>

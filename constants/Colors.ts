@@ -7,5 +7,8 @@ export const Colors = {
   info: '#3b72c4ff',
   light: '#f8f9fa',
   dark: '#343a40',
-  LIGHT_GRAY: '#6B7280'
+  LIGHT_GRAY: '#6B7280',
+  PRIMARY: '#246BFD',
+  DARK_BLUE: '#040E22',
+  BLACK: '#000000',
 };

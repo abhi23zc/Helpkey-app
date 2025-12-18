@@ -206,7 +206,7 @@ export default function BookingScreen() {
     const customerVerified = checkCustomerVerified();
     const allGuestsVerified = checkAllGuestsVerified();
     const unverifiedGuests = guestInfoList.filter(guest => !guest.aadhaarVerified);
-    
+
     return {
       customerVerified,
       allGuestsVerified,
@@ -218,7 +218,7 @@ export default function BookingScreen() {
   const handlePreCheckinToggle = (enabled: boolean) => {
     if (enabled) {
       const verificationStatus = getVerificationStatus();
-      
+
       if (!verificationStatus.customerVerified) {
         Alert.alert(
           'Aadhaar Verification Required',
@@ -227,7 +227,7 @@ export default function BookingScreen() {
         );
         return;
       }
-      
+
       if (!verificationStatus.allGuestsVerified) {
         const unverifiedNames = verificationStatus.unverifiedGuests
           .map(guest => `${guest.firstName} ${guest.lastName || ''}`.trim())
@@ -239,7 +239,7 @@ export default function BookingScreen() {
         );
         return;
       }
-      
+
       if (verificationStatus.allComplete) {
         setCustomerPreferences(prev => ({ ...prev, preCheckinEnabled: true }));
       }
@@ -257,7 +257,7 @@ export default function BookingScreen() {
       aadhaarNumber: verificationData.aadhaarNumber,
     };
     setGuestInfoList(updatedGuests);
-    
+
     Alert.alert(
       'Verification Successful',
       `${updatedGuests[guestIndex].firstName} ${updatedGuests[guestIndex].lastName}'s Aadhaar has been verified successfully.`,
@@ -434,7 +434,7 @@ export default function BookingScreen() {
     };
     setGuestInfoList(updatedGuests);
     setShowSavedGuestSelector(false);
-    
+
     // Show success message
     Alert.alert(
       'Guest Selected',
@@ -751,7 +751,7 @@ export default function BookingScreen() {
               <Text style={styles.inputHelperText}>
                 Enter 12-digit Aadhaar number for identity verification
               </Text>
-              
+
               {/* Verification status and button */}
               <View style={styles.guestVerificationStatusContainer}>
                 {guest.aadhaarVerified ? (
@@ -797,15 +797,16 @@ export default function BookingScreen() {
       <View style={styles.cardContainer}>
         <Text style={styles.sectionTitle}>Room Preferences</Text>
         <Text style={styles.subtext}>Select your traveler type to customize preferences</Text>
-        
+
         <TouchableOpacity
           style={styles.travelerTypeButton}
           onPress={() => setShowDynamicTravelerTypeSelector(true)}
+          activeOpacity={0.8}
         >
           <Text style={styles.travelerTypeButtonText}>
             {customerPreferences.travelerTypeId ? 'Change Traveler Type' : 'Select Traveler Type'}
           </Text>
-          <ChevronRight size={20} color="#9CA3AF" />
+          <ChevronRight size={18} color="#4B5563" />
         </TouchableOpacity>
       </View>
 
@@ -815,9 +816,9 @@ export default function BookingScreen() {
           travelerTypeId={customerPreferences.travelerTypeId}
           preferences={customerPreferences.dynamicPreferences || {}}
           onPreferencesChange={(prefs, totalPrice, breakdown) => {
-            setCustomerPreferences(prev => ({ 
-              ...prev, 
-              dynamicPreferences: prefs 
+            setCustomerPreferences(prev => ({
+              ...prev,
+              dynamicPreferences: prefs
             }));
             if (totalPrice !== undefined) {
               setPreferencesPrice(totalPrice);
@@ -860,7 +861,7 @@ export default function BookingScreen() {
       <View style={styles.cardContainer}>
         <Text style={styles.sectionTitle}>Pre-Checkin Option</Text>
         <Text style={styles.subtext}>Skip the front desk and go directly to your room</Text>
-        
+
         {/* Verification Status */}
         <View style={styles.verificationStatusContainer}>
           <View style={styles.verificationItem}>
@@ -893,13 +894,13 @@ export default function BookingScreen() {
               All Guests Aadhaar Verification
             </Text>
             {!checkAllGuestsVerified() && (
-              <TouchableOpacity 
-                style={styles.verifyButton} 
+              <TouchableOpacity
+                style={styles.verifyButton}
                 onPress={() => {
                   const unverifiedGuests = guestInfoList
                     .map((guest, index) => ({ guest, index }))
                     .filter(({ guest }) => !guest.aadhaarVerified);
-                  
+
                   if (unverifiedGuests.length > 0) {
                     const { guest, index } = unverifiedGuests[0];
                     Alert.alert(
@@ -907,8 +908,8 @@ export default function BookingScreen() {
                       `Verify Aadhaar for ${guest.firstName} ${guest.lastName}`,
                       [
                         { text: 'Cancel', style: 'cancel' },
-                        { 
-                          text: 'Verify', 
+                        {
+                          text: 'Verify',
                           onPress: () => {
                             // Simulate verification for demo
                             handleGuestVerificationComplete(index, {
@@ -986,9 +987,9 @@ export default function BookingScreen() {
     }
 
     const preferences = customerPreferences.dynamicPreferences;
-    const hasAnyPreferences = Object.values(preferences).some(category => 
-      category && Object.values(category).some(value => 
-        value !== null && value !== undefined && value !== '' && 
+    const hasAnyPreferences = Object.values(preferences).some(category =>
+      category && Object.values(category).some(value =>
+        value !== null && value !== undefined && value !== '' &&
         (Array.isArray(value) ? value.length > 0 : true)
       )
     );
@@ -1002,12 +1003,12 @@ export default function BookingScreen() {
         <Text style={styles.sectionTitle}>Selected Preferences</Text>
         {Object.entries(preferences).map(([categoryId, categoryPrefs]) => {
           if (!categoryPrefs || Object.keys(categoryPrefs).length === 0) return null;
-          
-          const hasValidPrefs = Object.values(categoryPrefs).some(value => 
-            value !== null && value !== undefined && value !== '' && 
+
+          const hasValidPrefs = Object.values(categoryPrefs).some(value =>
+            value !== null && value !== undefined && value !== '' &&
             (Array.isArray(value) ? value.length > 0 : true)
           );
-          
+
           if (!hasValidPrefs) return null;
 
           return (
@@ -1016,8 +1017,8 @@ export default function BookingScreen() {
                 {categoryId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
               </Text>
               {Object.entries(categoryPrefs).map(([optionId, value]) => {
-                if (value === null || value === undefined || value === '' || 
-                    (Array.isArray(value) && value.length === 0)) {
+                if (value === null || value === undefined || value === '' ||
+                  (Array.isArray(value) && value.length === 0)) {
                   return null;
                 }
 
@@ -1027,9 +1028,9 @@ export default function BookingScreen() {
                       {optionId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:
                     </Text>
                     <Text style={styles.preferenceValue}>
-                      {Array.isArray(value) ? value.join(', ') : 
-                       typeof value === 'boolean' ? (value ? 'Yes' : 'No') : 
-                       value.toString()}
+                      {Array.isArray(value) ? value.join(', ') :
+                        typeof value === 'boolean' ? (value ? 'Yes' : 'No') :
+                          value.toString()}
                     </Text>
                   </View>
                 );
@@ -1127,13 +1128,13 @@ export default function BookingScreen() {
         <Text style={styles.sectionTitle}>Price Breakdown</Text>
         <View style={styles.priceRowItem}>
           <Text style={styles.priceLabel}>
-            Room Charges {bookingType === 'hourly' 
-              ? `(${selectedHourlyRate?.hours || 0} hrs)` 
+            Room Charges {bookingType === 'hourly'
+              ? `(${selectedHourlyRate?.hours || 0} hrs)`
               : `(${calculateNights()} nights)`}
           </Text>
           <Text style={styles.priceValue}>
-            ₹{bookingType === 'hourly' && selectedHourlyRate 
-              ? selectedHourlyRate.price 
+            ₹{bookingType === 'hourly' && selectedHourlyRate
+              ? selectedHourlyRate.price
               : (roomData?.price || 0) * calculateNights()}
           </Text>
         </View>
@@ -1590,27 +1591,28 @@ const styles = StyleSheet.create({
   chipsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
     marginBottom: 20,
   },
   chip: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
+    paddingVertical: 10,
+    borderRadius: 30,
+    backgroundColor: '#F1F5F9', // Slate 100
     borderWidth: 1,
     borderColor: 'transparent',
   },
   chipActive: {
-    backgroundColor: '#F3F4F6',
-    borderColor: '#111827',
+    backgroundColor: '#1E293B', // Slate 800
+    borderColor: '#1E293B',
   },
   chipText: {
     fontSize: 13,
-    color: '#4B5563',
+    color: '#475569',
+    fontWeight: '500',
   },
   chipTextActive: {
-    color: '#111827',
+    color: '#FFF',
     fontWeight: '600',
   },
 
@@ -1969,15 +1971,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#F3F4F6',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderRadius: 16,
   },
   travelerTypeButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: '#1F293B',
   },
 
   // Dynamic Preferences Summary

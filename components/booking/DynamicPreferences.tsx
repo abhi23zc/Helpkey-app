@@ -46,8 +46,8 @@ interface DynamicPreferencesProps {
   travelerTypeId: string;
   preferences: Record<string, any>;
   onPreferencesChange: (
-    preferences: Record<string, any>, 
-    totalPrice?: number, 
+    preferences: Record<string, any>,
+    totalPrice?: number,
     breakdown?: Array<{ label: string; price: number; quantity?: number }>
   ) => void;
 }
@@ -70,14 +70,14 @@ export default function DynamicPreferences({
       setLoading(true);
       const docRef = doc(db, 'travelerTypes', travelerTypeId);
       const docSnap = await getDoc(docRef);
-      
+
       if (docSnap.exists()) {
         const data = docSnap.data();
         setTravelerType({
           id: docSnap.id,
           ...data,
         } as TravelerType);
-        
+
         // Auto-expand first category
         if (data.preferenceCategories && data.preferenceCategories.length > 0) {
           setExpandedCategories(new Set([data.preferenceCategories[0].id]));
@@ -93,22 +93,22 @@ export default function DynamicPreferences({
 
   const calculateTotalPrice = (prefs: Record<string, any>) => {
     if (!travelerType) return 0;
-    
+
     let total = 0;
-    
+
     travelerType.preferenceCategories.forEach(category => {
       const categoryPrefs = prefs[category.id];
       if (!categoryPrefs) return;
-      
+
       category.options.forEach(option => {
         const value = categoryPrefs[option.id];
-        
+
         // Skip if no value or false
-        if (!value || value === false || value === '' || 
-            (Array.isArray(value) && value.length === 0)) {
+        if (!value || value === false || value === '' ||
+          (Array.isArray(value) && value.length === 0)) {
           return;
         }
-        
+
         // Add price if option has a price
         if (option.price && option.price > 0) {
           if (option.type === 'checkbox' && value === true) {
@@ -125,28 +125,28 @@ export default function DynamicPreferences({
         }
       });
     });
-    
+
     return total;
   };
 
   const getDetailedPriceBreakdown = (prefs: Record<string, any>) => {
     if (!travelerType) return [];
-    
+
     const breakdown: Array<{ label: string; price: number; quantity?: number }> = [];
-    
+
     travelerType.preferenceCategories.forEach(category => {
       const categoryPrefs = prefs[category.id];
       if (!categoryPrefs) return;
-      
+
       category.options.forEach(option => {
         const value = categoryPrefs[option.id];
-        
+
         // Skip if no value or false
-        if (!value || value === false || value === '' || 
-            (Array.isArray(value) && value.length === 0)) {
+        if (!value || value === false || value === '' ||
+          (Array.isArray(value) && value.length === 0)) {
           return;
         }
-        
+
         // Add to breakdown if option has a price
         if (option.price && option.price > 0) {
           if (option.type === 'checkbox' && value === true) {
@@ -154,16 +154,16 @@ export default function DynamicPreferences({
           } else if (option.type === 'select' && value) {
             breakdown.push({ label: `${option.label}: ${value}`, price: option.price });
           } else if (option.type === 'multiselect' && Array.isArray(value) && value.length > 0) {
-            breakdown.push({ 
-              label: `${option.label} (${value.length} items)`, 
-              price: option.price, 
-              quantity: value.length 
+            breakdown.push({
+              label: `${option.label} (${value.length} items)`,
+              price: option.price,
+              quantity: value.length
             });
           } else if (option.type === 'number' && typeof value === 'number' && value > 0) {
-            breakdown.push({ 
-              label: `${option.label} (${value})`, 
-              price: option.price, 
-              quantity: value 
+            breakdown.push({
+              label: `${option.label} (${value})`,
+              price: option.price,
+              quantity: value
             });
           } else if (option.type === 'text' && value) {
             breakdown.push({ label: option.label, price: option.price });
@@ -171,7 +171,7 @@ export default function DynamicPreferences({
         }
       });
     });
-    
+
     return breakdown;
   };
 
@@ -183,7 +183,7 @@ export default function DynamicPreferences({
         [optionId]: value,
       },
     };
-    
+
     const totalPrice = calculateTotalPrice(updatedPreferences);
     const breakdown = getDetailedPriceBreakdown(updatedPreferences);
     onPreferencesChange(updatedPreferences, totalPrice, breakdown);
@@ -394,24 +394,40 @@ export default function DynamicPreferences({
 
   const colorStyles = getColorStyles(travelerType.color);
 
+  // Custom theme overrides for specific traveler types to match the screenshot
+  const isCorporate = travelerType.title.toLowerCase().includes('corporate') || travelerType.title.toLowerCase().includes('business');
+
+  const containerStyle = isCorporate ? {
+    backgroundColor: '#EFF6FF', // Light blue background
+    borderColor: '#BFDBFE', // Blue border
+    borderWidth: 1,
+  } : {
+    backgroundColor: colorStyles.bg,
+    borderColor: colorStyles.border,
+    borderWidth: 1,
+  };
+
+  const titleColor = isCorporate ? '#1E40AF' : colorStyles.text;
+
   return (
-    <View style={[styles.container, { backgroundColor: colorStyles.bg, borderColor: colorStyles.border }]}>
+    <View style={[styles.container, containerStyle]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colorStyles.text }]}>
+        <Text style={[styles.title, { color: titleColor }]}>
           {travelerType.title} Preferences
         </Text>
         <Text style={styles.subtitle}>Customize your stay experience</Text>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <View style={styles.content}>
         {travelerType.preferenceCategories.map((category) => {
           const isExpanded = expandedCategories.has(category.id);
-          
+
           return (
             <View key={category.id} style={styles.categoryContainer}>
               <TouchableOpacity
                 style={styles.categoryHeader}
                 onPress={() => toggleCategory(category.id)}
+                activeOpacity={0.7}
               >
                 <View style={styles.categoryHeaderContent}>
                   <Text style={styles.categoryName}>{category.name}</Text>
@@ -434,7 +450,7 @@ export default function DynamicPreferences({
             </View>
           );
         })}
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -470,13 +486,13 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   content: {
-    maxHeight: 400,
+    paddingBottom: 8,
   },
   categoryContainer: {
     backgroundColor: '#FFF',
     marginHorizontal: 16,
     marginBottom: 12,
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
   },
   categoryHeader: {
@@ -484,7 +500,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8FAFC', // Very subtle gray/white
   },
   categoryHeaderContent: {
     flex: 1,
@@ -492,8 +508,8 @@ const styles = StyleSheet.create({
   },
   categoryName: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
+    fontWeight: '700',
+    color: '#1E293B',
     marginBottom: 2,
   },
   categoryDescription: {
@@ -521,10 +537,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
     marginTop: 2,
+    backgroundColor: '#FFF',
   },
   checkboxActive: {
-    backgroundColor: '#111827',
-    borderColor: '#111827',
+    backgroundColor: '#1E293B',
+    borderColor: '#1E293B',
   },
   optionContent: {
     flex: 1,
@@ -590,20 +607,21 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   multiselectChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#F1F5F9', // Slate 100
+    borderRadius: 24, // Pill shape
     borderWidth: 1,
     borderColor: 'transparent',
   },
   multiselectChipActive: {
-    backgroundColor: '#111827',
-    borderColor: '#111827',
+    backgroundColor: '#1E293B', // Slate 800
+    borderColor: '#1E293B',
   },
   multiselectChipText: {
-    fontSize: 12,
-    color: '#374151',
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#475569',
   },
   multiselectChipTextActive: {
     color: '#FFF',
