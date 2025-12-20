@@ -68,7 +68,7 @@ class PushNotificationService {
 
       this.expoPushToken = tokenData.data;
       console.log('📱 Expo Push Token received:', this.expoPushToken);
-      
+
       // Validate token format
       if (!this.expoPushToken || !this.expoPushToken.startsWith('ExponentPushToken[')) {
         console.error('❌ Invalid push token format received');
@@ -164,7 +164,7 @@ class PushNotificationService {
   // Handle notification received while app is running
   private handleNotificationReceived(notification: Notifications.Notification): void {
     const { type, bookingId, hotelId } = notification.request.content.data || {};
-    
+
     // You can add custom logic here based on notification type
     switch (type) {
       case 'booking_confirmed':
@@ -181,7 +181,7 @@ class PushNotificationService {
   // Handle notification response (when user taps notification)
   private handleNotificationResponse(response: Notifications.NotificationResponse): void {
     const { type, bookingId, hotelId, screen } = response.notification.request.content.data || {};
-    
+
     // Navigate to appropriate screen based on notification type
     switch (type) {
       case 'booking_confirmed':
@@ -210,7 +210,7 @@ class PushNotificationService {
   async sendLocalNotification(notification: PushNotificationData): Promise<void> {
     try {
       console.log('📱 Sending local notification:', notification.title);
-      
+
       const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
           title: notification.title,
@@ -220,7 +220,7 @@ class PushNotificationService {
         },
         trigger: null, // Send immediately
       });
-      
+
       console.log('✅ Local notification scheduled:', notificationId);
     } catch (error) {
       console.error('❌ Error sending local notification:', error);
@@ -235,11 +235,11 @@ class PushNotificationService {
   ): Promise<boolean> {
     try {
       console.log('📤 Sending push notification to user:', targetUserId);
-      
+
       // Get user's push token from Firebase
       const userRef = doc(db, 'users', targetUserId);
       const userDoc = await getDoc(userRef);
-      
+
       if (!userDoc.exists()) {
         console.error('❌ User not found:', targetUserId);
         return false;
@@ -250,10 +250,10 @@ class PushNotificationService {
 
       if (!pushToken) {
         console.warn('⚠️ No push token found for user:', targetUserId);
-        console.log('💡 User data:', { 
-          uid: userData.uid, 
+        console.log('💡 User data:', {
+          uid: userData.uid,
           email: userData.email,
-          hasToken: !!userData.expoPushToken 
+          hasToken: !!userData.expoPushToken
         });
         return false;
       }
@@ -323,7 +323,7 @@ class PushNotificationService {
 
       const result = await response.json();
       console.log('📥 Push API Response:', result);
-      
+
       // Handle different response formats
       if (result.data) {
         // Array response format
@@ -402,7 +402,7 @@ class PushNotificationService {
       } else {
         failed++;
       }
-      
+
       // Add small delay to avoid rate limiting
       await new Promise(resolve => setTimeout(resolve, 100));
     }
@@ -487,9 +487,9 @@ class PushNotificationService {
           data: notification.data || {},
           sound: 'default',
         },
-        trigger: { 
+        trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
-          date: triggerDate 
+          date: triggerDate
         },
       });
 

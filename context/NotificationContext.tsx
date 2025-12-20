@@ -43,10 +43,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const initializeNotifications = async (): Promise<void> => {
     try {
       console.log('🔔 Initializing push notifications...');
-      
+
       // Initialize push notification service
       const token = await pushNotificationService.initialize(user?.uid);
-      
+
       if (token) {
         setExpoPushToken(token);
         setIsNotificationPermissionGranted(true);
@@ -104,7 +104,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       // Only schedule if the reminder date is in the future
       if (reminderDate > new Date()) {
         const template = pushNotificationService.getNotificationTemplate('checkin_reminder', bookingData);
-        
+
         await pushNotificationService.scheduleNotification(
           {
             type: 'checkin_reminder',

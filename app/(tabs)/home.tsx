@@ -31,8 +31,6 @@ import LocationPermissionModal from '@/components/home/LocationPermissionModal';
 import MapView from '@/components/home/MapView';
 import SectionHeader from '@/components/home/SectionHeader';
 import LocationSearchInput from '@/components/home/LocationSearchInput';
-import PreferencesTest from '@/components/debug/PreferencesTest';
-import TravelerTypeSetup from '@/components/debug/TravelerTypeSetup';
 
 const commonAmenities = [
   'Free WiFi',
@@ -470,20 +468,6 @@ export default function Home() {
           onApply={() => setShowFilters(false)}
         />
 
-
-
-        {/* Hotels Count Banner */}
-        <View style={styles.bannerContainer}>
-          <Text style={styles.bannerText}>
-            Book <Text style={styles.bannerHighlight}>{allHotels.length}+</Text> Hotels across{' '}
-            <Text style={styles.bannerHighlight}>20+</Text> cities
-          </Text>
-        </View>
-
-
-
-
-
         {/* Loading State */}
         {loading ? (
           <>
@@ -606,12 +590,11 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#0a0e27',
   },
   filterSection: {
     paddingHorizontal: 20,
-    paddingTop: 16,
-    backgroundColor: '#fff',
+    paddingTop: 16
   },
   filterToggle: {
     flexDirection: 'row',
@@ -621,8 +604,9 @@ const styles = StyleSheet.create({
   },
   filterToggleText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#0066FF',
+    fontWeight: '700',
+    color: '#00D9FF',
+    letterSpacing: 0.3,
   },
   priceRangeDisplay: {
     paddingVertical: 8,
@@ -630,7 +614,7 @@ const styles = StyleSheet.create({
   priceRangeLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: 'rgba(255, 255, 255, 0.9)',
   },
   filterChips: {
     flexDirection: 'row',
@@ -638,21 +622,25 @@ const styles = StyleSheet.create({
   },
   chip: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    paddingVertical: 10,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     marginRight: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   chipActive: {
-    backgroundColor: '#0066FF',
+    backgroundColor: 'rgba(0, 217, 255, 0.2)',
+    borderColor: '#00D9FF',
   },
   chipText: {
     fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: '600',
   },
   chipTextActive: {
-    color: '#fff',
+    color: '#00D9FF',
+    fontWeight: '700',
   },
   section: {
     marginTop: 24,
@@ -665,15 +653,21 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginTop: 24,
     marginBottom: 8,
+    backgroundColor: 'rgba(0, 217, 255, 0.1)',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 217, 255, 0.2)',
   },
   bannerText: {
     fontSize: 16,
-    color: '#333',
-    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: '500',
+    textAlign: 'center',
   },
   bannerHighlight: {
-    color: '#0066FF',
-    fontWeight: '700',
+    color: '#00D9FF',
+    fontWeight: '800',
   },
   hotelsScroll: {
     paddingHorizontal: 20,
@@ -691,7 +685,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   emptyContainer: {
     paddingVertical: 60,
@@ -699,21 +693,23 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: '700',
+    color: '#fff',
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.6)',
     marginTop: 8,
   },
   mapSection: {
     marginHorizontal: 20,
     marginTop: 16,
     height: 400,
-    borderRadius: 16,
+    borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#1a1f3a',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   loadingHeader: {
     paddingHorizontal: 20,
@@ -721,7 +717,8 @@ const styles = StyleSheet.create({
   },
   loadingTitle: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: '800',
+    color: '#fff',
+    letterSpacing: 0.3,
   },
 });

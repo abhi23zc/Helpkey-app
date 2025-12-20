@@ -5,8 +5,6 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
-  ScrollView,
-  Switch,
   Alert,
   ActivityIndicator,
 } from 'react-native';
@@ -57,6 +55,17 @@ export default function DynamicPreferences({
   preferences,
   onPreferencesChange,
 }: DynamicPreferencesProps) {
+  // Validate props
+  if (!travelerTypeId || typeof travelerTypeId !== 'string') {
+    console.error('DynamicPreferences: Invalid travelerTypeId:', travelerTypeId);
+    return null;
+  }
+
+  if (!preferences || typeof preferences !== 'object') {
+    console.error('DynamicPreferences: Invalid preferences:', preferences);
+    return null;
+  }
+
   const [travelerType, setTravelerType] = useState<TravelerType | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
@@ -73,9 +82,38 @@ export default function DynamicPreferences({
 
       if (docSnap.exists()) {
         const data = docSnap.data();
+        
+        // Validate the data structure
+        if (!data || !data.preferenceCategories || !Array.isArray(data.preferenceCategories)) {
+          console.error('DynamicPreferences: Invalid traveler type data structure:', data);
+          setTravelerType(null);
+          setLoading(false);
+          return;
+        }
+
+        // Validate each category and option
+        const validCategories = data.preferenceCategories.filter((category: any) => {
+          if (!category || !category.id || !category.name || !Array.isArray(category.options)) {
+            console.warn('DynamicPreferences: Invalid category:', category);
+            return false;
+          }
+          
+          // Validate options within the category
+          category.options = category.options.filter((option: any) => {
+            if (!option || !option.id || !option.type || !option.label) {
+              console.warn('DynamicPreferences: Invalid option:', option);
+              return false;
+            }
+            return true;
+          });
+          
+          return category.options.length > 0;
+        });
+
         setTravelerType({
           id: docSnap.id,
           ...data,
+          preferenceCategories: validCategories,
         } as TravelerType);
 
         // Auto-expand first category
@@ -200,12 +238,22 @@ export default function DynamicPreferences({
   };
 
   const renderOption = (category: PreferenceCategory, option: PreferenceOption) => {
-    const currentValue = preferences[category.id]?.[option.id];
+    try {
+      // Safety check for option object
+      if (!option || !option.id || !option.type) {
+        return null;
+      }
 
-    switch (option.type) {
+      const currentValue = preferences[category.id]?.[option.id];
+
+      switch (option.type) {
       case 'checkbox':
+        const checkboxLabel = option.label || '';
+        const checkboxPrice = option.price || 0;
+        const checkboxDescription = option.description || '';
+        
         return (
-          <View key={option.id} style={styles.optionContainer}>
+          <View key={`${category.id}-${option.id}`} style={styles.optionContainer}>
             <View style={styles.checkboxContainer}>
               <TouchableOpacity
                 style={[styles.checkbox, currentValue && styles.checkboxActive]}
@@ -214,12 +262,12 @@ export default function DynamicPreferences({
                 {currentValue && <Check size={14} color="#FFF" strokeWidth={3} />}
               </TouchableOpacity>
               <View style={styles.optionContent}>
-                <Text style={styles.optionLabel}>{option.label}</Text>
-                {option.price && option.price > 0 && (
-                  <Text style={styles.optionPrice}>+₹{option.price}</Text>
+                <Text style={styles.optionLabel}>{checkboxLabel}</Text>
+                {checkboxPrice > 0 && (
+                  <Text style={styles.optionPrice}>+₹{checkboxPrice}</Text>
                 )}
-                {option.description && (
-                  <Text style={styles.optionDescription}>{option.description}</Text>
+                {checkboxDescription.length > 0 && (
+                  <Text style={styles.optionDescription}>{checkboxDescription}</Text>
                 )}
               </View>
             </View>
@@ -227,17 +275,21 @@ export default function DynamicPreferences({
         );
 
       case 'select':
+        const selectLabel = option.label || '';
+        const selectPrice = option.price || 0;
+        const selectDescription = option.description || '';
+        
         return (
-          <View key={option.id} style={styles.optionContainer}>
+          <View key={`${category.id}-${option.id}`} style={styles.optionContainer}>
             <Text style={styles.optionLabel}>
-              {option.label}
+              {selectLabel}
               {option.required && <Text style={styles.required}> *</Text>}
-              {option.price && option.price > 0 && (
-                <Text style={styles.optionPrice}> +₹{option.price}</Text>
+              {selectPrice > 0 && (
+                <Text style={styles.optionPrice}> +₹{selectPrice}</Text>
               )}
             </Text>
-            {option.description && (
-              <Text style={styles.optionDescription}>{option.description}</Text>
+            {selectDescription.length > 0 && (
+              <Text style={styles.optionDescription}>{selectDescription}</Text>
             )}
             <View style={styles.selectContainer}>
               <Text style={styles.selectValue}>
@@ -262,7 +314,7 @@ export default function DynamicPreferences({
                       currentValue === opt && styles.selectOptionTextActive,
                     ]}
                   >
-                    {opt}
+                    {opt || ''}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -271,17 +323,21 @@ export default function DynamicPreferences({
         );
 
       case 'multiselect':
+        const multiselectLabel = option.label || '';
+        const multiselectPrice = option.price || 0;
+        const multiselectDescription = option.description || '';
+        
         return (
-          <View key={option.id} style={styles.optionContainer}>
+          <View key={`${category.id}-${option.id}`} style={styles.optionContainer}>
             <Text style={styles.optionLabel}>
-              {option.label}
+              {multiselectLabel}
               {option.required && <Text style={styles.required}> *</Text>}
-              {option.price && option.price > 0 && (
-                <Text style={styles.optionPrice}> +₹{option.price}</Text>
+              {multiselectPrice > 0 && (
+                <Text style={styles.optionPrice}> +₹{multiselectPrice}</Text>
               )}
             </Text>
-            {option.description && (
-              <Text style={styles.optionDescription}>{option.description}</Text>
+            {multiselectDescription.length > 0 && (
+              <Text style={styles.optionDescription}>{multiselectDescription}</Text>
             )}
             <View style={styles.multiselectContainer}>
               {option.options?.map((opt) => {
@@ -304,7 +360,7 @@ export default function DynamicPreferences({
                         isSelected && styles.multiselectChipTextActive,
                       ]}
                     >
-                      {opt}
+                      {opt || ''}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -314,21 +370,25 @@ export default function DynamicPreferences({
         );
 
       case 'number':
+        const numberLabel = option.label || '';
+        const numberPrice = option.price || 0;
+        const numberDescription = option.description || '';
+        
         return (
-          <View key={option.id} style={styles.optionContainer}>
+          <View key={`${category.id}-${option.id}`} style={styles.optionContainer}>
             <Text style={styles.optionLabel}>
-              {option.label}
+              {numberLabel}
               {option.required && <Text style={styles.required}> *</Text>}
-              {option.price && option.price > 0 && (
-                <Text style={styles.optionPrice}> +₹{option.price}</Text>
+              {numberPrice > 0 && (
+                <Text style={styles.optionPrice}> +₹{numberPrice}</Text>
               )}
             </Text>
-            {option.description && (
-              <Text style={styles.optionDescription}>{option.description}</Text>
+            {numberDescription.length > 0 && (
+              <Text style={styles.optionDescription}>{numberDescription}</Text>
             )}
             <TextInput
               style={styles.numberInput}
-              value={currentValue?.toString() || '0'}
+              value={currentValue ? currentValue.toString() : '0'}
               onChangeText={(text) => {
                 const num = parseInt(text) || 0;
                 handlePreferenceChange(category.id, option.id, num);
@@ -340,17 +400,21 @@ export default function DynamicPreferences({
         );
 
       case 'text':
+        const textLabel = option.label || '';
+        const textPrice = option.price || 0;
+        const textDescription = option.description || '';
+        
         return (
-          <View key={option.id} style={styles.optionContainer}>
+          <View key={`${category.id}-${option.id}`} style={styles.optionContainer}>
             <Text style={styles.optionLabel}>
-              {option.label}
+              {textLabel}
               {option.required && <Text style={styles.required}> *</Text>}
-              {option.price && option.price > 0 && (
-                <Text style={styles.optionPrice}> +₹{option.price}</Text>
+              {textPrice > 0 && (
+                <Text style={styles.optionPrice}> +₹{textPrice}</Text>
               )}
             </Text>
-            {option.description && (
-              <Text style={styles.optionDescription}>{option.description}</Text>
+            {textDescription.length > 0 && (
+              <Text style={styles.optionDescription}>{textDescription}</Text>
             )}
             <TextInput
               style={styles.textInput}
@@ -366,6 +430,10 @@ export default function DynamicPreferences({
       default:
         return null;
     }
+    } catch (error) {
+      console.error('Error rendering option:', error, option);
+      return null;
+    }
   };
 
   if (loading) {
@@ -378,8 +446,17 @@ export default function DynamicPreferences({
   }
 
   if (!travelerType || !travelerType.preferenceCategories || travelerType.preferenceCategories.length === 0) {
-    return null;
+    console.log('DynamicPreferences: No traveler type or categories found');
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>No preferences available for this traveler type.</Text>
+      </View>
+    );
   }
+
+  // Debug log to help identify data issues
+  console.log('DynamicPreferences: Rendering with traveler type:', travelerType.title);
+  console.log('DynamicPreferences: Categories count:', travelerType.preferenceCategories.length);
 
   const getColorStyles = (color: string) => {
     const colorMap: Record<string, { bg: string; border: string; text: string }> = {
@@ -413,13 +490,13 @@ export default function DynamicPreferences({
     <View style={[styles.container, containerStyle]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: titleColor }]}>
-          {travelerType.title} Preferences
+          {travelerType.title || ''} Preferences
         </Text>
         <Text style={styles.subtitle}>Customize your stay experience</Text>
       </View>
 
       <View style={styles.content}>
-        {travelerType.preferenceCategories.map((category) => {
+        {travelerType.preferenceCategories?.filter(category => category && category.id).map((category) => {
           const isExpanded = expandedCategories.has(category.id);
 
           return (
@@ -430,9 +507,9 @@ export default function DynamicPreferences({
                 activeOpacity={0.7}
               >
                 <View style={styles.categoryHeaderContent}>
-                  <Text style={styles.categoryName}>{category.name}</Text>
+                  <Text style={styles.categoryName}>{category.name || ''}</Text>
                   {category.description && (
-                    <Text style={styles.categoryDescription}>{category.description}</Text>
+                    <Text style={styles.categoryDescription}>{category.description || ''}</Text>
                   )}
                 </View>
                 {isExpanded ? (
@@ -444,7 +521,7 @@ export default function DynamicPreferences({
 
               {isExpanded && (
                 <View style={styles.categoryContent}>
-                  {category.options.map((option) => renderOption(category, option))}
+                  {category.options?.filter(option => option && option.id).map((option) => renderOption(category, option))}
                 </View>
               )}
             </View>
@@ -471,6 +548,12 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 14,
     color: '#6B7280',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    padding: 20,
   },
   header: {
     padding: 20,
