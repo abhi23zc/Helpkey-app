@@ -64,7 +64,7 @@ const RoomCard = ({ room, onSelect, isSelected }: RoomCardProps) => {
                             <Text style={styles.roomType} numberOfLines={1}>{room.roomType || room.type}</Text>
                             {isSelected && (
                                 <View style={styles.selectedBadge}>
-                                    <Check size={10} color="#fff" strokeWidth={4} />
+                                    <Check size={10} color="#0a0e27" strokeWidth={4} />
                                 </View>
                             )}
                         </View>
@@ -78,15 +78,15 @@ const RoomCard = ({ room, onSelect, isSelected }: RoomCardProps) => {
                         {/* Stats Row - Compact */}
                         <View style={styles.statsRow}>
                             <View style={styles.statItem}>
-                                <Maximize size={12} color="#666" />
+                                <Maximize size={12} color="rgba(255, 255, 255, 0.6)" />
                                 <Text style={styles.statText}>{room.size || '-'}</Text>
                             </View>
                             <View style={styles.statItem}>
-                                <Bed size={12} color="#666" />
+                                <Bed size={12} color="rgba(255, 255, 255, 0.6)" />
                                 <Text style={styles.statText}>{room.beds || '1'}</Text>
                             </View>
                             <View style={styles.statItem}>
-                                <Users size={12} color="#666" />
+                                <Users size={12} color="rgba(255, 255, 255, 0.6)" />
                                 <Text style={styles.statText}>{room.capacity || 2}</Text>
                             </View>
                         </View>
@@ -157,22 +157,22 @@ const RoomCard = ({ room, onSelect, isSelected }: RoomCardProps) => {
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: '#fff',
-        borderRadius: 12,
+        backgroundColor: '#1a1f3a',
+        borderRadius: 16,
         marginBottom: 12,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: '#f0f0f0',
+        borderColor: 'rgba(255, 255, 255, 0.1)',
         elevation: 1,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
     },
     containerSelected: {
-        borderColor: '#4F46E5',
+        borderColor: '#00D9FF',
         borderWidth: 1.5,
-        backgroundColor: '#EEF2FF',
+        backgroundColor: 'rgba(0, 217, 255, 0.05)',
     },
     innerContainer: {
         flexDirection: 'row',
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     },
     content: {
         flex: 1,
-        padding: 10,
+        padding: 12,
         justifyContent: 'space-between',
     },
     headerRow: {
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     roomType: {
         fontSize: 15,
         fontWeight: '700',
-        color: '#1A1A1A',
+        color: '#fff',
         flex: 1,
         marginRight: 8,
     },
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
         width: 18,
         height: 18,
         borderRadius: 9,
-        backgroundColor: '#4F46E5',
+        backgroundColor: '#00D9FF',
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -233,16 +233,16 @@ const styles = StyleSheet.create({
     },
     roomId: {
         fontSize: 11,
-        color: '#666',
+        color: 'rgba(255, 255, 255, 0.6)',
     },
     dotSeparator: {
         fontSize: 11,
-        color: '#999',
+        color: 'rgba(255, 255, 255, 0.4)',
         marginHorizontal: 4,
     },
     statusText: {
         fontSize: 11,
-        color: '#059669', // slight green for status is okay or use indigo? Let's use green for status usually
+        color: '#10B981', // Green for status
         fontWeight: '500',
     },
     statsRow: {
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     },
     statText: {
         fontSize: 11,
-        color: '#666',
+        color: 'rgba(255, 255, 255, 0.6)',
         fontWeight: '500',
     },
     footerRow: {
@@ -269,22 +269,24 @@ const styles = StyleSheet.create({
     price: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#1A1A1A',
+        color: '#00D9FF',
         lineHeight: 20,
     },
     perNight: {
         fontSize: 10,
-        color: '#999',
+        color: 'rgba(255, 255, 255, 0.5)',
     },
     hourlyTag: {
-        backgroundColor: '#E8F8F5',
+        backgroundColor: 'rgba(0, 217, 255, 0.1)',
         paddingHorizontal: 6,
         paddingVertical: 2,
         borderRadius: 4,
+        borderWidth: 1,
+        borderColor: 'rgba(0, 217, 255, 0.2)',
     },
     hourlyTagText: {
         fontSize: 9,
-        color: '#4F46E5',
+        color: '#00D9FF',
         fontWeight: '600',
     },
     // Modal Styles

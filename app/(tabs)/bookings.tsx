@@ -144,15 +144,15 @@ export default function Bookings() {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'completed':
-        return { bg: '#DCFCE7', text: '#15803D', icon: '#15803D' };
+        return { bg: 'rgba(16, 185, 129, 0.15)', text: '#34D399', icon: '#34D399' };
       case 'confirmed':
-        return { bg: '#F3F4F6', text: '#111827', icon: '#111827' };
+        return { bg: 'rgba(0, 217, 255, 0.15)', text: '#00D9FF', icon: '#00D9FF' };
       case 'pending':
-        return { bg: '#FEF9C3', text: '#A16207', icon: '#A16207' };
+        return { bg: 'rgba(251, 191, 36, 0.15)', text: '#FBBF24', icon: '#FBBF24' };
       case 'cancelled':
-        return { bg: '#FEE2E2', text: '#B91C1C', icon: '#B91C1C' };
+        return { bg: 'rgba(239, 68, 68, 0.15)', text: '#F87171', icon: '#F87171' };
       default:
-        return { bg: '#F3F4F6', text: '#6B7280', icon: '#6B7280' };
+        return { bg: 'rgba(107, 114, 128, 0.15)', text: '#9CA3AF', icon: '#9CA3AF' };
     }
   };
 
@@ -228,7 +228,7 @@ export default function Bookings() {
               />
             ) : (
               <View style={styles.imagePlaceholder}>
-                <MapPin size={32} color="#9CA3AF" />
+                <MapPin size={32} color="rgba(255, 255, 255, 0.2)" />
               </View>
             )}
 
@@ -243,7 +243,7 @@ export default function Bookings() {
             <View style={styles.hotelInfo}>
               <Text style={styles.hotelName} numberOfLines={1}>{booking.hotelDetails.name}</Text>
               <View style={styles.locationRow}>
-                <MapPin size={12} color="#6B7280" />
+                <MapPin size={12} color="#00D9FF" />
                 <Text style={styles.locationText} numberOfLines={1}>{booking.hotelDetails.location}</Text>
               </View>
             </View>
@@ -259,7 +259,7 @@ export default function Bookings() {
             <View style={styles.detailsGrid}>
               <View style={styles.detailItem}>
                 <View style={styles.detailIconBox}>
-                  <Calendar size={14} color="#111827" />
+                  <Calendar size={14} color="#00D9FF" />
                 </View>
                 <View>
                   <Text style={styles.detailLabel}>Check-in</Text>
@@ -268,8 +268,8 @@ export default function Bookings() {
               </View>
 
               <View style={styles.detailItem}>
-                <View style={[styles.detailIconBox, { backgroundColor: '#F0FDFA' }]}>
-                  <Clock size={14} color="#111827" />
+                <View style={[styles.detailIconBox, { backgroundColor: 'rgba(0, 217, 255, 0.05)' }]}>
+                  <Clock size={14} color="#00D9FF" />
                 </View>
                 <View>
                   <Text style={styles.detailLabel}>Duration</Text>
@@ -292,7 +292,7 @@ export default function Bookings() {
 
               <View style={styles.actionButton}>
                 <Text style={styles.actionButtonText}>View Details</Text>
-                <ChevronRight size={16} color="#111827" />
+                <ChevronRight size={16} color="#FFF" />
               </View>
             </View>
           </View>
@@ -306,7 +306,7 @@ export default function Bookings() {
       return (
         <View style={styles.emptyState}>
           <View style={styles.emptyIconCircle}>
-            <User size={48} color="#9CA3AF" strokeWidth={1.5} />
+            <User size={48} color="rgba(255, 255, 255, 0.3)" strokeWidth={1.5} />
           </View>
           <Text style={styles.emptyTitle}>Log in to see bookings</Text>
           <Text style={styles.emptySubtitle}>
@@ -347,7 +347,7 @@ export default function Bookings() {
     return (
       <View style={styles.emptyState}>
         <View style={styles.emptyIconCircle}>
-          <Calendar size={48} color="#9CA3AF" strokeWidth={1.5} />
+          <Calendar size={48} color="rgba(255, 255, 255, 0.3)" strokeWidth={1.5} />
         </View>
         <Text style={styles.emptyTitle}>{message.title}</Text>
         <Text style={styles.emptySubtitle}>{message.subtitle}</Text>
@@ -364,7 +364,7 @@ export default function Bookings() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+      <StatusBar barStyle="light-content" backgroundColor="#0a0e27" />
 
       {/* Header */}
       <View style={styles.header}>
@@ -380,7 +380,7 @@ export default function Bookings() {
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#111827" />
+          <ActivityIndicator size="large" color="#00D9FF" />
         </View>
       ) : (
         <>
@@ -437,8 +437,8 @@ export default function Bookings() {
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                tintColor="#111827"
-                colors={['#111827']}
+                tintColor="#00D9FF"
+                colors={['#00D9FF']}
               />
             }
           >
@@ -458,25 +458,24 @@ export default function Bookings() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB', // Gray 50
+    backgroundColor: '#0a0e27',
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingBottom: 20,
-    backgroundColor: '#FFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    backgroundColor: '#0a0e27',
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#111827',
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#FFF',
+    marginBottom: 4,
+    letterSpacing: -0.5,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#6B7280',
-    marginTop: 4,
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   loadingContainer: {
     flex: 1,
@@ -486,34 +485,32 @@ const styles = StyleSheet.create({
 
   // Tabs
   tabsContainer: {
-    backgroundColor: '#FFF',
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    backgroundColor: '#0a0e27',
+    paddingBottom: 16,
   },
   tabsContent: {
     paddingHorizontal: 20,
-    gap: 8,
+    gap: 12,
   },
   tab: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   tabActive: {
-    backgroundColor: '#F3F4F6', // Gray 50
-    borderColor: '#E5E7EB', // Gray 200
+    backgroundColor: 'rgba(0, 217, 255, 0.1)',
+    borderColor: '#00D9FF',
   },
   tabText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   tabTextActive: {
-    color: '#111827', // Black
+    color: '#00D9FF',
   },
 
   // List
@@ -522,25 +519,25 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    gap: 16,
+    gap: 20,
   },
 
   // Card
   bookingCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 16,
+    backgroundColor: '#1a1f3a',
+    borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(255, 255, 255, 0.05)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 2,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   cardHeader: {
-    height: 150,
+    height: 160,
     position: 'relative',
   },
   cardImage: {
@@ -550,26 +547,22 @@ const styles = StyleSheet.create({
   imagePlaceholder: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   statusBadge: {
     position: 'absolute',
-    top: 12,
-    right: 12,
+    top: 16,
+    right: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: '#FFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    zIndex: 2,
+    backdropFilter: 'blur(10px)',
   },
   statusText: {
     fontSize: 11,
@@ -580,15 +573,17 @@ const styles = StyleSheet.create({
   // Card Content
   cardContent: {
     padding: 16,
+    paddingTop: 16,
+    backgroundColor: '#1a1f3a',
   },
   hotelInfo: {
-    marginBottom: 12,
+    marginBottom: 16,
   },
   hotelName: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#111827',
-    marginBottom: 4,
+    color: '#FFF',
+    marginBottom: 6,
   },
   locationRow: {
     flexDirection: 'row',
@@ -597,33 +592,33 @@ const styles = StyleSheet.create({
   },
   locationText: {
     fontSize: 13,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
     flex: 1,
   },
   roomTag: {
     alignSelf: 'flex-start',
-    backgroundColor: '#F3F4F6',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginBottom: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginBottom: 16,
   },
   roomTagText: {
     fontSize: 11,
-    color: '#4B5563',
+    color: 'rgba(255, 255, 255, 0.8)',
     fontWeight: '600',
   },
   divider: {
     height: 1,
-    backgroundColor: '#F3F4F6',
-    marginBottom: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: 16,
   },
 
   // Details Grid
   detailsGrid: {
     flexDirection: 'row',
     gap: 16,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   detailItem: {
     flex: 1,
@@ -632,22 +627,22 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   detailIconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: '#F3F4F6', // Gray 100
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 217, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   detailLabel: {
     fontSize: 11,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.5)',
     marginBottom: 2,
   },
   detailValue: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#111827',
+    color: '#FFF',
   },
 
   // Card Footer
@@ -659,27 +654,29 @@ const styles = StyleSheet.create({
   },
   totalPriceLabel: {
     fontSize: 11,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.5)',
     marginBottom: 2,
   },
   totalPrice: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#111827',
+    color: '#00D9FF',
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#F3F4F6',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    gap: 6,
+    backgroundColor: 'rgba(0, 217, 255, 0.1)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 217, 255, 0.2)',
   },
   actionButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#111827',
+    color: '#FFF',
   },
 
   // Empty State
@@ -693,49 +690,49 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#111827',
+    color: '#FFF',
     marginBottom: 8,
     textAlign: 'center',
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
     textAlign: 'center',
     marginBottom: 32,
-    lineHeight: 20,
+    lineHeight: 22,
   },
   exploreButton: {
-    backgroundColor: '#111827',
+    backgroundColor: '#00D9FF',
     paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: 24,
-    shadowColor: '#111827',
+    shadowColor: '#00D9FF',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowRadius: 10,
     elevation: 4,
   },
   exploreButtonText: {
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: '600',
+    color: '#0a0e27',
+    fontSize: 15,
+    fontWeight: '700',
   },
   signInButton: {
-    backgroundColor: '#111827',
+    backgroundColor: '#00D9FF',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 24,
   },
   signInButtonText: {
-    color: '#FFF',
+    color: '#0a0e27',
     fontSize: 14,
     fontWeight: '600',
   },

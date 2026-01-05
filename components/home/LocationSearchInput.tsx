@@ -1,4 +1,4 @@
-import { MapPin, X, ArrowLeft, Building2 } from 'lucide-react-native';
+import { MapPin, X, ArrowLeft, Building2, Search } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -12,6 +12,7 @@ import {
   StatusBar,
   SafeAreaView,
   Keyboard,
+  Platform,
 } from 'react-native';
 
 interface PlacePrediction {
@@ -149,12 +150,12 @@ export default function LocationSearchInput({
   };
 
   // Separate predictions into locations and hotels
-  const locationPredictions = predictions.filter(p => 
+  const locationPredictions = predictions.filter(p =>
     p.types.some(type => ['locality', 'administrative_area_level_1', 'administrative_area_level_2', 'sublocality'].includes(type))
   );
-  
-  const hotelPredictions = predictions.filter(p => 
-    p.types.some(type => ['lodging', 'establishment'].includes(type)) && 
+
+  const hotelPredictions = predictions.filter(p =>
+    p.types.some(type => ['lodging', 'establishment'].includes(type)) &&
     !p.types.some(type => ['locality', 'administrative_area_level_1'].includes(type))
   );
 
@@ -164,11 +165,11 @@ export default function LocationSearchInput({
       onPress={() => handleSelectPlace(item)}
       activeOpacity={0.7}
     >
-      <View style={[styles.predictionIcon, isHotel && styles.hotelIcon]}>
+      <View style={styles.predictionIcon}>
         {isHotel ? (
-          <Building2 size={18} color="#666" />
+          <Building2 size={18} color="#00D9FF" />
         ) : (
-          <MapPin size={18} color="#00BCD4" />
+          <MapPin size={18} color="#00D9FF" />
         )}
       </View>
       <View style={styles.predictionText}>
@@ -191,40 +192,41 @@ export default function LocationSearchInput({
       transparent={false}
       onRequestClose={onClose}
     >
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="light-content" backgroundColor="#0a0e27" />
       <SafeAreaView style={styles.container}>
         {/* Header with Search Bar */}
         <View style={styles.header}>
-          <TouchableOpacity 
-            onPress={onClose} 
+          <TouchableOpacity
+            onPress={onClose}
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <ArrowLeft size={24} color="#333" />
+            <ArrowLeft size={24} color="#fff" />
           </TouchableOpacity>
-          
-          <View style={styles.searchContainer}>
+
+          <View style={styles.searchGradientContainer}>
             <View style={styles.searchIcon}>
-              <MapPin size={20} color="#00BCD4" />
+              <Search size={20} color="#00D9FF" />
             </View>
             <TextInput
               ref={searchInputRef}
               style={styles.searchInput}
               placeholder="Search destinations, hotels..."
-              placeholderTextColor="#999"
+              placeholderTextColor="rgba(255, 255, 255, 0.4)"
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoFocus
               returnKeyType="search"
               onSubmitEditing={() => Keyboard.dismiss()}
+              selectionColor="#00D9FF"
             />
             {searchQuery.length > 0 && (
-              <TouchableOpacity 
-                onPress={handleClear} 
+              <TouchableOpacity
+                onPress={handleClear}
                 style={styles.clearButton}
                 activeOpacity={0.7}
               >
-                <X size={18} color="#999" />
+                <X size={18} color="rgba(255, 255, 255, 0.6)" />
               </TouchableOpacity>
             )}
           </View>
@@ -235,7 +237,7 @@ export default function LocationSearchInput({
           {/* Loading Indicator */}
           {loading && (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="#00BCD4" />
+              <ActivityIndicator size="small" color="#00D9FF" />
               <Text style={styles.loadingText}>Searching...</Text>
             </View>
           )}
@@ -273,13 +275,16 @@ export default function LocationSearchInput({
               }
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: 40 }}
             />
           )}
 
           {/* Empty State */}
           {!loading && searchQuery.length > 0 && predictions.length === 0 && (
             <View style={styles.emptyContainer}>
-              <MapPin size={48} color="#E0E0E0" />
+              <View style={styles.iconCircle}>
+                <MapPin size={32} color="rgba(255, 255, 255, 0.3)" />
+              </View>
               <Text style={styles.emptyText}>No results found</Text>
               <Text style={styles.emptySubtext}>
                 Try searching for a different location or hotel
@@ -291,7 +296,7 @@ export default function LocationSearchInput({
           {!loading && searchQuery.length === 0 && (
             <View style={styles.initialContainer}>
               <View style={styles.initialIcon}>
-                <MapPin size={32} color="#00BCD4" />
+                <MapPin size={32} color="#00D9FF" />
               </View>
               <Text style={styles.initialTitle}>Where are you going?</Text>
               <Text style={styles.initialSubtext}>
@@ -308,50 +313,49 @@ export default function LocationSearchInput({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#0a0e27',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    backgroundColor: '#0a0e27',
     gap: 12,
+    paddingTop: Platform.OS === 'android' ? 16 : 12,
   },
   backButton: {
     padding: 8,
     marginLeft: -8,
   },
-  searchContainer: {
+  searchGradientContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 25,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderWidth: 2,
-    borderColor: '#00BCD4',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     gap: 12,
   },
   searchIcon: {
-    opacity: 0.7,
+    opacity: 0.8,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#333',
+    color: '#fff',
     padding: 0,
-    fontWeight: '400',
+    fontWeight: '500',
   },
   clearButton: {
     padding: 4,
   },
   content: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#0a0e27',
   },
   loadingContainer: {
     flexDirection: 'row',
@@ -362,7 +366,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.6)',
     fontWeight: '500',
   },
   section: {
@@ -371,10 +375,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#333',
+    color: '#fff',
     paddingHorizontal: 20,
     paddingVertical: 16,
     paddingBottom: 8,
+    letterSpacing: 0.5,
   },
   predictionItem: {
     flexDirection: 'row',
@@ -382,18 +387,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     gap: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#0a0e27',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.03)',
   },
   predictionIcon: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#f0f9ff',
+    backgroundColor: 'rgba(0, 217, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  hotelIcon: {
-    backgroundColor: '#f5f5f5',
   },
   predictionText: {
     flex: 1,
@@ -401,12 +405,12 @@ const styles = StyleSheet.create({
   predictionMain: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#00BCD4',
-    marginBottom: 2,
+    color: '#fff',
+    marginBottom: 4,
   },
   predictionSecondary: {
     fontSize: 14,
-    color: '#999',
+    color: 'rgba(255, 255, 255, 0.5)',
     fontWeight: '400',
   },
   emptyContainer: {
@@ -416,17 +420,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingVertical: 60,
   },
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: '#fff',
     marginTop: 16,
     marginBottom: 8,
     textAlign: 'center',
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#999',
+    color: 'rgba(255, 255, 255, 0.5)',
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -441,23 +454,29 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#f0f9ff',
+    backgroundColor: 'rgba(0, 217, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
+    shadowColor: '#00D9FF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 5,
   },
   initialTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#333',
+    color: '#fff',
     marginBottom: 12,
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
   initialSubtext: {
     fontSize: 16,
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.6)',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 24,
     maxWidth: 280,
   },
 });

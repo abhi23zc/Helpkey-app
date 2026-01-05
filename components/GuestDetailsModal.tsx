@@ -80,10 +80,10 @@ export default function GuestDetailsModal({
   // Helper function to get Aadhaar data
   const getAadhaarValue = (field: string) => {
     if (!guest?.aadhaarData) return 'N/A';
-    
+
     const rawData = guest.aadhaarData.rawCashfreeResponse;
     const directData = guest.aadhaarData;
-    
+
     switch (field) {
       case 'name':
         return rawData?.name || directData.fullName || 'N/A';
@@ -118,7 +118,7 @@ export default function GuestDetailsModal({
                 Guest Details - {guest.firstName} {guest.lastName || ''}
               </Text>
               <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <X size={24} color="#666" strokeWidth={2} />
+                <X size={24} color="#FFF" strokeWidth={2} />
               </TouchableOpacity>
             </View>
 
@@ -151,7 +151,7 @@ export default function GuestDetailsModal({
               {/* Aadhaar Verification Status */}
               <View style={styles.verificationSection}>
                 <View style={styles.verificationHeader}>
-                  <Shield size={24} color="#00BFA6" strokeWidth={2} />
+                  <Shield size={24} color="#00D9FF" strokeWidth={2} />
                   <View style={styles.verificationHeaderText}>
                     <Text style={styles.verificationTitle}>Aadhaar Verification</Text>
                     <Text style={styles.verificationSubtitle}>
@@ -163,7 +163,7 @@ export default function GuestDetailsModal({
                 {guest.aadhaarVerified ? (
                   <View style={styles.verifiedContent}>
                     <View style={styles.statusBadge}>
-                      <CheckCircle size={20} color="#10B981" strokeWidth={2} />
+                      <CheckCircle size={20} color="#059669" strokeWidth={2} />
                       <Text style={styles.statusText}>Verified Successfully</Text>
                     </View>
 
@@ -292,19 +292,19 @@ export default function GuestDetailsModal({
                       <Text style={styles.benefitsTitle}>Benefits of Verification</Text>
                       <View style={styles.benefitsList}>
                         <View style={styles.benefitItem}>
-                          <CheckCircle size={16} color="#10B981" strokeWidth={2} />
+                          <CheckCircle size={16} color="#059669" strokeWidth={2} />
                           <Text style={styles.benefitText}>Enable pre-checkin for hotel bookings</Text>
                         </View>
                         <View style={styles.benefitItem}>
-                          <CheckCircle size={16} color="#10B981" strokeWidth={2} />
+                          <CheckCircle size={16} color="#059669" strokeWidth={2} />
                           <Text style={styles.benefitText}>Skip front desk queues</Text>
                         </View>
                         <View style={styles.benefitItem}>
-                          <CheckCircle size={16} color="#10B981" strokeWidth={2} />
+                          <CheckCircle size={16} color="#059669" strokeWidth={2} />
                           <Text style={styles.benefitText}>Faster check-in process</Text>
                         </View>
                         <View style={styles.benefitItem}>
-                          <CheckCircle size={16} color="#10B981" strokeWidth={2} />
+                          <CheckCircle size={16} color="#059669" strokeWidth={2} />
                           <Text style={styles.benefitText}>Secure identity verification</Text>
                         </View>
                       </View>
@@ -317,7 +317,7 @@ export default function GuestDetailsModal({
                         onVerifyGuest(guest);
                       }}
                     >
-                      <Shield size={20} color="#fff" strokeWidth={2} />
+                      <Shield size={20} color="#0a0e27" strokeWidth={2} />
                       <Text style={styles.verifyButtonText}>
                         Verify {guest.firstName}'s Aadhaar Now
                       </Text>
@@ -332,7 +332,7 @@ export default function GuestDetailsModal({
               {/* Pre-checkin Status */}
               <View style={styles.preCheckinSection}>
                 <View style={styles.preCheckinHeader}>
-                  <Shield size={24} color="#10B981" strokeWidth={2} />
+                  <Shield size={24} color="#059669" strokeWidth={2} />
                   <View style={styles.preCheckinHeaderText}>
                     <Text style={styles.preCheckinTitle}>Pre-checkin Status</Text>
                     <Text style={styles.preCheckinSubtitle}>
@@ -384,17 +384,19 @@ export default function GuestDetailsModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
   },
   modal: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1f3a',
     borderRadius: 16,
     width: '100%',
     maxHeight: '90%',
     maxWidth: 600,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   header: {
     flexDirection: 'row',
@@ -402,12 +404,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#FFF',
     flex: 1,
     paddingRight: 16,
   },
@@ -418,15 +420,17 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   section: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#FFF',
     marginBottom: 12,
   },
   infoGrid: {
@@ -438,23 +442,23 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 14,
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   infoValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#FFF',
   },
   monoFont: {
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   verificationSection: {
-    backgroundColor: '#E8F5F3',
+    backgroundColor: 'rgba(0, 217, 255, 0.05)',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#00BFA6',
+    borderColor: 'rgba(0, 217, 255, 0.2)',
   },
   verificationHeader: {
     flexDirection: 'row',
@@ -468,12 +472,12 @@ const styles = StyleSheet.create({
   verificationTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#065F46',
+    color: '#00D9FF',
     marginBottom: 4,
   },
   verificationSubtitle: {
     fontSize: 13,
-    color: '#047857',
+    color: 'rgba(0, 217, 255, 0.8)',
     lineHeight: 18,
   },
   verifiedContent: {
@@ -490,22 +494,22 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#10B981',
+    color: '#059669',
   },
   unverifiedText: {
     color: '#F59E0B',
   },
   detailsCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1f3a',
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#6EE7B7',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   detailsCardTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#FFF',
     marginBottom: 12,
   },
   detailsGrid: {
@@ -517,16 +521,16 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 13,
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   detailValue: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#FFF',
   },
   addressText: {
     fontSize: 13,
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.7)',
     lineHeight: 20,
   },
   splitAddressGrid: {
@@ -538,12 +542,12 @@ const styles = StyleSheet.create({
   },
   splitAddressLabel: {
     fontSize: 13,
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   splitAddressValue: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#FFF',
   },
   photoContainer: {
     alignItems: 'center',
@@ -554,19 +558,19 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#E8E8E8',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   benefitsCard: {
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#FCD34D',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   benefitsTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#FFF',
     marginBottom: 12,
   },
   benefitsList: {
@@ -580,35 +584,35 @@ const styles = StyleSheet.create({
   benefitText: {
     flex: 1,
     fontSize: 13,
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.8)',
     lineHeight: 18,
   },
   verifyButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#00BFA6',
+    backgroundColor: '#00D9FF',
     paddingVertical: 14,
     borderRadius: 12,
     gap: 8,
   },
   verifyButtonText: {
-    color: '#fff',
+    color: '#0a0e27',
     fontSize: 15,
     fontWeight: '700',
   },
   verifyNote: {
     fontSize: 12,
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.5)',
     textAlign: 'center',
   },
   preCheckinSection: {
-    backgroundColor: '#D1FAE5',
+    backgroundColor: 'rgba(5, 150, 105, 0.1)',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#6EE7B7',
+    borderColor: 'rgba(5, 150, 105, 0.3)',
   },
   preCheckinHeader: {
     flexDirection: 'row',
@@ -622,20 +626,20 @@ const styles = StyleSheet.create({
   preCheckinTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#065F46',
+    color: '#059669',
     marginBottom: 4,
   },
   preCheckinSubtitle: {
     fontSize: 13,
-    color: '#047857',
+    color: '#34D399',
     lineHeight: 18,
   },
   preCheckinCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1f3a',
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#6EE7B7',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   preCheckinRow: {
     flexDirection: 'row',
@@ -649,12 +653,12 @@ const styles = StyleSheet.create({
   preCheckinLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#FFF',
     marginBottom: 4,
   },
   preCheckinDesc: {
     fontSize: 12,
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.6)',
     lineHeight: 18,
   },
   eligibilityBadge: {
@@ -663,23 +667,23 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   eligibleBadge: {
-    backgroundColor: '#D1FAE5',
+    backgroundColor: 'rgba(5, 150, 105, 0.2)',
   },
   ineligibleBadge: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: 'rgba(251, 191, 36, 0.1)',
   },
   eligibilityText: {
     fontSize: 11,
     fontWeight: '700',
   },
   eligibleText: {
-    color: '#10B981',
+    color: '#059669',
   },
   ineligibleText: {
-    color: '#F59E0B',
+    color: '#FBBF24',
   },
   closeButtonBottom: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -687,6 +691,6 @@ const styles = StyleSheet.create({
   closeButtonText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#666',
+    color: '#FFF',
   },
 });

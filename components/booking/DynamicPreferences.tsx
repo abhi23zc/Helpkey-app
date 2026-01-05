@@ -82,7 +82,7 @@ export default function DynamicPreferences({
 
       if (docSnap.exists()) {
         const data = docSnap.data();
-        
+
         // Validate the data structure
         if (!data || !data.preferenceCategories || !Array.isArray(data.preferenceCategories)) {
           console.error('DynamicPreferences: Invalid traveler type data structure:', data);
@@ -97,7 +97,7 @@ export default function DynamicPreferences({
             console.warn('DynamicPreferences: Invalid category:', category);
             return false;
           }
-          
+
           // Validate options within the category
           category.options = category.options.filter((option: any) => {
             if (!option || !option.id || !option.type || !option.label) {
@@ -106,7 +106,7 @@ export default function DynamicPreferences({
             }
             return true;
           });
-          
+
           return category.options.length > 0;
         });
 
@@ -247,189 +247,191 @@ export default function DynamicPreferences({
       const currentValue = preferences[category.id]?.[option.id];
 
       switch (option.type) {
-      case 'checkbox':
-        const checkboxLabel = option.label || '';
-        const checkboxPrice = option.price || 0;
-        const checkboxDescription = option.description || '';
-        
-        return (
-          <View key={`${category.id}-${option.id}`} style={styles.optionContainer}>
-            <View style={styles.checkboxContainer}>
-              <TouchableOpacity
-                style={[styles.checkbox, currentValue && styles.checkboxActive]}
-                onPress={() => handlePreferenceChange(category.id, option.id, !currentValue)}
-              >
-                {currentValue && <Check size={14} color="#FFF" strokeWidth={3} />}
-              </TouchableOpacity>
-              <View style={styles.optionContent}>
-                <Text style={styles.optionLabel}>{checkboxLabel}</Text>
-                {checkboxPrice > 0 && (
-                  <Text style={styles.optionPrice}>+₹{checkboxPrice}</Text>
-                )}
-                {checkboxDescription.length > 0 && (
-                  <Text style={styles.optionDescription}>{checkboxDescription}</Text>
-                )}
+        case 'checkbox':
+          const checkboxLabel = option.label || '';
+          const checkboxPrice = option.price || 0;
+          const checkboxDescription = option.description || '';
+
+          return (
+            <View key={`${category.id}-${option.id}`} style={styles.optionContainer}>
+              <View style={styles.checkboxContainer}>
+                <TouchableOpacity
+                  style={[styles.checkbox, currentValue && styles.checkboxActive]}
+                  onPress={() => handlePreferenceChange(category.id, option.id, !currentValue)}
+                >
+                  {currentValue && <Check size={14} color="#0a0e27" strokeWidth={3} />}
+                </TouchableOpacity>
+                <View style={styles.optionContent}>
+                  <Text style={styles.optionLabel}>{checkboxLabel}</Text>
+                  {checkboxPrice > 0 && (
+                    <Text style={styles.optionPrice}>+₹{checkboxPrice}</Text>
+                  )}
+                  {checkboxDescription.length > 0 && (
+                    <Text style={styles.optionDescription}>{checkboxDescription}</Text>
+                  )}
+                </View>
               </View>
             </View>
-          </View>
-        );
+          );
 
-      case 'select':
-        const selectLabel = option.label || '';
-        const selectPrice = option.price || 0;
-        const selectDescription = option.description || '';
-        
-        return (
-          <View key={`${category.id}-${option.id}`} style={styles.optionContainer}>
-            <Text style={styles.optionLabel}>
-              {selectLabel}
-              {option.required && <Text style={styles.required}> *</Text>}
-              {selectPrice > 0 && (
-                <Text style={styles.optionPrice}> +₹{selectPrice}</Text>
-              )}
-            </Text>
-            {selectDescription.length > 0 && (
-              <Text style={styles.optionDescription}>{selectDescription}</Text>
-            )}
-            <View style={styles.selectContainer}>
-              <Text style={styles.selectValue}>
-                {currentValue || 'Select an option'}
+        case 'select':
+          const selectLabel = option.label || '';
+          const selectPrice = option.price || 0;
+          const selectDescription = option.description || '';
+
+          return (
+            <View key={`${category.id}-${option.id}`} style={styles.optionContainer}>
+              <Text style={styles.optionLabel}>
+                {selectLabel}
+                {option.required && <Text style={styles.required}> *</Text>}
+                {selectPrice > 0 && (
+                  <Text style={styles.optionPrice}> +₹{selectPrice}</Text>
+                )}
               </Text>
-              <ChevronDown size={16} color="#6B7280" />
-            </View>
-            {/* Simple implementation - in production, you'd want a proper picker */}
-            <View style={styles.selectOptions}>
-              {option.options?.map((opt) => (
-                <TouchableOpacity
-                  key={opt}
-                  style={[
-                    styles.selectOption,
-                    currentValue === opt && styles.selectOptionActive,
-                  ]}
-                  onPress={() => handlePreferenceChange(category.id, option.id, opt)}
-                >
-                  <Text
-                    style={[
-                      styles.selectOptionText,
-                      currentValue === opt && styles.selectOptionTextActive,
-                    ]}
-                  >
-                    {opt || ''}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        );
-
-      case 'multiselect':
-        const multiselectLabel = option.label || '';
-        const multiselectPrice = option.price || 0;
-        const multiselectDescription = option.description || '';
-        
-        return (
-          <View key={`${category.id}-${option.id}`} style={styles.optionContainer}>
-            <Text style={styles.optionLabel}>
-              {multiselectLabel}
-              {option.required && <Text style={styles.required}> *</Text>}
-              {multiselectPrice > 0 && (
-                <Text style={styles.optionPrice}> +₹{multiselectPrice}</Text>
+              {selectDescription.length > 0 && (
+                <Text style={styles.optionDescription}>{selectDescription}</Text>
               )}
-            </Text>
-            {multiselectDescription.length > 0 && (
-              <Text style={styles.optionDescription}>{multiselectDescription}</Text>
-            )}
-            <View style={styles.multiselectContainer}>
-              {option.options?.map((opt) => {
-                const isSelected = (currentValue || []).includes(opt);
-                return (
+              <View style={styles.selectContainer}>
+                <Text style={styles.selectValue}>
+                  {currentValue || 'Select an option'}
+                </Text>
+                <ChevronDown size={16} color="rgba(255, 255, 255, 0.6)" />
+              </View>
+              {/* Simple implementation - in production, you'd want a proper picker */}
+              <View style={styles.selectOptions}>
+                {option.options?.map((opt) => (
                   <TouchableOpacity
                     key={opt}
-                    style={[styles.multiselectChip, isSelected && styles.multiselectChipActive]}
-                    onPress={() => {
-                      const current = currentValue || [];
-                      const updated = isSelected
-                        ? current.filter((v: string) => v !== opt)
-                        : [...current, opt];
-                      handlePreferenceChange(category.id, option.id, updated);
-                    }}
+                    style={[
+                      styles.selectOption,
+                      currentValue === opt && styles.selectOptionActive,
+                    ]}
+                    onPress={() => handlePreferenceChange(category.id, option.id, opt)}
                   >
                     <Text
                       style={[
-                        styles.multiselectChipText,
-                        isSelected && styles.multiselectChipTextActive,
+                        styles.selectOptionText,
+                        currentValue === opt && styles.selectOptionTextActive,
                       ]}
                     >
                       {opt || ''}
                     </Text>
                   </TouchableOpacity>
-                );
-              })}
+                ))}
+              </View>
             </View>
-          </View>
-        );
+          );
 
-      case 'number':
-        const numberLabel = option.label || '';
-        const numberPrice = option.price || 0;
-        const numberDescription = option.description || '';
-        
-        return (
-          <View key={`${category.id}-${option.id}`} style={styles.optionContainer}>
-            <Text style={styles.optionLabel}>
-              {numberLabel}
-              {option.required && <Text style={styles.required}> *</Text>}
-              {numberPrice > 0 && (
-                <Text style={styles.optionPrice}> +₹{numberPrice}</Text>
+        case 'multiselect':
+          const multiselectLabel = option.label || '';
+          const multiselectPrice = option.price || 0;
+          const multiselectDescription = option.description || '';
+
+          return (
+            <View key={`${category.id}-${option.id}`} style={styles.optionContainer}>
+              <Text style={styles.optionLabel}>
+                {multiselectLabel}
+                {option.required && <Text style={styles.required}> *</Text>}
+                {multiselectPrice > 0 && (
+                  <Text style={styles.optionPrice}> +₹{multiselectPrice}</Text>
+                )}
+              </Text>
+              {multiselectDescription.length > 0 && (
+                <Text style={styles.optionDescription}>{multiselectDescription}</Text>
               )}
-            </Text>
-            {numberDescription.length > 0 && (
-              <Text style={styles.optionDescription}>{numberDescription}</Text>
-            )}
-            <TextInput
-              style={styles.numberInput}
-              value={currentValue ? currentValue.toString() : '0'}
-              onChangeText={(text) => {
-                const num = parseInt(text) || 0;
-                handlePreferenceChange(category.id, option.id, num);
-              }}
-              keyboardType="numeric"
-              placeholder="0"
-            />
-          </View>
-        );
+              <View style={styles.multiselectContainer}>
+                {option.options?.map((opt) => {
+                  const isSelected = (currentValue || []).includes(opt);
+                  return (
+                    <TouchableOpacity
+                      key={opt}
+                      style={[styles.multiselectChip, isSelected && styles.multiselectChipActive]}
+                      onPress={() => {
+                        const current = currentValue || [];
+                        const updated = isSelected
+                          ? current.filter((v: string) => v !== opt)
+                          : [...current, opt];
+                        handlePreferenceChange(category.id, option.id, updated);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.multiselectChipText,
+                          isSelected && styles.multiselectChipTextActive,
+                        ]}
+                      >
+                        {opt || ''}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          );
 
-      case 'text':
-        const textLabel = option.label || '';
-        const textPrice = option.price || 0;
-        const textDescription = option.description || '';
-        
-        return (
-          <View key={`${category.id}-${option.id}`} style={styles.optionContainer}>
-            <Text style={styles.optionLabel}>
-              {textLabel}
-              {option.required && <Text style={styles.required}> *</Text>}
-              {textPrice > 0 && (
-                <Text style={styles.optionPrice}> +₹{textPrice}</Text>
+        case 'number':
+          const numberLabel = option.label || '';
+          const numberPrice = option.price || 0;
+          const numberDescription = option.description || '';
+
+          return (
+            <View key={`${category.id}-${option.id}`} style={styles.optionContainer}>
+              <Text style={styles.optionLabel}>
+                {numberLabel}
+                {option.required && <Text style={styles.required}> *</Text>}
+                {numberPrice > 0 && (
+                  <Text style={styles.optionPrice}> +₹{numberPrice}</Text>
+                )}
+              </Text>
+              {numberDescription.length > 0 && (
+                <Text style={styles.optionDescription}>{numberDescription}</Text>
               )}
-            </Text>
-            {textDescription.length > 0 && (
-              <Text style={styles.optionDescription}>{textDescription}</Text>
-            )}
-            <TextInput
-              style={styles.textInput}
-              value={currentValue || ''}
-              onChangeText={(text) => handlePreferenceChange(category.id, option.id, text)}
-              placeholder="Enter text..."
-              multiline={true}
-              numberOfLines={3}
-            />
-          </View>
-        );
+              <TextInput
+                style={styles.numberInput}
+                value={currentValue ? currentValue.toString() : '0'}
+                onChangeText={(text) => {
+                  const num = parseInt(text) || 0;
+                  handlePreferenceChange(category.id, option.id, num);
+                }}
+                keyboardType="numeric"
+                placeholder="0"
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+              />
+            </View>
+          );
 
-      default:
-        return null;
-    }
+        case 'text':
+          const textLabel = option.label || '';
+          const textPrice = option.price || 0;
+          const textDescription = option.description || '';
+
+          return (
+            <View key={`${category.id}-${option.id}`} style={styles.optionContainer}>
+              <Text style={styles.optionLabel}>
+                {textLabel}
+                {option.required && <Text style={styles.required}> *</Text>}
+                {textPrice > 0 && (
+                  <Text style={styles.optionPrice}> +₹{textPrice}</Text>
+                )}
+              </Text>
+              {textDescription.length > 0 && (
+                <Text style={styles.optionDescription}>{textDescription}</Text>
+              )}
+              <TextInput
+                style={styles.textInput}
+                value={currentValue || ''}
+                onChangeText={(text) => handlePreferenceChange(category.id, option.id, text)}
+                placeholder="Enter text..."
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                multiline={true}
+                numberOfLines={3}
+              />
+            </View>
+          );
+
+        default:
+          return null;
+      }
     } catch (error) {
       console.error('Error rendering option:', error, option);
       return null;
@@ -439,7 +441,7 @@ export default function DynamicPreferences({
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#111827" />
+        <ActivityIndicator size="large" color="#00D9FF" />
         <Text style={styles.loadingText}>Loading preferences...</Text>
       </View>
     );
@@ -458,33 +460,14 @@ export default function DynamicPreferences({
   console.log('DynamicPreferences: Rendering with traveler type:', travelerType.title);
   console.log('DynamicPreferences: Categories count:', travelerType.preferenceCategories.length);
 
-  const getColorStyles = (color: string) => {
-    const colorMap: Record<string, { bg: string; border: string; text: string }> = {
-      blue: { bg: '#EFF6FF', border: '#3B82F6', text: '#1E40AF' },
-      green: { bg: '#ECFDF5', border: '#10B981', text: '#047857' },
-      pink: { bg: '#FDF2F8', border: '#EC4899', text: '#BE185D' },
-      yellow: { bg: '#FEF3C7', border: '#F59E0B', text: '#92400E' },
-      purple: { bg: '#F5F3FF', border: '#8B5CF6', text: '#6D28D9' },
-    };
-    return colorMap[color] || colorMap.blue;
-  };
-
-  const colorStyles = getColorStyles(travelerType.color);
-
-  // Custom theme overrides for specific traveler types to match the screenshot
-  const isCorporate = travelerType.title.toLowerCase().includes('corporate') || travelerType.title.toLowerCase().includes('business');
-
-  const containerStyle = isCorporate ? {
-    backgroundColor: '#EFF6FF', // Light blue background
-    borderColor: '#BFDBFE', // Blue border
-    borderWidth: 1,
-  } : {
-    backgroundColor: colorStyles.bg,
-    borderColor: colorStyles.border,
+  // Define color styles based on theme instead of mapping
+  const containerStyle = {
+    backgroundColor: 'rgba(0, 217, 255, 0.05)',
+    borderColor: '#00D9FF',
     borderWidth: 1,
   };
 
-  const titleColor = isCorporate ? '#1E40AF' : colorStyles.text;
+  const titleColor = '#FFF';
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -513,9 +496,9 @@ export default function DynamicPreferences({
                   )}
                 </View>
                 {isExpanded ? (
-                  <ChevronUp size={20} color="#6B7280" />
+                  <ChevronUp size={20} color="rgba(255, 255, 255, 0.6)" />
                 ) : (
-                  <ChevronDown size={20} color="#6B7280" />
+                  <ChevronDown size={20} color="rgba(255, 255, 255, 0.6)" />
                 )}
               </TouchableOpacity>
 
@@ -538,6 +521,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 20,
     overflow: 'hidden',
+    backgroundColor: '#1a1f3a',
   },
   loadingContainer: {
     padding: 40,
@@ -547,17 +531,19 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   errorText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
     textAlign: 'center',
     padding: 20,
   },
   header: {
     padding: 20,
     paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   title: {
     fontSize: 18,
@@ -566,24 +552,26 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   content: {
     paddingBottom: 8,
   },
   categoryContainer: {
-    backgroundColor: '#FFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     marginHorizontal: 16,
     marginBottom: 12,
     borderRadius: 16,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
   categoryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    backgroundColor: '#F8FAFC', // Very subtle gray/white
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   categoryHeaderContent: {
     flex: 1,
@@ -592,16 +580,17 @@ const styles = StyleSheet.create({
   categoryName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1E293B',
+    color: '#FFF',
     marginBottom: 2,
   },
   categoryDescription: {
     fontSize: 12,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   categoryContent: {
     padding: 16,
     paddingTop: 0,
+    marginTop: 16,
   },
   optionContainer: {
     marginBottom: 16,
@@ -615,16 +604,16 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: '#D1D5DB',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
     marginTop: 2,
-    backgroundColor: '#FFF',
+    backgroundColor: 'transparent',
   },
   checkboxActive: {
-    backgroundColor: '#1E293B',
-    borderColor: '#1E293B',
+    backgroundColor: '#00D9FF',
+    borderColor: '#00D9FF',
   },
   optionContent: {
     flex: 1,
@@ -632,17 +621,17 @@ const styles = StyleSheet.create({
   optionLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#111827',
+    color: '#FFF',
     marginBottom: 4,
   },
   optionPrice: {
     fontSize: 12,
-    color: '#059669',
+    color: '#00D9FF',
     fontWeight: '600',
   },
   optionDescription: {
     fontSize: 12,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
     lineHeight: 16,
   },
   required: {
@@ -652,16 +641,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 8,
     padding: 12,
     marginTop: 8,
   },
   selectValue: {
     fontSize: 14,
-    color: '#111827',
+    color: '#FFF',
   },
   selectOptions: {
     marginTop: 8,
@@ -669,18 +658,18 @@ const styles = StyleSheet.create({
   },
   selectOption: {
     padding: 8,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 6,
   },
   selectOptionActive: {
-    backgroundColor: '#111827',
+    backgroundColor: '#00D9FF',
   },
   selectOptionText: {
     fontSize: 13,
-    color: '#374151',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   selectOptionTextActive: {
-    color: '#FFF',
+    color: '#0a0e27',
     fontWeight: '600',
   },
   multiselectContainer: {
@@ -692,42 +681,42 @@ const styles = StyleSheet.create({
   multiselectChip: {
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#F1F5F9', // Slate 100
-    borderRadius: 24, // Pill shape
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   multiselectChipActive: {
-    backgroundColor: '#1E293B', // Slate 800
-    borderColor: '#1E293B',
+    backgroundColor: '#00D9FF',
+    borderColor: '#00D9FF',
   },
   multiselectChipText: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#475569',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   multiselectChipTextActive: {
-    color: '#FFF',
+    color: '#0a0e27',
     fontWeight: '600',
   },
   numberInput: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 8,
     padding: 12,
     fontSize: 14,
-    color: '#111827',
+    color: '#FFF',
     marginTop: 8,
   },
   textInput: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 8,
     padding: 12,
     fontSize: 14,
-    color: '#111827',
+    color: '#FFF',
     marginTop: 8,
     textAlignVertical: 'top',
     minHeight: 80,

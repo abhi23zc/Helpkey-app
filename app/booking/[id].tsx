@@ -127,14 +127,13 @@ export default function BookingDetailsScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { user } = useAuth();
-  
+
   // Notification hooks
   const { sendNotification } = useNotifications(); // WhatsApp notifications
   const { sendCompleteCancellationNotifications } = useNotificationHandler(); // Push notifications
-  
+
   const [booking, setBooking] = useState<BookingDetails | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState<'details' | 'room' | 'guest' | 'payment'>('details');
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [refundRequest, setRefundRequest] = useState<any>(null);
@@ -190,9 +189,9 @@ export default function BookingDetailsScreen() {
   const handleCancelBooking = async (reason: string) => {
     try {
       if (!booking) return;
-      
+
       console.log('🚫 Cancelling booking:', booking.reference);
-      
+
       // Update booking status in Firebase
       const bookingRef = doc(db, 'bookings', booking.id);
       await updateDoc(bookingRef, {
@@ -201,14 +200,14 @@ export default function BookingDetailsScreen() {
         cancelledAt: new Date().toISOString(),
         cancelledBy: user?.uid || 'user',
       });
-      
+
       // Update local state
       setBooking({ ...booking, status: 'cancelled' });
-      
+
       // Send notifications (WhatsApp + Push)
       try {
         console.log('📧 Sending cancellation notifications...');
-        
+
         // Prepare notification data
         const notificationData = {
           bookingId: booking.reference,
@@ -224,31 +223,31 @@ export default function BookingDetailsScreen() {
           hotelAdmin: booking.hotelAdmin,
           cancellationReason: reason,
         };
-        
+
         // Send WhatsApp notifications (existing system)
-        await sendNotification({ 
-          type: 'booking_cancelled', 
-          data: { ...notificationData, reason } 
+        await sendNotification({
+          type: 'booking_cancelled',
+          data: { ...notificationData, reason }
         });
-        
-        await sendNotification({ 
-          type: 'admin_booking_cancelled_by_user', 
-          data: { ...notificationData, reason } 
+
+        await sendNotification({
+          type: 'admin_booking_cancelled_by_user',
+          data: { ...notificationData, reason }
         });
-        
+
         // Send Push notifications (new system)
         const pushSuccess = await sendCompleteCancellationNotifications(notificationData);
         console.log('📱 Push notifications result:', pushSuccess);
-        
+
         console.log('✅ All cancellation notifications sent successfully');
-        
+
       } catch (notificationError) {
         console.error('❌ Error sending cancellation notifications:', notificationError);
         // Don't fail the cancellation if notifications fail
       }
-      
+
       Alert.alert('Booking Cancelled', 'Your booking has been cancelled successfully. You and the hotel will receive notifications.');
-      
+
     } catch (e) {
       console.error('❌ Error cancelling booking:', e);
       Alert.alert('Error', 'Failed to cancel booking. Please try again.');
@@ -258,15 +257,15 @@ export default function BookingDetailsScreen() {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'completed':
-        return { bg: 'rgba(21, 128, 61, 0.1)', text: '#15803D', border: '#DCFCE7' };
+        return { bg: 'rgba(16, 185, 129, 0.15)', text: '#34D399', border: 'rgba(52, 211, 153, 0.3)' };
       case 'confirmed':
-        return { bg: 'rgba(2, 132, 199, 0.1)', text: '#0284C7', border: '#E0F2FE' };
+        return { bg: 'rgba(0, 217, 255, 0.15)', text: '#00D9FF', border: 'rgba(0, 217, 255, 0.3)' };
       case 'pending':
-        return { bg: 'rgba(202, 138, 4, 0.1)', text: '#CA8A04', border: '#FEF9C3' };
+        return { bg: 'rgba(251, 191, 36, 0.15)', text: '#FBBF24', border: 'rgba(251, 191, 36, 0.3)' };
       case 'cancelled':
-        return { bg: 'rgba(220, 38, 38, 0.1)', text: '#DC2626', border: '#FEE2E2' };
+        return { bg: 'rgba(239, 68, 68, 0.15)', text: '#F87171', border: 'rgba(248, 113, 113, 0.3)' };
       default:
-        return { bg: '#F3F4F6', text: '#6B7280', border: '#E5E7EB' };
+        return { bg: 'rgba(107, 114, 128, 0.15)', text: '#9CA3AF', border: 'rgba(156, 163, 175, 0.3)' };
     }
   };
 
@@ -297,7 +296,7 @@ export default function BookingDetailsScreen() {
   if (loading || !booking) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#111827" />
+        <ActivityIndicator size="large" color="#00D9FF" />
       </View>
     );
   }
@@ -307,12 +306,12 @@ export default function BookingDetailsScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFF" translucent={false} />
+      <StatusBar barStyle="light-content" backgroundColor="#0a0e27" />
 
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'android' ? 12 : 0) }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Booking Details</Text>
         <View style={{ width: 24 }} />
@@ -358,7 +357,7 @@ export default function BookingDetailsScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.preCheckinTitle}>Pre-checkin Activated</Text>
                   <Text style={styles.preCheckinSubtitle}>
-                    {booking.preCheckinStatus === 'confirmed' 
+                    {booking.preCheckinStatus === 'confirmed'
                       ? 'Skip the front desk and go directly to your room!'
                       : 'Setting up your pre-checkin access...'}
                   </Text>
@@ -370,7 +369,7 @@ export default function BookingDetailsScreen() {
                   </View>
                 )}
               </View>
-              
+
               {booking.preCheckinId && (
                 <View style={styles.preCheckinDetails}>
                   <View style={styles.preCheckinDetailRow}>
@@ -411,12 +410,12 @@ export default function BookingDetailsScreen() {
               resizeMode="cover"
             />
             <LinearGradient
-              colors={['transparent', 'rgba(0,0,0,0.8)']}
+              colors={['transparent', 'rgba(10, 14, 39, 0.95)']}
               style={styles.hotelOverlay}
             >
               <Text style={styles.hotelName}>{booking.hotelDetails.name}</Text>
               <View style={styles.locationRow}>
-                <MapPin size={14} color="#E5E7EB" />
+                <MapPin size={14} color="#00D9FF" />
                 <Text style={styles.locationText}>{booking.hotelDetails.location}</Text>
               </View>
             </LinearGradient>
@@ -427,8 +426,8 @@ export default function BookingDetailsScreen() {
             <Text style={styles.sectionHeader}>Trip Summary</Text>
             <View style={styles.summaryGrid}>
               <View style={styles.summaryItem}>
-                <View style={[styles.iconBox, { backgroundColor: '#F3F4F6' }]}>
-                  <Calendar size={18} color="#111827" />
+                <View style={styles.iconBox}>
+                  <Calendar size={18} color="#00D9FF" />
                 </View>
                 <View>
                   <Text style={styles.summaryLabel}>Check-in</Text>
@@ -437,8 +436,8 @@ export default function BookingDetailsScreen() {
                 </View>
               </View>
               <View style={styles.summaryItem}>
-                <View style={[styles.iconBox, { backgroundColor: '#F3F4F6' }]}>
-                  <Calendar size={18} color="#111827" />
+                <View style={styles.iconBox}>
+                  <Calendar size={18} color="#00D9FF" />
                 </View>
                 <View>
                   <Text style={styles.summaryLabel}>Check-out</Text>
@@ -448,10 +447,10 @@ export default function BookingDetailsScreen() {
               </View>
             </View>
 
-            <View style={[styles.summaryGrid, { marginTop: 16 }]}>
+            <View style={[styles.summaryGrid, { marginTop: 12 }]}>
               <View style={styles.summaryItem}>
-                <View style={[styles.iconBox, { backgroundColor: '#F3F4F6' }]}>
-                  <Users size={18} color="#111827" />
+                <View style={styles.iconBox}>
+                  <Users size={18} color="#00D9FF" />
                 </View>
                 <View>
                   <Text style={styles.summaryLabel}>Guests</Text>
@@ -460,8 +459,8 @@ export default function BookingDetailsScreen() {
                 </View>
               </View>
               <View style={styles.summaryItem}>
-                <View style={[styles.iconBox, { backgroundColor: '#F3F4F6' }]}>
-                  <Clock size={18} color="#111827" />
+                <View style={styles.iconBox}>
+                  <Clock size={18} color="#00D9FF" />
                 </View>
                 <View>
                   <Text style={styles.summaryLabel}>Duration</Text>
@@ -482,7 +481,7 @@ export default function BookingDetailsScreen() {
             <View style={styles.guestCard}>
               <View style={styles.guestRow}>
                 <View style={styles.guestIcon}>
-                  <User size={20} color="#6B7280" />
+                  <User size={20} color="rgba(255, 255, 255, 0.6)" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.guestLabel}>Name</Text>
@@ -494,7 +493,7 @@ export default function BookingDetailsScreen() {
               <View style={styles.divider} />
               <View style={styles.guestRow}>
                 <View style={styles.guestIcon}>
-                  <Phone size={20} color="#6B7280" />
+                  <Phone size={20} color="rgba(255, 255, 255, 0.6)" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.guestLabel}>Phone</Text>
@@ -504,25 +503,25 @@ export default function BookingDetailsScreen() {
               <View style={styles.divider} />
               <View style={styles.guestRow}>
                 <View style={styles.guestIcon}>
-                  <Mail size={20} color="#6B7280" />
+                  <Mail size={20} color="rgba(255, 255, 255, 0.6)" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.guestLabel}>Email</Text>
                   <Text style={styles.guestValue}>{booking.guestInfo[0]?.email}</Text>
                 </View>
               </View>
-              
+
               {/* Aadhaar Verification Status */}
               {booking.guestVerifications && booking.guestVerifications.length > 0 && (
                 <>
                   <View style={styles.divider} />
                   <View style={styles.guestRow}>
-                    <View style={[styles.guestIcon, { backgroundColor: booking.guestVerifications[0]?.verified ? '#ECFDF5' : '#FEF2F2' }]}>
-                      <ShieldCheck size={20} color={booking.guestVerifications[0]?.verified ? '#059669' : '#DC2626'} />
+                    <View style={[styles.guestIcon, { backgroundColor: booking.guestVerifications[0]?.verified ? 'rgba(52, 211, 153, 0.1)' : 'rgba(248, 113, 113, 0.1)' }]}>
+                      <ShieldCheck size={20} color={booking.guestVerifications[0]?.verified ? '#34D399' : '#F87171'} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.guestLabel}>Aadhaar Verification</Text>
-                      <Text style={[styles.guestValue, { color: booking.guestVerifications[0]?.verified ? '#059669' : '#DC2626' }]}>
+                      <Text style={[styles.guestValue, { color: booking.guestVerifications[0]?.verified ? '#34D399' : '#F87171' }]}>
                         {booking.guestVerifications[0]?.verified ? 'Verified' : 'Not Verified'}
                       </Text>
                       {booking.guestVerifications[0]?.aadhaarNumber && (
@@ -543,10 +542,10 @@ export default function BookingDetailsScreen() {
               <Text style={styles.sectionHeader}>Verification Details</Text>
               <View style={styles.verificationCard}>
                 <View style={styles.verificationHeader}>
-                  <ShieldCheck size={18} color="#059669" />
+                  <ShieldCheck size={18} color="#34D399" />
                   <Text style={styles.verificationTitle}>Aadhaar Verified Successfully</Text>
                 </View>
-                
+
                 <View style={styles.verificationGrid}>
                   <View style={styles.verificationItem}>
                     <Text style={styles.verificationLabel}>Full Name</Text>
@@ -566,8 +565,8 @@ export default function BookingDetailsScreen() {
                   <View style={styles.verificationItem}>
                     <Text style={styles.verificationLabel}>Gender</Text>
                     <Text style={styles.verificationValue}>
-                      {booking.guestVerifications[0].verificationDetails.gender === 'M' ? 'Male' : 
-                       booking.guestVerifications[0].verificationDetails.gender === 'F' ? 'Female' : 'N/A'}
+                      {booking.guestVerifications[0].verificationDetails.gender === 'M' ? 'Male' :
+                        booking.guestVerifications[0].verificationDetails.gender === 'F' ? 'Female' : 'N/A'}
                     </Text>
                   </View>
                   <View style={styles.verificationItem}>
@@ -589,8 +588,8 @@ export default function BookingDetailsScreen() {
 
                 <View style={styles.verificationFooter}>
                   <Text style={styles.verificationFooterText}>
-                    Verified on {booking.guestVerifications[0].verificationDetails.verifiedAt ? 
-                      new Date(booking.guestVerifications[0].verificationDetails.verifiedAt.seconds * 1000).toLocaleDateString('en-IN') : 
+                    Verified on {booking.guestVerifications[0].verificationDetails.verifiedAt ?
+                      new Date(booking.guestVerifications[0].verificationDetails.verifiedAt.seconds * 1000).toLocaleDateString('en-IN') :
                       'N/A'}
                   </Text>
                 </View>
@@ -602,10 +601,10 @@ export default function BookingDetailsScreen() {
           {booking.customerPreferences && (
             <View style={styles.sectionContainer}>
               <Text style={styles.sectionHeader}>Booking Preferences</Text>
-              
+
               {/* Use PreferencesDisplay component for dynamic preferences */}
               <PreferencesDisplay preferences={booking.customerPreferences} />
-              
+
               {/* Fallback for basic preferences if no dynamic preferences */}
               {!booking.customerPreferences.dynamicPreferences && (
                 <View style={styles.preferencesCard}>
@@ -613,17 +612,17 @@ export default function BookingDetailsScreen() {
                     <View style={styles.preferenceRow}>
                       <Text style={styles.preferenceLabel}>Traveler Type</Text>
                       <Text style={styles.preferenceValue}>
-                        {booking.customerPreferences.travelerType.charAt(0).toUpperCase() + 
-                         booking.customerPreferences.travelerType.slice(1)}
+                        {booking.customerPreferences.travelerType.charAt(0).toUpperCase() +
+                          booking.customerPreferences.travelerType.slice(1)}
                       </Text>
                     </View>
                   )}
-                  
+
                   {booking.customerPreferences.preCheckinEnabled && (
                     <View style={styles.preferenceRow}>
                       <Text style={styles.preferenceLabel}>Pre-checkin</Text>
                       <View style={styles.preferenceEnabledBadge}>
-                        <CheckCircle size={12} color="#059669" />
+                        <CheckCircle size={12} color="#34D399" />
                         <Text style={styles.preferenceEnabledText}>Enabled</Text>
                       </View>
                     </View>
@@ -639,29 +638,29 @@ export default function BookingDetailsScreen() {
             <View style={styles.paymentCard}>
               <View style={styles.paymentRow}>
                 <Text style={styles.paymentRowLabel}>
-                  Room Rate {booking.bookingType === 'hourly' 
-                    ? `(${booking.hourlyDuration || 0} hrs)` 
+                  Room Rate {booking.bookingType === 'hourly'
+                    ? `(${booking.hourlyDuration || 0} hrs)`
                     : `(${booking.nights} night${booking.nights > 1 ? 's' : ''})`}
                 </Text>
                 <Text style={styles.paymentRowValue}>
                   ₹{(booking.totalPrice || booking.unitPrice) - (booking.preferencesPrice || 0)}
                 </Text>
               </View>
-              
+
               {/* Show detailed preferences breakdown */}
               {booking.preferencesPriceBreakdown && booking.preferencesPriceBreakdown.length > 0 && (
                 <>
                   <View style={[styles.divider, { marginVertical: 8 }]} />
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#059669', marginBottom: 8, marginTop: 4 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#00D9FF', marginBottom: 8, marginTop: 4 }}>
                     Preferences & Add-ons
                   </Text>
                   {booking.preferencesPriceBreakdown.map((item, index) => (
                     <View key={index} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6, paddingLeft: 8 }}>
-                      <Text style={{ fontSize: 13, color: '#047857', flex: 1, marginRight: 12 }}>
+                      <Text style={{ fontSize: 13, color: 'rgba(255, 255, 255, 0.7)', flex: 1, marginRight: 12 }}>
                         • {item.label}
                       </Text>
-                      <Text style={{ fontSize: 13, fontWeight: '600', color: '#059669', textAlign: 'right' }}>
-                        {item.quantity && item.quantity > 1 
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: '#00D9FF', textAlign: 'right' }}>
+                        {item.quantity && item.quantity > 1
                           ? `₹${item.price} × ${item.quantity} = ₹${item.price * item.quantity}`
                           : `₹${item.price}`}
                       </Text>
@@ -670,21 +669,21 @@ export default function BookingDetailsScreen() {
                   <View style={[styles.divider, { marginVertical: 8 }]} />
                 </>
               )}
-              
+
               <View style={styles.paymentRow}>
                 <Text style={styles.paymentRowLabel}>Taxes & Fees (18%)</Text>
                 <Text style={styles.paymentRowValue}>₹{booking.taxesAndFees}</Text>
               </View>
-              
+
               <View style={[styles.divider, { marginVertical: 12 }]} />
-              
+
               <View style={styles.paymentRow}>
                 <Text style={styles.totalLabel}>Total Paid</Text>
                 <Text style={styles.totalValue}>₹{booking.totalAmount}</Text>
               </View>
-              
+
               <View style={styles.paymentMethodRow}>
-                <CreditCard size={14} color="#6B7280" />
+                <CreditCard size={14} color="rgba(255, 255, 255, 0.6)" />
                 <Text style={styles.paymentMethodText}>
                   Paid via {booking.paymentInfo?.method || booking.paymentMode === 'hotel' ? 'Cash at Hotel' : 'Online'}
                 </Text>
@@ -749,7 +748,7 @@ export default function BookingDetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#0a0e27',
   },
   header: {
     flexDirection: 'row',
@@ -757,17 +756,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFF',
+    backgroundColor: '#0a0e27',
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
   },
   backButton: {
     padding: 4,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#111827',
+    color: '#FFF',
   },
 
   // Status Banner
@@ -779,6 +778,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     gap: 12,
     borderWidth: 1,
+    backdropFilter: 'blur(10px)',
   },
   statusBannerTitle: {
     fontSize: 16,
@@ -795,14 +795,11 @@ const styles = StyleSheet.create({
     height: 180,
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#E5E7EB',
+    backgroundColor: '#1a1f3a',
     position: 'relative',
     marginBottom: 24,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
   hotelImage: {
     width: '100%',
@@ -828,7 +825,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   locationText: {
-    color: '#E5E7EB',
+    color: 'rgba(255, 255, 255, 0.8)',
     fontSize: 13,
   },
 
@@ -838,10 +835,10 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionHeader: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
-    color: '#111827',
-    marginBottom: 12,
+    color: '#FFF',
+    marginBottom: 16,
   },
   summaryGrid: {
     flexDirection: 'row',
@@ -851,47 +848,43 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: '#1a1f3a',
     padding: 12,
-    borderRadius: 12,
+    borderRadius: 16,
     gap: 12,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
   iconBox: {
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 217, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   summaryLabel: {
     fontSize: 11,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.5)',
     marginBottom: 2,
   },
   summaryValue: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#111827',
+    color: '#FFF',
   },
   summarySubValue: {
     fontSize: 11,
-    color: '#9CA3AF',
+    color: 'rgba(255, 255, 255, 0.4)',
   },
 
   // Guest Card
   guestCard: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#1a1f3a',
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
   guestRow: {
     flexDirection: 'row',
@@ -902,33 +895,33 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   guestLabel: {
     fontSize: 11,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.5)',
     marginBottom: 2,
   },
   guestValue: {
     fontSize: 14,
-    color: '#111827',
+    color: '#FFF',
     fontWeight: '500',
   },
   divider: {
     height: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     marginVertical: 12,
   },
 
   // Payment
   paymentCard: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#1a1f3a',
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
   paymentRow: {
     flexDirection: 'row',
@@ -937,22 +930,22 @@ const styles = StyleSheet.create({
   },
   paymentRowLabel: {
     fontSize: 14,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   paymentRowValue: {
     fontSize: 14,
-    color: '#111827',
+    color: '#FFF',
     fontWeight: '500',
   },
   totalLabel: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#111827',
+    color: '#FFF',
   },
   totalValue: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#111827',
+    color: '#00D9FF',
   },
   paymentMethodRow: {
     flexDirection: 'row',
@@ -963,22 +956,22 @@ const styles = StyleSheet.create({
   },
   paymentMethodText: {
     fontSize: 12,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.5)',
   },
 
   // Buttons
   cancelButton: {
     marginHorizontal: 20,
-    backgroundColor: '#FEF2F2',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
     paddingVertical: 14,
     borderRadius: 24,
     alignItems: 'center',
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#FCA5A5',
+    borderColor: 'rgba(239, 68, 68, 0.3)',
   },
   cancelButtonText: {
-    color: '#DC2626',
+    color: '#F87171',
     fontWeight: '600',
     fontSize: 15,
   },
@@ -988,45 +981,46 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 20,
     padding: 16,
-    backgroundColor: '#FFF',
+    backgroundColor: '#1a1f3a',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
   refundTitle: {
     fontSize: 16,
     fontWeight: '700',
     marginBottom: 12,
+    color: '#FFF',
   },
   requestRefundButton: {
-    backgroundColor: '#111827',
+    backgroundColor: '#00D9FF',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
   },
   requestRefundText: {
-    color: '#FFF',
+    color: '#0a0e27',
     fontWeight: '600',
   },
   refundStatusBox: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     padding: 12,
     borderRadius: 8,
   },
   refundStatusText: {
-    color: '#4B5563',
+    color: 'rgba(255, 255, 255, 0.8)',
     fontSize: 13,
   },
 
   // Pre-checkin Styles
   preCheckinBanner: {
     marginHorizontal: 20,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: 'rgba(16, 185, 129, 0.3)',
   },
   preCheckinHeader: {
     flexDirection: 'row',
@@ -1038,24 +1032,24 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   preCheckinTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#047857',
+    color: '#34D399',
   },
   preCheckinSubtitle: {
     fontSize: 13,
-    color: '#065F46',
+    color: 'rgba(52, 211, 153, 0.8)',
     marginTop: 2,
   },
   preCheckinBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -1064,10 +1058,10 @@ const styles = StyleSheet.create({
   preCheckinBadgeText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#059669',
+    color: '#34D399',
   },
   preCheckinDetails: {
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 8,
     padding: 8,
     marginBottom: 12,
@@ -1079,7 +1073,7 @@ const styles = StyleSheet.create({
   },
   preCheckinDetailText: {
     fontSize: 11,
-    color: '#047857',
+    color: '#34D399',
     fontWeight: '500',
   },
   preCheckinBenefits: {
@@ -1094,22 +1088,22 @@ const styles = StyleSheet.create({
   },
   preCheckinBenefitText: {
     fontSize: 11,
-    color: '#047857',
+    color: '#34D399',
     fontWeight: '500',
   },
 
   // Guest Verification Styles
   guestSubValue: {
     fontSize: 11,
-    color: '#9CA3AF',
+    color: 'rgba(255, 255, 255, 0.4)',
     marginTop: 2,
   },
   verificationCard: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#1a1f3a',
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
   verificationHeader: {
     flexDirection: 'row',
@@ -1120,7 +1114,7 @@ const styles = StyleSheet.create({
   verificationTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#047857',
+    color: '#34D399',
   },
   verificationGrid: {
     flexDirection: 'row',
@@ -1132,44 +1126,44 @@ const styles = StyleSheet.create({
   },
   verificationLabel: {
     fontSize: 11,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.5)',
     marginBottom: 4,
   },
   verificationValue: {
     fontSize: 13,
-    color: '#111827',
+    color: '#FFF',
     fontWeight: '500',
   },
   verificationAddressContainer: {
     marginTop: 8,
     padding: 12,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 8,
   },
   verificationAddressText: {
     fontSize: 12,
-    color: '#374151',
+    color: 'rgba(255, 255, 255, 0.8)',
     lineHeight: 16,
   },
   verificationFooter: {
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
   },
   verificationFooterText: {
     fontSize: 11,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.4)',
     textAlign: 'center',
   },
 
   // Preferences Styles
   preferencesCard: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#1a1f3a',
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
   preferenceRow: {
     flexDirection: 'row',
@@ -1179,17 +1173,17 @@ const styles = StyleSheet.create({
   },
   preferenceLabel: {
     fontSize: 14,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   preferenceValue: {
     fontSize: 14,
-    color: '#111827',
+    color: '#FFF',
     fontWeight: '500',
   },
   preferenceEnabledBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ECFDF5',
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
@@ -1197,7 +1191,7 @@ const styles = StyleSheet.create({
   },
   preferenceEnabledText: {
     fontSize: 12,
-    color: '#047857',
+    color: '#34D399',
     fontWeight: '600',
   },
 });

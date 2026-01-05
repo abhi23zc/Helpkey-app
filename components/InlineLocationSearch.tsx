@@ -5,6 +5,7 @@ import {
   FlatList,
   Text,
   TouchableOpacity,
+
   StyleSheet,
   ActivityIndicator,
   Dimensions,
@@ -254,7 +255,7 @@ export default function InlineLocationSearch({
       activeOpacity={0.7}
     >
       <View style={styles.predictionIcon}>
-        <MapPin size={16} color="#0EA5E9" />
+        <MapPin size={16} color="#00D9FF" />
       </View>
       <View style={styles.predictionText}>
         <Text style={styles.predictionMain} numberOfLines={1}>
@@ -277,15 +278,15 @@ export default function InlineLocationSearch({
         isLocationSelected && styles.searchContainerSelected
       ]}>
         {isLocationSelected ? (
-          <MapPin size={isTablet ? 22 : 20} color="#0EA5E9" />
+          <MapPin size={isTablet ? 22 : 20} color="#00D9FF" />
         ) : (
-          <SearchIcon size={isTablet ? 22 : 20} color="#6B7280" />
+          <SearchIcon size={isTablet ? 22 : 20} color="#00D9FF" />
         )}
         <TextInput
           ref={searchInputRef}
           style={styles.searchInput}
           placeholder={placeholder}
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor="rgba(255, 255, 255, 0.4)"
           value={searchQuery}
           onChangeText={handleSearchChange}
           onFocus={() => {
@@ -306,11 +307,11 @@ export default function InlineLocationSearch({
         />
         {searchQuery.length > 0 && (
           <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-            <X size={18} color="#6B7280" />
+            <X size={18} color="rgba(255, 255, 255, 0.6)" />
           </TouchableOpacity>
         )}
         {loading && (
-          <ActivityIndicator size="small" color="#0EA5E9" style={styles.loadingIndicator} />
+          <ActivityIndicator size="small" color="#00D9FF" style={styles.loadingIndicator} />
         )}
       </View>
 
@@ -319,7 +320,7 @@ export default function InlineLocationSearch({
         <View style={styles.resultsContainer}>
           {loading && predictions.length === 0 ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="#0EA5E9" />
+              <ActivityIndicator size="small" color="#00D9FF" />
               <Text style={styles.loadingText}>Searching...</Text>
             </View>
           ) : (
@@ -346,23 +347,23 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-    borderRadius: 25,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 16,
     paddingHorizontal: isTablet ? 20 : 16,
     paddingVertical: isTablet ? 16 : 14,
     gap: isTablet ? 16 : 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   searchContainerSelected: {
-    backgroundColor: '#E0F2FE', // Sky 50
-    borderColor: '#0EA5E9', // Sky 500
-    borderWidth: 1.5,
+    backgroundColor: 'rgba(0, 217, 255, 0.1)',
+    borderColor: 'rgba(0, 217, 255, 0.3)',
+    borderWidth: 1,
   },
   searchInput: {
     flex: 1,
     fontSize: isTablet ? 18 : 16,
-    color: '#111827',
+    color: '#fff',
     padding: 0,
     fontWeight: '500',
   },
@@ -377,7 +378,7 @@ const styles = StyleSheet.create({
     top: '100%',
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1f3a',
     borderRadius: 16,
     marginTop: 8,
     shadowColor: '#000',
@@ -385,13 +386,13 @@ const styles = StyleSheet.create({
       width: 0,
       height: 10,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 20,
-    elevation: 10,
+    elevation: 8,
     maxHeight: 300,
     zIndex: 1001,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     overflow: 'hidden',
   },
   resultsList: {
@@ -406,7 +407,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   predictionItem: {
     flexDirection: 'row',
@@ -415,13 +416,13 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
   },
   predictionIcon: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#E0F2FE', // Sky 50
+    backgroundColor: 'rgba(0, 217, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -431,11 +432,11 @@ const styles = StyleSheet.create({
   predictionMain: {
     fontSize: isTablet ? 16 : 15,
     fontWeight: '600',
-    color: '#111827',
+    color: '#fff',
     marginBottom: 2,
   },
   predictionSecondary: {
     fontSize: isTablet ? 14 : 13,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
 });

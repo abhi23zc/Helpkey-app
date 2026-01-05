@@ -203,7 +203,7 @@ export default function Search() {
   const handleLocationSelect = async (location: any) => {
     try {
       console.log('Search screen - Location selected:', location);
-      
+
       // Save location to shared storage
       try {
         const { saveSelectedLocation } = await import('../../services/locationStorage');
@@ -211,7 +211,7 @@ export default function Search() {
       } catch (error) {
         console.error('Error saving location:', error);
       }
-      
+
       await addToSearchHistory(location.description);
       setSelectedLocation(location);
 
@@ -245,7 +245,7 @@ export default function Search() {
     } catch (error) {
       console.error('Error clearing stored location:', error);
     }
-    
+
     setSelectedLocation(null);
     setNearbyHotels([]);
     setSearchingNearby(false);
@@ -258,7 +258,7 @@ export default function Search() {
         try {
           const { getSelectedLocation, isLocationRecent } = await import('../../services/locationStorage');
           const storedLocation = await getSelectedLocation();
-          
+
           if (storedLocation && isLocationRecent(storedLocation)) {
             console.log('Loading stored location on focus:', storedLocation);
             // Check if this is a different location than currently selected
@@ -329,7 +329,7 @@ export default function Search() {
           transition={300}
         />
         <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.6)']}
+          colors={['transparent', 'rgba(10, 14, 39, 0.8)', '#0a0e27']}
           style={styles.cardGradient}
         />
 
@@ -352,7 +352,7 @@ export default function Search() {
 
           <Text style={styles.cardTitle} numberOfLines={1}>{item.name}</Text>
           <View style={styles.locationRow}>
-            <MapPin size={12} color="#E5E7EB" />
+            <MapPin size={12} color="#00D9FF" />
             <Text style={styles.cardLocation} numberOfLines={1}>{item.location}</Text>
           </View>
 
@@ -387,7 +387,7 @@ export default function Search() {
         </View>
 
         <View style={styles.recentLocationRow}>
-          <MapPin size={12} color="#9CA3AF" />
+          <MapPin size={12} color="#00D9FF" />
           <Text style={styles.recentLocation} numberOfLines={1}>{item.location}</Text>
         </View>
 
@@ -412,14 +412,14 @@ export default function Search() {
   if (loading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
-        <ActivityIndicator size="large" color="#111827" />
+        <ActivityIndicator size="large" color="#00D9FF" />
       </View>
     );
   }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
       {/* Search Header */}
       <View style={styles.header}>
@@ -427,7 +427,7 @@ export default function Search() {
           style={styles.backIcon}
           onPress={handleBackPress}
         >
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft size={24} color="#fff" />
         </TouchableOpacity>
         <View style={styles.flex1}>
           <InlineLocationSearch
@@ -449,7 +449,7 @@ export default function Search() {
           </View>
 
           {searchingNearby ? (
-            <ActivityIndicator color="#111827" style={{ marginTop: 40 }} />
+            <ActivityIndicator color="#00D9FF" style={{ marginTop: 40 }} />
           ) : (
             <FlatList
               data={nearbyHotels}
@@ -461,14 +461,14 @@ export default function Search() {
                       <Text style={styles.resultName} numberOfLines={1}>{item.name}</Text>
                       {getSafeNumber(item.rating) > 0 && (
                         <View style={styles.ratingBadgeSM}>
-                          <Star size={10} color="#D97706" fill="#D97706" />
+                          <Star size={10} color="#FBBF24" fill="#FBBF24" />
                           <Text style={styles.ratingTextSM}>{getSafeNumber(item.rating).toFixed(1)}</Text>
                         </View>
                       )}
                     </View>
 
                     <View style={styles.addressRow}>
-                      <MapPin size={12} color="#6B7280" />
+                      <MapPin size={12} color="#9CA3AF" />
                       <Text style={styles.resultLocation} numberOfLines={1}>{item.address || item.location}</Text>
                     </View>
 
@@ -491,13 +491,13 @@ export default function Search() {
                     <View style={styles.availabilityRow}>
                       {item.hasHourly && (
                         <View style={styles.hourlyBadge}>
-                          <Clock size={10} color="#111827" />
+                          <Clock size={10} color="#E0F2FE" />
                           <Text style={styles.hourlyText}>Hourly</Text>
                         </View>
                       )}
                       {item.hasNightly && (
                         <View style={styles.nightlyBadge}>
-                          <Moon size={10} color="#111827" />
+                          <Moon size={10} color="#E0E7FF" />
                           <Text style={styles.nightlyText}>Nightly</Text>
                         </View>
                       )}
@@ -528,7 +528,7 @@ export default function Search() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 100 }}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#111827" />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00D9FF" />
           }
         >
           {/* Latest Search */}
@@ -580,7 +580,7 @@ export default function Search() {
           {/* Empty State */}
           {!searchHistory.length && !recommendations.length && !recentlyViewed.length && (
             <View style={styles.emptyState}>
-              <SearchIcon size={50} color="#D1D5DB" />
+              <SearchIcon size={50} color="rgba(255, 255, 255, 0.2)" />
               <Text style={styles.emptyTitle}>Start Exploring</Text>
               <Text style={styles.emptySubtitle}>Search for destinations, hotels, and more.</Text>
             </View>
@@ -594,7 +594,7 @@ export default function Search() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF',
+    backgroundColor: '#0a0e27', // Dark Navy
   },
   flex1: {
     flex: 1,
@@ -605,7 +605,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     gap: 12,
-    backgroundColor: '#FFF',
+    marginTop: 10,
   },
   backIcon: {
     padding: 4,
@@ -623,11 +623,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#111827',
+    color: '#fff',
+    letterSpacing: 0.3,
   },
   seeAll: {
     fontSize: 14,
-    color: '#111827', // Black
+    color: '#00D9FF',
     fontWeight: '600',
   },
 
@@ -640,15 +641,15 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   searchTag: {
-    backgroundColor: '#F3F4F6', // Gray 50
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E5E7EB', // Gray 200
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   searchTagText: {
-    color: '#111827', // Black
+    color: 'rgba(255, 255, 255, 0.9)',
     fontWeight: '600',
     fontSize: 13,
   },
@@ -660,8 +661,10 @@ const styles = StyleSheet.create({
     height: 250,
     borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#1a1f3a',
     position: 'relative',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   cardImage: {
     width: '100%',
@@ -672,7 +675,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 120,
+    height: 150,
   },
   favoriteButton: {
     position: 'absolute',
@@ -719,7 +722,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   cardLocation: {
-    color: '#E5E7EB',
+    color: 'rgba(255, 255, 255, 0.8)',
     fontSize: 13,
   },
   locationRow: {
@@ -739,30 +742,25 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   priceUnit: {
-    color: '#D1D5DB',
+    color: 'rgba(255, 255, 255, 0.6)',
     fontSize: 12,
   },
 
   // Recently Viewed
   recentItem: {
     flexDirection: 'row',
-    backgroundColor: '#FFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 16,
     padding: 12,
     gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2, // Android shadow
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   recentImage: {
     width: 90,
     height: 90,
     borderRadius: 12,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   recentContent: {
     flex: 1,
@@ -777,7 +775,7 @@ const styles = StyleSheet.create({
   recentTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#111827',
+    color: '#fff',
     flex: 1,
     marginRight: 8,
   },
@@ -785,7 +783,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: 'rgba(251, 191, 36, 0.2)',
     paddingHorizontal: 4,
     paddingVertical: 1,
     borderRadius: 4,
@@ -793,86 +791,99 @@ const styles = StyleSheet.create({
   recentRatingText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#92400E',
+    color: '#FBBF24',
   },
   recentLocationRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    marginVertical: 4,
   },
   recentLocation: {
     fontSize: 12,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
+    flex: 1,
   },
   recentFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 4,
   },
   recentAmenities: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 4,
   },
   amenityChip: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
   },
   amenityChipText: {
     fontSize: 10,
-    color: '#4B5563',
-    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.7)',
   },
   recentPrice: {
+    flexDirection: 'row',
     alignItems: 'baseline',
   },
   recentPriceAmount: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#111827', // Black
+    color: '#00D9FF',
   },
   recentPriceUnit: {
     fontSize: 10,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.5)',
   },
 
-  // Results Interface
+  // Empty State
+  emptyState: {
+    height: 300,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.5)',
+  },
+
+  // Search Results
   resultsContainer: {
     flex: 1,
   },
   resultsHeader: {
-    padding: 20,
-    backgroundColor: '#F9FAFB',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    paddingHorizontal: 20,
+    marginBottom: 16,
   },
   resultsTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#111827',
+    color: '#fff',
+    marginBottom: 4,
   },
   resultsSubtitle: {
     fontSize: 14,
-    color: '#6B7280',
-    marginTop: 4,
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   resultCard: {
-    backgroundColor: '#FFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    marginBottom: 4,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   resultImage: {
     width: '100%',
     height: 180,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   resultContent: {
     padding: 16,
@@ -881,174 +892,132 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   resultName: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#111827',
+    color: '#fff',
     flex: 1,
     marginRight: 8,
   },
   ratingBadgeSM: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: 'rgba(251, 191, 36, 0.2)',
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: 6,
+    gap: 4,
   },
   ratingTextSM: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#D97706',
+    color: '#FBBF24',
   },
   addressRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
     marginBottom: 12,
   },
   resultLocation: {
     fontSize: 14,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
     flex: 1,
   },
-
-  // Amenities
   amenitiesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   amenityBadge: {
-    backgroundColor: '#F3F4F6', // Gray 50
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   amenityText: {
-    fontSize: 11,
-    color: '#111827', // Black
-    fontWeight: '500',
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
     textTransform: 'capitalize',
   },
   moreAmenities: {
-    fontSize: 11,
-    color: '#6B7280',
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.5)',
     alignSelf: 'center',
   },
-
-  divider: {
-    height: 1,
-    backgroundColor: '#F3F4F6',
-    marginBottom: 12,
-  },
-
-  // Availability
   availabilityRow: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   hourlyBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#F3F4F6', // Gray 50
+    backgroundColor: 'rgba(14, 165, 233, 0.2)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
   },
   hourlyText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#111827',
+    color: '#38BDF8', // Sky 400
   },
   nightlyBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#F3F4F6', // Gray 50
+    backgroundColor: 'rgba(99, 102, 241, 0.2)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
   },
   nightlyText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#111827',
+    color: '#818CF8', // Indigo 400
   },
-
-  // Footer
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginVertical: 12,
+  },
   priceFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   priceInfo: {
-    flex: 1,
+    justifyContent: 'center',
   },
   fromText: {
-    fontSize: 11,
-    color: '#6B7280',
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.5)',
     marginBottom: 2,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    fontWeight: '500',
   },
   resultPrice: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#111827', // Black
+    color: '#fff',
   },
   resultPriceUnit: {
-    fontSize: 12,
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.6)',
     fontWeight: '400',
-    color: '#6B7280',
   },
   viewBtn: {
-    backgroundColor: '#111827', // Black
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    shadowColor: '#111827',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: '#00D9FF',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 12,
   },
   viewBtnText: {
-    color: '#FFF',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-
-  // Empty State
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 80,
-    paddingHorizontal: 40,
-  },
-  emptyTitle: {
-    marginTop: 16,
-    fontSize: 18,
+    color: '#0a0e27',
     fontWeight: '700',
-    color: '#111827',
-  },
-  emptySubtitle: {
-    marginTop: 8,
     fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
   },
 });

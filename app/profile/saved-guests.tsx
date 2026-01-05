@@ -2,7 +2,7 @@ import { useAuth } from '@/context/AuthContext';
 import { db } from '@/config/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Plus, Edit2, Trash2, Shield, Eye, User, Phone, CheckCircle, AlertCircle } from 'lucide-react-native';
+import { ArrowLeft, Plus, Edit2, Trash2, Shield, Eye, User, Phone, CheckCircle, AlertCircle, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import AadhaarVerificationModal from '@/components/AadhaarVerificationModal';
 import GuestDetailsModal from '@/components/GuestDetailsModal';
@@ -198,7 +198,7 @@ export default function SavedGuestsScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+      <StatusBar barStyle="light-content" backgroundColor="#0a0e27" />
 
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'android' ? 12 : 0) }]}>
@@ -207,7 +207,7 @@ export default function SavedGuestsScreen() {
           style={styles.backButton}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Saved Guests</Text>
         <TouchableOpacity
@@ -215,7 +215,7 @@ export default function SavedGuestsScreen() {
           style={styles.addButton}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Plus size={24} color="#0EA5E9" />
+          <Plus size={24} color="#00D9FF" />
         </TouchableOpacity>
       </View>
 
@@ -230,7 +230,7 @@ export default function SavedGuestsScreen() {
           style={styles.infoCard}
         >
           <View style={styles.infoIconContainer}>
-            <Shield size={20} color="#0EA5E9" />
+            <Shield size={20} color="#00D9FF" />
           </View>
           <Text style={styles.infoText}>
             Save guest details for faster bookings. Verified guests get pre-checkin benefits.
@@ -251,7 +251,7 @@ export default function SavedGuestsScreen() {
                 >
                   <View style={styles.cardHeader}>
                     <View style={styles.avatarContainer}>
-                      <User size={24} color="#6B7280" />
+                      <User size={24} color="#00D9FF" />
                     </View>
                     <View style={styles.headerInfo}>
                       <Text style={styles.guestName}>{guest.firstName} {guest.lastName}</Text>
@@ -259,12 +259,12 @@ export default function SavedGuestsScreen() {
                     </View>
                     {guest.aadhaarVerified ? (
                       <View style={styles.verifiedBadge}>
-                        <Shield size={12} color="#15803D" />
+                        <Shield size={12} color="#00D9FF" />
                         <Text style={styles.verifiedBadgeText}>Verified</Text>
                       </View>
                     ) : (
                       <View style={styles.unverifiedBadge}>
-                        <AlertCircle size={12} color="#B45309" />
+                        <AlertCircle size={12} color="#F87171" />
                         <Text style={styles.unverifiedBadgeText}>Unverified</Text>
                       </View>
                     )}
@@ -277,14 +277,14 @@ export default function SavedGuestsScreen() {
                       style={styles.actionBtn}
                       onPress={() => handleShowDetails(guest)}
                     >
-                      <Eye size={18} color="#4B5563" />
+                      <Eye size={18} color="rgba(255, 255, 255, 0.6)" />
                     </TouchableOpacity>
 
                     <TouchableOpacity
                       style={styles.actionBtn}
                       onPress={() => handleEditGuest(guest)}
                     >
-                      <Edit2 size={18} color="#0EA5E9" />
+                      <Edit2 size={18} color="#00D9FF" />
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -306,7 +306,7 @@ export default function SavedGuestsScreen() {
                           <Text style={styles.statusTitle}>Ready for Pre-checkin</Text>
                           <Text style={styles.statusSubtitle}>Identity verified successfully</Text>
                         </View>
-                        <Shield size={20} color="#15803D" />
+                        <Shield size={20} color="#059669" />
                       </>
                     ) : (
                       <>
@@ -335,7 +335,7 @@ export default function SavedGuestsScreen() {
             style={styles.emptyState}
           >
             <View style={styles.emptyIconCircle}>
-              <User size={48} color="#9CA3AF" />
+              <User size={48} color="rgba(255, 255, 255, 0.4)" />
             </View>
             <Text style={styles.emptyTitle}>No Saved Guests</Text>
             <Text style={styles.emptyText}>
@@ -345,7 +345,7 @@ export default function SavedGuestsScreen() {
               style={styles.addFirstGuestBtn}
               onPress={handleAddGuest}
             >
-              <Plus size={20} color="#FFF" />
+              <Plus size={20} color="#0a0e27" />
               <Text style={styles.addFirstGuestText}>Add Your First Guest</Text>
             </TouchableOpacity>
           </MotiView>
@@ -379,7 +379,6 @@ export default function SavedGuestsScreen() {
       {showAddModal && (
         <View style={styles.modalOverlay}>
           <MotiView
-
             transition={{ type: 'spring', damping: 15 } as any}
             style={styles.modalContainer}
           >
@@ -388,7 +387,7 @@ export default function SavedGuestsScreen() {
                 {editingGuest ? 'Edit Guest Details' : 'Add New Guest'}
               </Text>
               <TouchableOpacity onPress={() => setShowAddModal(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                <Text style={styles.closeModalText}>✕</Text>
+                <X size={24} color="#FFF" />
               </TouchableOpacity>
             </View>
 
@@ -400,7 +399,7 @@ export default function SavedGuestsScreen() {
                   value={guestForm.firstName}
                   onChangeText={(t) => setGuestForm({ ...guestForm, firstName: t })}
                   placeholder="e.g. Rahul"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
                 />
               </View>
 
@@ -411,7 +410,7 @@ export default function SavedGuestsScreen() {
                   value={guestForm.lastName}
                   onChangeText={(t) => setGuestForm({ ...guestForm, lastName: t })}
                   placeholder="e.g. Sharma"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
                 />
               </View>
 
@@ -422,7 +421,7 @@ export default function SavedGuestsScreen() {
                   value={guestForm.phoneNumber}
                   onChangeText={(t) => setGuestForm({ ...guestForm, phoneNumber: t })}
                   placeholder="+91 XXXXX XXXXX"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
                   keyboardType="phone-pad"
                 />
               </View>
@@ -438,7 +437,7 @@ export default function SavedGuestsScreen() {
                     setGuestForm({ ...guestForm, aadhaarNumber: formatted });
                   }}
                   placeholder="XXXX XXXX XXXX"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
                   keyboardType="number-pad"
                 />
                 <Text style={styles.helperText}>Used for secure identity verification</Text>
@@ -450,7 +449,7 @@ export default function SavedGuestsScreen() {
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
-                  <ActivityIndicator color="#FFF" />
+                  <ActivityIndicator color="#0a0e27" />
                 ) : (
                   <Text style={styles.saveBtnText}>{editingGuest ? 'Update Guest' : 'Save Guest'}</Text>
                 )}
@@ -467,7 +466,7 @@ export default function SavedGuestsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#0a0e27',
   },
   header: {
     flexDirection: 'row',
@@ -475,9 +474,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingBottom: 16,
-    backgroundColor: '#FFF',
+    backgroundColor: '#0a0e27',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   backButton: {
     padding: 4,
@@ -485,7 +484,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#111827',
+    color: '#FFF',
   },
   addButton: {
     padding: 4,
@@ -495,24 +494,24 @@ const styles = StyleSheet.create({
   infoCard: {
     marginTop: 20,
     marginBottom: 24,
-    backgroundColor: '#E0F2FE',
+    backgroundColor: 'rgba(0, 217, 255, 0.1)',
     borderRadius: 16,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     borderWidth: 1,
-    borderColor: '#BAE6FD',
+    borderColor: 'rgba(0, 217, 255, 0.2)',
   },
   infoIconContainer: {
-    backgroundColor: '#FFF',
+    backgroundColor: 'rgba(0, 217, 255, 0.1)',
     padding: 8,
     borderRadius: 10,
   },
   infoText: {
     flex: 1,
     fontSize: 14,
-    color: '#0369A1',
+    color: '#00D9FF',
     lineHeight: 20,
   },
 
@@ -521,16 +520,11 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   guestCard: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#1a1f3a',
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     marginBottom: 10,
   },
   cardHeader: {
@@ -542,7 +536,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -552,19 +546,19 @@ const styles = StyleSheet.create({
   guestName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#111827',
+    color: '#FFF',
     marginBottom: 2,
   },
   guestAadhaar: {
     fontSize: 13,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   verifiedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#DCFCE7',
+    backgroundColor: 'rgba(0, 217, 255, 0.1)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 99,
@@ -572,13 +566,13 @@ const styles = StyleSheet.create({
   verifiedBadgeText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#15803D',
+    color: '#00D9FF',
   },
   unverifiedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 99,
@@ -586,12 +580,12 @@ const styles = StyleSheet.create({
   unverifiedBadgeText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#B45309',
+    color: '#F87171',
   },
 
   divider: {
     height: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     marginVertical: 12,
   },
 
@@ -602,10 +596,10 @@ const styles = StyleSheet.create({
   },
   actionBtn: {
     padding: 8,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
 
   statusBanner: {
@@ -617,14 +611,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   statusBannerVerified: {
-    backgroundColor: '#F0FDF4',
+    backgroundColor: 'rgba(5, 150, 105, 0.1)',
     borderWidth: 1,
-    borderColor: '#DCFCE7',
+    borderColor: 'rgba(5, 150, 105, 0.3)',
   },
   statusBannerUnverified: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   statusContent: {
     flex: 1,
@@ -632,29 +626,29 @@ const styles = StyleSheet.create({
   statusTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#15803D',
+    color: '#059669',
   },
   statusSubtitle: {
     fontSize: 12,
-    color: '#166534',
+    color: '#34D399',
   },
   statusTitleUnverified: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#475569',
+    color: 'rgba(255, 255, 255, 0.8)',
   },
   statusSubtitleUnverified: {
     fontSize: 12,
-    color: '#64748B',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   verifyBtn: {
-    backgroundColor: '#0EA5E9',
+    backgroundColor: '#00D9FF',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
   },
   verifyBtnText: {
-    color: '#FFF',
+    color: '#0a0e27',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -669,7 +663,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
@@ -677,12 +671,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#111827',
+    color: '#FFF',
     marginBottom: 10,
   },
   emptyText: {
     fontSize: 15,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
     textAlign: 'center',
     paddingHorizontal: 40,
     marginBottom: 30,
@@ -692,13 +686,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#0EA5E9',
+    backgroundColor: '#00D9FF',
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 100,
   },
   addFirstGuestText: {
-    color: '#FFF',
+    color: '#0a0e27',
     fontSize: 16,
     fontWeight: '700',
   },
@@ -710,16 +704,18 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
     zIndex: 1000,
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#1a1f3a',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingBottom: 40,
     maxHeight: '80%',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -727,19 +723,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#111827',
+    color: '#FFF',
   },
   closeModalText: {
     fontSize: 22,
-    color: '#9CA3AF',
+    color: '#FFF',
   },
   modalBody: {
     padding: 24,
+    backgroundColor: '#1a1f3a',
   },
   formGroup: {
     marginBottom: 20,
@@ -747,33 +744,33 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: '#FFF',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 15,
-    color: '#111827',
+    color: '#FFF',
   },
   helperText: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: 'rgba(255, 255, 255, 0.5)',
     marginTop: 6,
   },
   saveBtn: {
-    backgroundColor: '#0EA5E9',
+    backgroundColor: '#00D9FF',
     paddingVertical: 16,
     borderRadius: 16,
     alignItems: 'center',
     marginTop: 10,
   },
   saveBtnText: {
-    color: '#FFF',
+    color: '#0a0e27',
     fontSize: 16,
     fontWeight: '700',
   },

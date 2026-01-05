@@ -8,6 +8,8 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  StyleSheet,
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
@@ -135,15 +137,15 @@ export default function RefundRequestModal({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return { bg: '#FEF3C7', text: '#92400E' };
+        return { bg: 'rgba(251, 191, 36, 0.15)', text: '#FBBF24' };
       case 'approved':
-        return { bg: '#D1FAE5', text: '#065F46' };
+        return { bg: 'rgba(52, 211, 153, 0.15)', text: '#34D399' };
       case 'rejected':
-        return { bg: '#FEE2E2', text: '#991B1B' };
+        return { bg: 'rgba(248, 113, 113, 0.15)', text: '#F87171' };
       case 'processed':
-        return { bg: '#DBEAFE', text: '#1E40AF' };
+        return { bg: 'rgba(96, 165, 250, 0.15)', text: '#60A5FA' };
       default:
-        return { bg: '#F3F4F6', text: '#1F2937' };
+        return { bg: 'rgba(156, 163, 175, 0.15)', text: '#9CA3AF' };
     }
   };
 
@@ -164,54 +166,29 @@ export default function RefundRequestModal({
       transparent={true}
       onRequestClose={onClose}
     >
-      <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
-        <View
-          style={{
-            flex: 1,
-            marginTop: 50,
-            backgroundColor: 'white',
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
-          }}
-        >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContainer}>
           {/* Header */}
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: 20,
-              borderBottomWidth: 1,
-              borderBottomColor: '#E5E7EB',
-            }}
-          >
-            <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#111827' }}>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>
               Request Refund
             </Text>
             <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={24} color="#6B7280" />
+              <Ionicons name="close" size={24} color="#FFF" />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20 }}>
             {loadingRequest ? (
               <View style={{ padding: 40, alignItems: 'center' }}>
-                <ActivityIndicator size="large" color="#2563EB" />
-                <Text style={{ marginTop: 10, color: '#6B7280' }}>
+                <ActivityIndicator size="large" color="#00D9FF" />
+                <Text style={{ marginTop: 10, color: 'rgba(255, 255, 255, 0.6)' }}>
                   Checking refund status...
                 </Text>
               </View>
             ) : existingRequest ? (
               // Show existing request status
-              <View
-                style={{
-                  backgroundColor: '#F9FAFB',
-                  borderWidth: 1,
-                  borderColor: '#E5E7EB',
-                  borderRadius: 12,
-                  padding: 16,
-                }}
-              >
+              <View style={styles.contentBox}>
                 <View
                   style={{
                     flexDirection: 'row',
@@ -221,10 +198,10 @@ export default function RefundRequestModal({
                   }}
                 >
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 16, fontWeight: '600', color: '#111827' }}>
+                    <Text style={{ fontSize: 16, fontWeight: '600', color: '#FFF' }}>
                       Refund Request Status
                     </Text>
-                    <Text style={{ fontSize: 14, color: '#6B7280', marginTop: 4 }}>
+                    <Text style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.6)', marginTop: 4 }}>
                       You have already submitted a refund request for this booking.
                     </Text>
                   </View>
@@ -252,21 +229,21 @@ export default function RefundRequestModal({
 
                 <View style={{ marginTop: 12, gap: 8 }}>
                   <View>
-                    <Text style={{ fontSize: 14, color: '#6B7280' }}>
-                      <Text style={{ fontWeight: '600' }}>Reason:</Text>{' '}
+                    <Text style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.6)' }}>
+                      <Text style={{ fontWeight: '600', color: '#FFF' }}>Reason:</Text>{' '}
                       {existingRequest.reason}
                     </Text>
                   </View>
                   <View>
-                    <Text style={{ fontSize: 14, color: '#6B7280' }}>
-                      <Text style={{ fontWeight: '600' }}>Requested:</Text>{' '}
+                    <Text style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.6)' }}>
+                      <Text style={{ fontWeight: '600', color: '#FFF' }}>Requested:</Text>{' '}
                       {formatDate(existingRequest.requestedAt)}
                     </Text>
                   </View>
                   {existingRequest.adminNotes && (
                     <View>
-                      <Text style={{ fontSize: 14, color: '#6B7280' }}>
-                        <Text style={{ fontWeight: '600' }}>Admin Notes:</Text>{' '}
+                      <Text style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.6)' }}>
+                        <Text style={{ fontWeight: '600', color: '#FFF' }}>Admin Notes:</Text>{' '}
                         {existingRequest.adminNotes}
                       </Text>
                     </View>
@@ -277,37 +254,21 @@ export default function RefundRequestModal({
               // Show refund request form
               <>
                 {/* Booking Info */}
-                <View
-                  style={{
-                    backgroundColor: '#EFF6FF',
-                    borderWidth: 1,
-                    borderColor: '#BFDBFE',
-                    borderRadius: 12,
-                    padding: 16,
-                    marginBottom: 20,
-                  }}
-                >
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: '#1E40AF' }}>
+                <View style={styles.infoBox}>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: '#00D9FF' }}>
                     Booking Reference: {bookingReference}
                   </Text>
-                  <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1E3A8A', marginTop: 4 }}>
+                  <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#FFF', marginTop: 4 }}>
                     Refund Amount: ₹{totalAmount.toLocaleString()}
                   </Text>
                 </View>
 
                 {/* Reason */}
                 <View style={{ marginBottom: 20 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 }}>
+                  <Text style={styles.label}>
                     Reason for Refund *
                   </Text>
-                  <View
-                    style={{
-                      borderWidth: 1,
-                      borderColor: '#D1D5DB',
-                      borderRadius: 8,
-                      backgroundColor: 'white',
-                    }}
-                  >
+                  <View style={styles.inputContainer}>
                     {[
                       'Booking cancellation',
                       'Change of plans',
@@ -324,7 +285,7 @@ export default function RefundRequestModal({
                           alignItems: 'center',
                           padding: 12,
                           borderBottomWidth: 1,
-                          borderBottomColor: '#E5E7EB',
+                          borderBottomColor: 'rgba(255, 255, 255, 0.1)',
                         }}
                       >
                         <View
@@ -333,7 +294,7 @@ export default function RefundRequestModal({
                             height: 20,
                             borderRadius: 10,
                             borderWidth: 2,
-                            borderColor: formData.reason === reason ? '#2563EB' : '#D1D5DB',
+                            borderColor: formData.reason === reason ? '#00D9FF' : 'rgba(255, 255, 255, 0.3)',
                             alignItems: 'center',
                             justifyContent: 'center',
                             marginRight: 12,
@@ -345,12 +306,12 @@ export default function RefundRequestModal({
                                 width: 10,
                                 height: 10,
                                 borderRadius: 5,
-                                backgroundColor: '#2563EB',
+                                backgroundColor: '#00D9FF',
                               }}
                             />
                           )}
                         </View>
-                        <Text style={{ fontSize: 14, color: '#374151' }}>{reason}</Text>
+                        <Text style={{ fontSize: 14, color: '#FFF' }}>{reason}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -358,63 +319,41 @@ export default function RefundRequestModal({
 
                 {/* Description */}
                 <View style={{ marginBottom: 20 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 }}>
+                  <Text style={styles.label}>
                     Additional Details
                   </Text>
                   <TextInput
                     value={formData.description}
                     onChangeText={(text) => setFormData({ ...formData, description: text })}
                     placeholder="Please provide any additional details..."
+                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
                     multiline
                     numberOfLines={4}
-                    style={{
-                      borderWidth: 1,
-                      borderColor: '#D1D5DB',
-                      borderRadius: 8,
-                      padding: 12,
-                      fontSize: 14,
-                      color: '#111827',
-                      textAlignVertical: 'top',
-                      backgroundColor: 'white',
-                    }}
+                    style={styles.textInput}
                   />
                 </View>
 
                 {/* Contact Phone */}
                 <View style={{ marginBottom: 20 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 }}>
+                  <Text style={styles.label}>
                     Contact Phone Number *
                   </Text>
                   <TextInput
                     value={formData.contactPhone}
                     onChangeText={(text) => setFormData({ ...formData, contactPhone: text })}
                     placeholder="+91 98765 43210"
+                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
                     keyboardType="phone-pad"
-                    style={{
-                      borderWidth: 1,
-                      borderColor: '#D1D5DB',
-                      borderRadius: 8,
-                      padding: 12,
-                      fontSize: 14,
-                      color: '#111827',
-                      backgroundColor: 'white',
-                    }}
+                    style={styles.textInput}
                   />
                 </View>
 
                 {/* Preferred Refund Method */}
                 <View style={{ marginBottom: 20 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 }}>
+                  <Text style={styles.label}>
                     Preferred Refund Method
                   </Text>
-                  <View
-                    style={{
-                      borderWidth: 1,
-                      borderColor: '#D1D5DB',
-                      borderRadius: 8,
-                      backgroundColor: 'white',
-                    }}
-                  >
+                  <View style={styles.inputContainer}>
                     {[
                       { value: 'original_payment_method', label: 'Original Payment Method' },
                       { value: 'bank_transfer', label: 'Bank Transfer' },
@@ -431,7 +370,7 @@ export default function RefundRequestModal({
                           alignItems: 'center',
                           padding: 12,
                           borderBottomWidth: 1,
-                          borderBottomColor: '#E5E7EB',
+                          borderBottomColor: 'rgba(255, 255, 255, 0.1)',
                         }}
                       >
                         <View
@@ -442,8 +381,8 @@ export default function RefundRequestModal({
                             borderWidth: 2,
                             borderColor:
                               formData.preferredRefundMethod === method.value
-                                ? '#2563EB'
-                                : '#D1D5DB',
+                                ? '#00D9FF'
+                                : 'rgba(255, 255, 255, 0.3)',
                             alignItems: 'center',
                             justifyContent: 'center',
                             marginRight: 12,
@@ -455,50 +394,41 @@ export default function RefundRequestModal({
                                 width: 10,
                                 height: 10,
                                 borderRadius: 5,
-                                backgroundColor: '#2563EB',
+                                backgroundColor: '#00D9FF',
                               }}
                             />
                           )}
                         </View>
-                        <Text style={{ fontSize: 14, color: '#374151' }}>{method.label}</Text>
+                        <Text style={{ fontSize: 14, color: '#FFF' }}>{method.label}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
                 </View>
 
                 {/* Refund Policy */}
-                <View
-                  style={{
-                    backgroundColor: '#FFFBEB',
-                    borderWidth: 1,
-                    borderColor: '#FDE68A',
-                    borderRadius: 12,
-                    padding: 16,
-                    marginBottom: 20,
-                  }}
-                >
+                <View style={styles.policyBox}>
                   <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
                     <Ionicons
                       name="information-circle"
                       size={20}
-                      color="#D97706"
+                      color="#00D9FF"
                       style={{ marginRight: 8, marginTop: 2 }}
                     />
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#92400E', marginBottom: 8 }}>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#00D9FF', marginBottom: 8 }}>
                         Refund Policy:
                       </Text>
                       <View style={{ gap: 4 }}>
-                        <Text style={{ fontSize: 12, color: '#92400E' }}>
+                        <Text style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.7)' }}>
                           • Refunds are processed within 2-3 business days
                         </Text>
-                        <Text style={{ fontSize: 12, color: '#92400E' }}>
+                        <Text style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.7)' }}>
                           • Full refund available until 24 hours before check-in
                         </Text>
-                        <Text style={{ fontSize: 12, color: '#92400E' }}>
+                        <Text style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.7)' }}>
                           • Partial refund may apply for cancellations within 24 hours
                         </Text>
-                        <Text style={{ fontSize: 12, color: '#92400E' }}>
+                        <Text style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.7)' }}>
                           • Refund amount will be credited to your original payment method
                         </Text>
                       </View>
@@ -510,26 +440,19 @@ export default function RefundRequestModal({
                 <TouchableOpacity
                   onPress={handleSubmit}
                   disabled={isSubmitting}
-                  style={{
-                    backgroundColor: isSubmitting ? '#93C5FD' : '#2563EB',
-                    padding: 16,
-                    borderRadius: 12,
-                    alignItems: 'center',
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                  }}
+                  style={styles.submitButton}
                 >
                   {isSubmitting ? (
                     <>
-                      <ActivityIndicator size="small" color="white" style={{ marginRight: 8 }} />
-                      <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+                      <ActivityIndicator size="small" color="#0a0e27" style={{ marginRight: 8 }} />
+                      <Text style={styles.submitButtonText}>
                         Submitting...
                       </Text>
                     </>
                   ) : (
                     <>
-                      <Ionicons name="send" size={20} color="white" style={{ marginRight: 8 }} />
-                      <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+                      <Ionicons name="send" size={20} color="#0a0e27" style={{ marginRight: 8 }} />
+                      <Text style={styles.submitButtonText}>
                         Submit Request
                       </Text>
                     </>
@@ -543,3 +466,90 @@ export default function RefundRequestModal({
     </Modal>
   );
 }
+
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  modalContainer: {
+    flex: 1,
+    marginTop: 50,
+    backgroundColor: '#1a1f3a',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFF',
+  },
+  contentBox: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+  },
+  infoBox: {
+    backgroundColor: 'rgba(0, 217, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 217, 255, 0.2)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFF',
+    marginBottom: 8,
+  },
+  inputContainer: {
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    color: '#FFF',
+    textAlignVertical: 'top',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  policyBox: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+  },
+  submitButton: {
+    backgroundColor: '#00D9FF',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  submitButtonText: {
+    color: '#0a0e27',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});

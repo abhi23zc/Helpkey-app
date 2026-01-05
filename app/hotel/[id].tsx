@@ -258,7 +258,7 @@ export default function HotelDetail() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#111827" />
+        <ActivityIndicator size="large" color="#00D9FF" />
       </View>
     );
   }
@@ -372,9 +372,11 @@ export default function HotelDetail() {
               }}
             />
             <LinearGradient
-              colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.7)']}
+              colors={['transparent', 'rgba(10, 14, 39, 0.4)', 'rgba(10, 14, 39, 1)']}
               style={styles.imageOverlay}
               pointerEvents="none"
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 0, y: 1 }}
             />
           </Animated.View>
 
@@ -410,13 +412,13 @@ export default function HotelDetail() {
             <View style={styles.mainInfo}>
               <Text style={styles.hotelName}>{hotel.name}</Text>
               <View style={styles.locationRow}>
-                <MapPin size={16} color="#6B7280" />
+                <MapPin size={16} color="#00D9FF" />
                 <Text style={styles.locationText} numberOfLines={1}>{hotel.address || hotel.location}</Text>
               </View>
 
               <View style={styles.ratingBadgeContainer}>
                 <View style={styles.ratingBadge}>
-                  <Star size={14} color="#F59E0B" fill="#F59E0B" />
+                  <Star size={14} color="#FBBF24" fill="#FBBF24" />
                   <Text style={styles.ratingValue}>{displayRating.toFixed(1)}</Text>
                 </View>
                 <Text style={styles.reviewCountText}>({displayReviewCount} reviews)</Text>
@@ -470,7 +472,7 @@ export default function HotelDetail() {
                 return (
                   <View key={index} style={styles.amenityChip}>
                     <View style={styles.amenityIconBox}>
-                      <Icon size={20} color="#4B5563" />
+                      <Icon size={20} color="#00D9FF" />
                     </View>
                     <Text style={styles.amenityText}>{amenityStr}</Text>
                   </View>
@@ -494,6 +496,7 @@ export default function HotelDetail() {
                   room={room}
                   onSelect={setSelectedRoom}
                   isSelected={selectedRoom?.id === room.id}
+                // Need to update RoomCard component to accept dark mode prop or style it internally
                 />
               ))}
               {(!hotel.rooms || hotel.rooms.length === 0) && (
@@ -522,6 +525,96 @@ export default function HotelDetail() {
                 }}
                 scrollEnabled={false}
                 zoomEnabled={false}
+                userInterfaceStyle="dark"
+                customMapStyle={[
+                  {
+                    "elementType": "geometry",
+                    "stylers": [{ "color": "#242f3e" }]
+                  },
+                  {
+                    "elementType": "labels.text.stroke",
+                    "stylers": [{ "color": "#242f3e" }]
+                  },
+                  {
+                    "elementType": "labels.text.fill",
+                    "stylers": [{ "color": "#746855" }]
+                  },
+                  {
+                    "featureType": "administrative.locality",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{ "color": "#d59563" }]
+                  },
+                  {
+                    "featureType": "poi",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{ "color": "#d59563" }]
+                  },
+                  {
+                    "featureType": "poi.park",
+                    "elementType": "geometry",
+                    "stylers": [{ "color": "#263c3f" }]
+                  },
+                  {
+                    "featureType": "poi.park",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{ "color": "#6b9a76" }]
+                  },
+                  {
+                    "featureType": "road",
+                    "elementType": "geometry",
+                    "stylers": [{ "color": "#38414e" }]
+                  },
+                  {
+                    "featureType": "road",
+                    "elementType": "geometry.stroke",
+                    "stylers": [{ "color": "#212a37" }]
+                  },
+                  {
+                    "featureType": "road",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{ "color": "#9ca5b3" }]
+                  },
+                  {
+                    "featureType": "road.highway",
+                    "elementType": "geometry",
+                    "stylers": [{ "color": "#746855" }]
+                  },
+                  {
+                    "featureType": "road.highway",
+                    "elementType": "geometry.stroke",
+                    "stylers": [{ "color": "#1f2835" }]
+                  },
+                  {
+                    "featureType": "road.highway",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{ "color": "#f3d19c" }]
+                  },
+                  {
+                    "featureType": "transit",
+                    "elementType": "geometry",
+                    "stylers": [{ "color": "#2f3948" }]
+                  },
+                  {
+                    "featureType": "transit.station",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{ "color": "#d59563" }]
+                  },
+                  {
+                    "featureType": "water",
+                    "elementType": "geometry",
+                    "stylers": [{ "color": "#17263c" }]
+                  },
+                  {
+                    "featureType": "water",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{ "color": "#515c6d" }]
+                  },
+                  {
+                    "featureType": "water",
+                    "elementType": "labels.text.stroke",
+                    "stylers": [{ "color": "#17263c" }]
+                  }
+                ]}
               >
                 <Marker
                   coordinate={{
@@ -530,7 +623,7 @@ export default function HotelDetail() {
                   }}
                 >
                   <View style={styles.customMarker}>
-                    <MapPin size={24} color="#FFF" fill="#111827" />
+                    <MapPin size={24} color="#00D9FF" fill="#0a0e27" />
                   </View>
                 </Marker>
               </MapView>
@@ -567,7 +660,7 @@ export default function HotelDetail() {
             activeOpacity={0.8}
           >
             <Text style={styles.bookButtonText}>Book Now</Text>
-            <ChevronRight size={20} color="#FFF" />
+            <ChevronRight size={20} color="#0a0e27" />
           </TouchableOpacity>
         </View>
       </MotiView>
@@ -579,17 +672,17 @@ export default function HotelDetail() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#0a0e27',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#0a0e27',
   },
   errorText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: '#9CA3AF',
     fontFamily: Platform.select({ ios: 'System', android: 'Roboto' }),
   },
 
@@ -599,10 +692,10 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(10, 14, 39, 0.95)',
     zIndex: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   headerButtons: {
     position: 'absolute',
@@ -663,6 +756,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   dot: {
     width: 8,
@@ -670,7 +765,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   activeDot: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#00D9FF',
     width: 12,
   },
   inactiveDot: {
@@ -685,7 +780,7 @@ const styles = StyleSheet.create({
 
   // Content
   contentContainer: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#0a0e27',
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     marginTop: -32,
@@ -699,7 +794,7 @@ const styles = StyleSheet.create({
   hotelName: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#111827',
+    color: '#FFF',
     marginBottom: 8,
     letterSpacing: -0.5,
   },
@@ -711,7 +806,7 @@ const styles = StyleSheet.create({
   },
   locationText: {
     fontSize: 15,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.7)',
     flex: 1,
   },
   ratingBadgeContainer: {
@@ -723,7 +818,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: 'rgba(251, 191, 36, 0.15)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -731,16 +826,16 @@ const styles = StyleSheet.create({
   ratingValue: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#B45309',
+    color: '#FBBF24',
   },
   reviewCountText: {
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.5)',
     fontSize: 14,
   },
   divider: {
     height: 1,
-    backgroundColor: '#E5E7EB',
-    marginVertical: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginVertical: 20,
   },
 
   // Sections
@@ -756,25 +851,25 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#111827',
+    color: '#FFF',
     marginBottom: 12,
   },
   seeAllText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#111827',
+    color: '#00D9FF',
   },
 
   // Description
   descriptionText: {
     fontSize: 15,
     lineHeight: 24,
-    color: '#4B5563',
+    color: 'rgba(255, 255, 255, 0.7)',
   },
   readMoreText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#111827',
+    color: '#00D9FF',
     marginTop: 6,
   },
 
@@ -787,21 +882,16 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 20,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
   },
   amenityText: {
     fontSize: 11,
-    color: '#4B5563',
+    color: 'rgba(255, 255, 255, 0.6)',
     textAlign: 'center',
     fontWeight: '500',
   },
@@ -812,38 +902,40 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
     position: 'relative',
-    backgroundColor: '#E5E7EB',
+    backgroundColor: '#1a1f3a',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   map: {
     ...StyleSheet.absoluteFillObject,
   },
   customMarker: {
     padding: 4,
-    backgroundColor: '#111827',
+    backgroundColor: '#0a0e27',
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: '#fff',
+    borderColor: '#00D9FF',
   },
   mapOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.1)',
+    backgroundColor: 'rgba(10, 14, 39, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   viewMapButton: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#00D9FF',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 25,
-    shadowColor: '#000',
+    shadowColor: '#00D9FF',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
   viewMapText: {
     fontWeight: '600',
-    color: '#111827',
+    color: '#0a0e27',
   },
 
   // Bottom Bar
@@ -852,7 +944,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFF',
+    backgroundColor: '#1a1f3a',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -860,9 +952,11 @@ const styles = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? 30 : 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
   },
   bottomBarContent: {
     flexDirection: 'row',
@@ -880,41 +974,41 @@ const styles = StyleSheet.create({
   priceCurrency: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: '#00D9FF',
     marginRight: 2,
   },
   priceValue: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#111827',
+    color: '#FFF',
   },
   priceLabel: {
     fontSize: 12,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.5)',
     marginTop: 2,
   },
   bookButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#111827',
+    backgroundColor: '#00D9FF',
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 16,
     gap: 8,
-    shadowColor: '#0F172A',
+    shadowColor: '#00D9FF',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.4,
     shadowRadius: 8,
     elevation: 6,
   },
   bookButtonText: {
-    color: '#FFF',
+    color: '#0a0e27',
     fontSize: 16,
     fontWeight: '700',
   },
   noDataText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.5)',
     fontStyle: 'italic',
     textAlign: 'center',
     marginVertical: 10,

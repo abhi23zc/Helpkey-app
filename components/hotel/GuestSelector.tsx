@@ -46,7 +46,7 @@ export default function GuestSelector({
           <View style={styles.content}>
             <View style={styles.row}>
               <View style={styles.iconContainer}>
-                <User size={24} color="#4F46E5" />
+                <User size={24} color="#00D9FF" />
               </View>
               <View style={styles.info}>
                 <Text style={styles.label}>Guests</Text>
@@ -58,7 +58,7 @@ export default function GuestSelector({
                   onPress={() => setSelectedGuests(Math.max(1, selectedGuests - 1))}
                   disabled={selectedGuests <= 1}
                 >
-                  <Minus size={20} color={selectedGuests <= 1 ? '#ccc' : '#4F46E5'} />
+                  <Minus size={20} color={selectedGuests <= 1 ? 'rgba(255,255,255,0.2)' : '#00D9FF'} />
                 </TouchableOpacity>
                 <Text style={styles.count}>{selectedGuests}</Text>
                 <TouchableOpacity
@@ -66,7 +66,7 @@ export default function GuestSelector({
                   onPress={() => setSelectedGuests(Math.min(10, selectedGuests + 1))}
                   disabled={selectedGuests >= 10}
                 >
-                  <Plus size={20} color={selectedGuests >= 10 ? '#ccc' : '#4F46E5'} />
+                  <Plus size={20} color={selectedGuests >= 10 ? 'rgba(255,255,255,0.2)' : '#00D9FF'} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -84,14 +84,17 @@ export default function GuestSelector({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'flex-end',
   },
   container: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1f3a',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingBottom: 40,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomWidth: 0,
   },
   header: {
     flexDirection: 'row',
@@ -99,16 +102,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#111827',
+    color: '#FFF',
   },
   closeButton: {
     fontSize: 24,
-    color: '#6B7280',
+    color: '#FFF',
   },
   content: {
     padding: 20,
@@ -122,7 +125,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: 'rgba(0, 217, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -133,12 +136,12 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: '#FFF',
     marginBottom: 4,
   },
   sublabel: {
     fontSize: 13,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   controls: {
     flexDirection: 'row',
@@ -149,26 +152,28 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   count: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#111827',
+    color: '#FFF',
     minWidth: 30,
     textAlign: 'center',
   },
   confirmButton: {
-    backgroundColor: '#111827',
+    backgroundColor: '#00D9FF',
     marginHorizontal: 20,
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
   },
   confirmButtonText: {
-    color: '#fff',
+    color: '#0a0e27',
     fontSize: 16,
     fontWeight: '700',
   },

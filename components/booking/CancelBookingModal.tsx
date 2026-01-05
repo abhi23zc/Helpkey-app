@@ -81,7 +81,7 @@ export default function CancelBookingModal({
               </Text>
             </View>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-              <X size={24} color="#1A1A1A" strokeWidth={2} />
+              <X size={24} color="#FFF" strokeWidth={2} />
             </TouchableOpacity>
           </View>
 
@@ -92,7 +92,7 @@ export default function CancelBookingModal({
           >
             {/* Warning */}
             <View style={styles.warningBox}>
-              <AlertCircle size={20} color="#dc3545" strokeWidth={2} />
+              <AlertCircle size={20} color="#F87171" strokeWidth={2} />
               <Text style={styles.warningText}>
                 This action cannot be undone. Please review the cancellation policy before proceeding.
               </Text>
@@ -146,7 +146,7 @@ export default function CancelBookingModal({
                 <TextInput
                   style={styles.textInput}
                   placeholder="Enter your reason..."
-                  placeholderTextColor="#999"
+                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
                   value={reason === 'Other' ? '' : reason}
                   onChangeText={setReason}
                   multiline
@@ -189,11 +189,11 @@ export default function CancelBookingModal({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1f3a',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     height: '85%',
@@ -201,13 +201,16 @@ const styles = StyleSheet.create({
       ios: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
+        shadowOpacity: 0.3,
         shadowRadius: 12,
       },
       android: {
         elevation: 8,
       },
     }),
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomWidth: 0,
   },
   header: {
     flexDirection: 'row',
@@ -217,7 +220,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   headerContent: {
     flex: 1,
@@ -226,12 +229,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: isSmallDevice ? 18 : 20,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#FFF',
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: isSmallDevice ? 13 : 14,
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   closeButton: {
     padding: 4,
@@ -246,22 +249,22 @@ const styles = StyleSheet.create({
   warningBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#FFF5F5',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
     borderLeftWidth: 4,
-    borderLeftColor: '#dc3545',
+    borderLeftColor: '#F87171',
   },
   warningText: {
     flex: 1,
     fontSize: isSmallDevice ? 12 : 13,
-    color: '#dc3545',
+    color: '#F87171',
     marginLeft: 12,
     lineHeight: 18,
   },
   policyBox: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
@@ -269,19 +272,19 @@ const styles = StyleSheet.create({
   policyTitle: {
     fontSize: isSmallDevice ? 14 : 15,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#FFF',
     marginBottom: 12,
   },
   policyText: {
     fontSize: isSmallDevice ? 12 : 13,
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.7)',
     marginBottom: 6,
     lineHeight: 18,
   },
   sectionLabel: {
     fontSize: isSmallDevice ? 13 : 14,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#FFF',
     marginBottom: 12,
   },
   reasonsContainer: {
@@ -293,34 +296,34 @@ const styles = StyleSheet.create({
   reasonChip: {
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E8E8E8',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   reasonChipSelected: {
-    backgroundColor: '#dc3545',
-    borderColor: '#dc3545',
+    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+    borderColor: '#F87171',
   },
   reasonChipText: {
     fontSize: isSmallDevice ? 12 : 13,
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.7)',
     fontWeight: '600',
   },
   reasonChipTextSelected: {
-    color: '#fff',
+    color: '#F87171',
   },
   customReasonContainer: {
     marginTop: 8,
   },
   textInput: {
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 12,
     padding: 16,
     fontSize: isSmallDevice ? 13 : 14,
-    color: '#1A1A1A',
+    color: '#FFF',
     borderWidth: 1,
-    borderColor: '#E8E8E8',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     minHeight: 80,
     textAlignVertical: 'top',
   },
@@ -330,7 +333,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
     ...Platform.select({
       ios: {
         paddingBottom: 30,
@@ -344,14 +347,16 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   cancelButtonText: {
     fontSize: isSmallDevice ? 14 : 15,
     fontWeight: '700',
-    color: '#666',
+    color: '#FFF',
   },
   confirmButton: {
     flex: 1,
@@ -362,7 +367,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   confirmButtonDisabled: {
-    backgroundColor: '#CCC',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    opacity: 0.5,
   },
   confirmButtonText: {
     fontSize: isSmallDevice ? 14 : 15,

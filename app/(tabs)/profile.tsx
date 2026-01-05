@@ -12,6 +12,7 @@ import {
   StatusBar,
   Platform
 } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MotiView } from 'moti';
 import {
@@ -60,11 +61,11 @@ const ProfileMenuItem = ({
   >
     <View style={[
       styles.iconContainer,
-      isDestructive ? { backgroundColor: '#FEF2F2' } : { backgroundColor: '#EFF6FF' }
+      isDestructive ? { backgroundColor: 'rgba(239, 68, 68, 0.1)' } : { backgroundColor: 'rgba(0, 217, 255, 0.1)' }
     ]}>
       <Icon
         size={20}
-        color={isDestructive ? '#EF4444' : '#2563EB'}
+        color={isDestructive ? '#EF4444' : '#00D9FF'}
         strokeWidth={1.5}
       />
     </View>
@@ -73,7 +74,7 @@ const ProfileMenuItem = ({
       {value && <Text style={styles.menuValue} numberOfLines={1}>{value}</Text>}
     </View>
     {badge}
-    {showChevron && <ChevronRight size={16} color="#9CA3AF" />}
+    {showChevron && <ChevronRight size={16} color="rgba(255, 255, 255, 0.6)" />}
   </TouchableOpacity>
 );
 
@@ -113,10 +114,10 @@ export default function Profile() {
   if (!user) {
     return (
       <View style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+        <StatusBar barStyle="light-content" backgroundColor="#0a0e27" />
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.header}>
-            <Text style={styles.headerTitleDark}>Profile</Text>
+            <Text style={styles.headerTitleLight}>Profile</Text>
           </View>
 
           <ScrollView contentContainerStyle={styles.centerContent} showsVerticalScrollIndicator={false}>
@@ -127,7 +128,7 @@ export default function Profile() {
               style={styles.authCard}
             >
               <View style={styles.iconCircleLarge}>
-                <User size={40} color="#111827" strokeWidth={1.5} />
+                <User size={40} color="#00D9FF" strokeWidth={1.5} />
               </View>
               <Text style={styles.authTitle}>Welcome to HelpKey</Text>
               <Text style={styles.authSubtitle}>
@@ -177,12 +178,13 @@ export default function Profile() {
   // ---------------------------------------------------------------------------
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#111827" />
+      <StatusBar barStyle="light-content" backgroundColor="#0a0e27" />
 
       {/* Dark Header Section */}
       <View style={styles.headerBackgroundContainer}>
+        {/* Using a subtle dark gradient for the header background */}
         <LinearGradient
-          colors={['#1e3a8a', '#2563EB']} // Deep Blue to Bright Blue
+          colors={['#0a0e27', '#1a1f3a']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.headerGradient}
@@ -202,12 +204,25 @@ export default function Profile() {
               style={styles.userInfoContainer}
             >
               <View style={styles.avatarContainer}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{userData?.fullName ? userData.fullName.charAt(0).toUpperCase() : 'U'}</Text>
-                </View>
-                <View style={styles.verifiedBadge}>
-                  <Shield size={10} color="#FFF" />
-                </View>
+                {userData?.photoURL ? (
+                  <Image
+                    source={{ uri: userData.photoURL }}
+                    style={styles.avatar}
+                    contentFit="cover"
+                    transition={300}
+                  />
+                ) : (
+                  <View style={styles.avatarFallback}>
+                    <Text style={styles.avatarText}>
+                      {userData?.fullName ? userData.fullName.charAt(0).toUpperCase() : 'U'}
+                    </Text>
+                  </View>
+                )}
+                {userData?.aadhaarData?.verified && (
+                  <View style={styles.verifiedBadge}>
+                    <Shield size={10} color="#0a0e27" fill="#059669" />
+                  </View>
+                )}
               </View>
               <View style={styles.userDetails}>
                 <Text style={styles.userName}>{userData?.fullName || 'User'}</Text>
@@ -245,18 +260,18 @@ export default function Profile() {
               {userData?.aadhaarData?.verified ? (
                 <CheckCircle size={24} color="#059669" />
               ) : (
-                <Shield size={24} color="#D97706" />
+                <Shield size={24} color="#FBBF24" />
               )}
             </View>
             <View style={styles.statusContent}>
-              <Text style={styles.statusTitle}>
+              <Text style={[styles.statusTitle, { color: userData?.aadhaarData?.verified ? '#059669' : '#FBBF24' }]}>
                 {userData?.aadhaarData?.verified ? 'Identity Verified' : 'Verify Identity'}
               </Text>
-              <Text style={styles.statusDesc}>
+              <Text style={[styles.statusDesc, { color: userData?.aadhaarData?.verified ? 'rgba(5, 150, 105, 0.8)' : 'rgba(251, 191, 36, 0.8)' }]}>
                 {userData?.aadhaarData?.verified ? 'You are all set for instant check-ins' : 'Complete verification for faster check-ins'}
               </Text>
             </View>
-            <ChevronRight size={18} color={userData?.aadhaarData?.verified ? "#059669" : "#D97706"} />
+            <ChevronRight size={18} color={userData?.aadhaarData?.verified ? "#059669" : "#FBBF24"} />
           </TouchableOpacity>
         </MotiView>
 
@@ -354,7 +369,7 @@ export default function Profile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#0a0e27',
   },
   safeArea: {
     flex: 1,
@@ -364,16 +379,10 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 24,
     paddingVertical: 20,
-    backgroundColor: '#FFF',
-  },
-  headerTitleDark: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#111827',
-    letterSpacing: -0.5,
+    backgroundColor: '#0a0e27',
   },
 
-  // Auth Card (Logged Out)
+  // Auth Card (Logged Out) - Updated to dark
   centerContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
@@ -381,24 +390,24 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   authCard: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#1a1f3a',
     borderRadius: 24,
     padding: 32,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.2,
     shadowRadius: 12,
     elevation: 4,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     marginBottom: 40,
   },
   iconCircleLarge: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(0, 217, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
@@ -406,31 +415,31 @@ const styles = StyleSheet.create({
   authTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#1e3a8a', // Deep Blue
+    color: '#FFF',
     marginBottom: 12,
     textAlign: 'center',
   },
   authSubtitle: {
     fontSize: 15,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 32,
   },
   primaryButton: {
-    backgroundColor: '#2563EB', // Bright Blue
+    backgroundColor: '#00D9FF',
     width: '100%',
     paddingVertical: 16,
     borderRadius: 16,
     alignItems: 'center',
-    shadowColor: '#2563EB',
+    shadowColor: '#00D9FF',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
   primaryButtonText: {
-    color: '#FFF',
+    color: '#0a0e27',
     fontSize: 16,
     fontWeight: '700',
   },
@@ -440,10 +449,13 @@ const styles = StyleSheet.create({
 
   // Logged In Styles
   headerBackgroundContainer: {
-    backgroundColor: '#1e3a8a',
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
     overflow: 'hidden',
+    backgroundColor: '#1a1f3a',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+    borderTopWidth: 0,
   },
   headerGradient: {
     paddingBottom: 24,
@@ -480,11 +492,18 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderWidth: 2,
+    borderColor: 'rgba(0, 217, 255, 0.3)',
+  },
+  avatarFallback: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(0, 217, 255, 0.3)',
   },
   avatarText: {
     fontSize: 24,
@@ -493,8 +512,8 @@ const styles = StyleSheet.create({
   },
   verifiedBadge: {
     position: 'absolute',
-    bottom: -2,
-    right: -2,
+    bottom: 0,
+    right: 0,
     backgroundColor: '#059669',
     borderRadius: 10,
     width: 20,
@@ -502,7 +521,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#111827',
+    borderColor: '#1a1f3a',
   },
   userDetails: {
     flex: 1,
@@ -515,18 +534,20 @@ const styles = StyleSheet.create({
   },
   userEmail: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255,255,255,0.6)',
     marginBottom: 8,
   },
   userRoleTag: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(0, 217, 255, 0.1)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
     alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 217, 255, 0.2)',
   },
   userRoleText: {
-    color: '#FFF',
+    color: '#00D9FF',
     fontSize: 12,
     fontWeight: '600',
     textTransform: 'capitalize',
@@ -544,7 +565,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.5)',
     marginBottom: 12,
     marginLeft: 4,
     textTransform: 'uppercase',
@@ -553,26 +574,21 @@ const styles = StyleSheet.create({
 
   // Menu Groups
   menuGroup: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#1a1f3a',
     borderRadius: 20,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 16,
-    backgroundColor: '#FFF',
+    backgroundColor: '#1a1f3a',
   },
   menuItemDestructive: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#1a1f3a',
   },
   iconContainer: {
     width: 36,
@@ -588,11 +604,11 @@ const styles = StyleSheet.create({
   menuLabel: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#111827',
+    color: '#FFF',
   },
   menuValue: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: 'rgba(255, 255, 255, 0.5)',
     marginTop: 2,
   },
   textDestructive: {
@@ -600,7 +616,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     marginLeft: 66,
   },
 
@@ -608,24 +624,19 @@ const styles = StyleSheet.create({
   statusCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: '#1a1f3a',
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   statusVerified: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
+    backgroundColor: 'rgba(5, 150, 105, 0.1)',
+    borderColor: 'rgba(5, 150, 105, 0.3)',
   },
   statusPending: {
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FEF3C7',
+    backgroundColor: 'rgba(251, 191, 36, 0.1)',
+    borderColor: 'rgba(251, 191, 36, 0.3)',
   },
   statusIcon: {
     marginRight: 14,
@@ -636,12 +647,12 @@ const styles = StyleSheet.create({
   statusTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#111827',
+    color: '#FFF',
     marginBottom: 2,
   },
   statusDesc: {
     fontSize: 12,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.7)',
   },
 
   // Logout
@@ -649,17 +660,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
     padding: 16,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#FEE2E2',
+    borderColor: 'rgba(239, 68, 68, 0.2)',
     gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
   },
   logoutText: {
     color: '#EF4444',
@@ -669,7 +675,7 @@ const styles = StyleSheet.create({
   versionText: {
     textAlign: 'center',
     fontSize: 12,
-    color: '#9CA3AF',
+    color: 'rgba(255, 255, 255, 0.4)',
     marginTop: 24,
   },
 });

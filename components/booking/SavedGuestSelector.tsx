@@ -76,7 +76,7 @@ export default function SavedGuestSelector({
                         styles.verificationBadge,
                         guest.aadhaarVerified ? styles.verifiedBadge : styles.unverifiedBadge
                       ]}>
-                        <Shield size={12} color={guest.aadhaarVerified ? "#059669" : "#DC2626"} strokeWidth={2} />
+                        <Shield size={12} color={guest.aadhaarVerified ? "#00D9FF" : "#F87171"} strokeWidth={2} />
                         <Text style={[
                           styles.verificationText,
                           guest.aadhaarVerified ? styles.verifiedText : styles.unverifiedText
@@ -85,7 +85,7 @@ export default function SavedGuestSelector({
                         </Text>
                       </View>
                     </View>
-                    
+
                     <View style={styles.guestDetails}>
                       {guest.phoneNumber && (
                         <Text style={styles.guestPhone}>📱 {guest.phoneNumber}</Text>
@@ -129,14 +129,17 @@ export default function SavedGuestSelector({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'flex-end',
   },
   modal: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1f3a',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '80%',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomWidth: 0,
   },
   header: {
     flexDirection: 'row',
@@ -144,21 +147,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#111827',
+    color: '#FFF',
   },
   subtitle: {
     fontSize: 13,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
     marginTop: 2,
   },
   closeButton: {
     fontSize: 24,
-    color: '#6B7280',
+    color: '#FFF',
   },
   content: {
     padding: 20,
@@ -168,20 +171,16 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 2,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   guestCardVerified: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#A7F3D0',
+    backgroundColor: 'rgba(0, 217, 255, 0.05)',
+    borderColor: 'rgba(0, 217, 255, 0.2)',
   },
   guestCardUnverified: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FECACA',
+    backgroundColor: 'rgba(239, 68, 68, 0.05)',
+    borderColor: 'rgba(239, 68, 68, 0.2)',
   },
   guestInfo: {
     flex: 1,
@@ -195,7 +194,7 @@ const styles = StyleSheet.create({
   guestName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#111827',
+    color: '#FFF',
     flex: 1,
   },
   verificationBadge: {
@@ -207,57 +206,59 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   verifiedBadge: {
-    backgroundColor: '#FFF',
+    backgroundColor: 'rgba(0, 217, 255, 0.1)',
     borderWidth: 1,
-    borderColor: '#059669',
+    borderColor: '#00D9FF',
   },
   unverifiedBadge: {
-    backgroundColor: '#FFF',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
     borderWidth: 1,
-    borderColor: '#DC2626',
+    borderColor: '#EF4444',
   },
   verificationText: {
     fontSize: 11,
     fontWeight: '600',
   },
   verifiedText: {
-    color: '#059669',
+    color: '#00D9FF',
   },
   unverifiedText: {
-    color: '#DC2626',
+    color: '#F87171',
   },
   guestDetails: {
     marginBottom: 12,
   },
   guestPhone: {
     fontSize: 13,
-    color: '#374151',
+    color: 'rgba(255, 255, 255, 0.6)',
     marginBottom: 4,
   },
   guestAadhaar: {
     fontSize: 13,
-    color: '#374151',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   benefitContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: 'rgba(0, 217, 255, 0.1)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
+    alignSelf: 'flex-start',
   },
   benefitText: {
     fontSize: 11,
-    color: '#047857',
+    color: '#00D9FF',
     fontWeight: '500',
   },
   warningContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
+    alignSelf: 'flex-start',
   },
   warningText: {
     fontSize: 11,
-    color: '#B91C1C',
+    color: '#F87171',
     fontWeight: '500',
   },
   emptyState: {
@@ -267,25 +268,27 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#4B5563',
+    color: 'rgba(255, 255, 255, 0.6)',
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: 'rgba(255, 255, 255, 0.4)',
     textAlign: 'center',
   },
   cancelButton: {
     margin: 20,
     marginTop: 0,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#4B5563',
+    color: '#FFF',
   },
 });
