@@ -2,7 +2,7 @@ import { authService } from '@/services/authService';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -30,6 +30,12 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    // Initialize Google Sign-In when component mounts
+    authService.initializeGoogleSignIn();
+  }, []);
 
   const handleCreate = async () => {
     if (!name || !phone || !email || !password || !confirmPassword) {
@@ -56,6 +62,19 @@ export default function Register() {
       Alert.alert('Registration Failed', error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      await authService.signInWithGoogle();
+      Alert.alert('Success', 'Signed in with Google successfully!');
+      router.replace('/(tabs)/home');
+    } catch (error: any) {
+      Alert.alert('Google Sign-In Failed', error.message);
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -259,9 +278,18 @@ export default function Register() {
 
               {/* Social Login Buttons */}
               <View style={styles.socialContainer}>
-                <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
+                <TouchableOpacity 
+                  style={styles.socialButton} 
+                  activeOpacity={0.7}
+                  onPress={handleGoogleSignIn}
+                  disabled={googleLoading}
+                >
                   <View style={styles.socialIconWrapper}>
-                    <Feather name="chrome" size={24} color="#DB4437" />
+                    {googleLoading ? (
+                      <ActivityIndicator size="small" color="#DB4437" />
+                    ) : (
+                      <Feather name="chrome" size={24} color="#DB4437" />
+                    )}
                   </View>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>

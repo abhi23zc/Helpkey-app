@@ -48,6 +48,12 @@ export const getAuthErrorMessage = (errorCode: string): string => {
     'auth/too-many-requests': 'Too many failed attempts. Please try again later.',
     'auth/network-request-failed': 'Network error. Please check your internet connection.',
     'auth/requires-recent-login': 'Please logout and login again to perform this action.',
+    // Google Sign-In specific errors
+    'auth/account-exists-with-different-credential': 'An account already exists with the same email but different sign-in credentials.',
+    'auth/credential-already-in-use': 'This credential is already associated with a different user account.',
+    'auth/popup-blocked': 'The popup was blocked by the browser.',
+    'auth/popup-closed-by-user': 'The popup was closed before completing sign-in.',
+    'auth/unauthorized-domain': 'This domain is not authorized for OAuth operations.',
   };
 
   return errorMessages[errorCode] || 'An error occurred. Please try again.';

@@ -546,8 +546,8 @@ export default function Home() {
             {/* Empty State - Only show if not loading and initial load is complete and no hotels */}
             {!loading && !initialLoad && hotels.length === 0 && (
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>No hotels found</Text>
-                <Text style={styles.emptySubtext}>Try adjusting your filters</Text>
+                {/* <Text style={styles.emptyText}>No hotels found</Text>
+                <Text style={styles.emptySubtext}>Try adjusting your filters</Text> */}
               </View>
             )}
           </>

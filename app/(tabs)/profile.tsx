@@ -287,14 +287,14 @@ export default function Profile() {
             <ProfileMenuItem
               icon={User}
               label="Personal Information"
-              onPress={() => { }}
+              onPress={() => router.push('/profile/personal-info' as any)}
             />
             <View style={styles.divider} />
             <ProfileMenuItem
               icon={Phone}
               label="Phone Number"
-              value={userData?.phoneNumber || 'Add Phone'}
-              onPress={() => { }}
+              value={userData?.phoneNumber ? `+91 ${userData.phoneNumber.replace(/(\d{5})(\d{5})/, '$1 $2')}` : 'Add Phone'}
+              onPress={() => router.push('/profile/phone-number' as any)}
             />
             <View style={styles.divider} />
             <ProfileMenuItem

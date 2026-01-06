@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { Video, ResizeMode } from 'expo-av';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MotiView, MotiText } from 'moti';
@@ -46,6 +46,35 @@ import { collection, doc, getDoc, getDocs, limit, orderBy, query, where } from '
 
 const { width, height } = Dimensions.get('window');
 const IMAGE_HEIGHT = height * 0.45;
+
+// Video component to handle video player properly
+const VideoItem = ({ uri, isActive, width }: { uri: string; isActive: boolean; width: number }) => {
+  const player = useVideoPlayer(uri, player => {
+    player.loop = true;
+    player.muted = true;
+  });
+
+  useEffect(() => {
+    if (isActive) {
+      player.play();
+    } else {
+      player.pause();
+    }
+  }, [isActive, player]);
+
+  return (
+    <View style={{ width, height: '100%' }}>
+      <VideoView
+        style={{ width: '100%', height: '100%' }}
+        player={player}
+        allowsFullscreen={false}
+        allowsPictureInPicture={false}
+        contentFit="cover"
+        nativeControls={false}
+      />
+    </View>
+  );
+};
 
 const amenityIcons: { [key: string]: any } = {
   'Free WiFi': Wifi,
@@ -348,17 +377,11 @@ export default function HotelDetail() {
               renderItem={({ item, index }) => {
                 if (item.type === 'video') {
                   return (
-                    <View style={{ width, height: '100%' }}>
-                      <Video
-                        source={{ uri: item.uri }}
-                        style={{ width: '100%', height: '100%' }}
-                        resizeMode={ResizeMode.COVER}
-                        shouldPlay={index === selectedImageIndex}
-                        isLooping
-                        isMuted
-                        useNativeControls={false}
-                      />
-                    </View>
+                    <VideoItem 
+                      uri={item.uri} 
+                      isActive={index === selectedImageIndex}
+                      width={width}
+                    />
                   );
                 }
                 return (

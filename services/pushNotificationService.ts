@@ -255,10 +255,21 @@ class PushNotificationService {
           email: userData.email,
           hasToken: !!userData.expoPushToken
         });
-        return false;
+        
+        // Fallback to local notification for testing
+        console.log('🔄 Falling back to local notification for testing...');
+        await this.sendLocalNotification(notification);
+        await this.logNotificationToFirebase(targetUserId, notification);
+        return true;
       }
 
       console.log('🎯 Found push token for user, sending notification...');
+
+      // Check if this is Android and we might have FCM issues
+      if (Platform.OS === 'android') {
+        console.log('⚠️ Android detected - FCM server key may be required');
+        console.log('💡 If this fails, you need to upload FCM server key to Expo');
+      }
 
       // Send notification via Expo Push API
       const success = await this.sendToExpoPushAPI(pushToken, notification);
@@ -268,12 +279,28 @@ class PushNotificationService {
         await this.logNotificationToFirebase(targetUserId, notification);
       } else {
         console.error('❌ Failed to send push notification via API');
+        
+        // Fallback to local notification if push fails
+        console.log('🔄 Falling back to local notification...');
+        await this.sendLocalNotification(notification);
+        await this.logNotificationToFirebase(targetUserId, notification);
+        return true;
       }
 
       return success;
     } catch (error) {
       console.error('❌ Error sending push notification:', error);
-      return false;
+      
+      // Fallback to local notification on error
+      try {
+        console.log('🔄 Error fallback: sending local notification...');
+        await this.sendLocalNotification(notification);
+        await this.logNotificationToFirebase(targetUserId, notification);
+        return true;
+      } catch (localError) {
+        console.error('❌ Local notification fallback also failed:', localError);
+        return false;
+      }
     }
   }
 

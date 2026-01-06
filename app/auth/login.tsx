@@ -2,7 +2,7 @@ import { authService } from '@/services/authService';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -27,6 +27,12 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    // Initialize Google Sign-In when component mounts
+    authService.initializeGoogleSignIn();
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -43,6 +49,19 @@ export default function Login() {
       Alert.alert('Login Failed', error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      await authService.signInWithGoogle();
+      Alert.alert('Success', 'Signed in with Google successfully!');
+      router.replace('/(tabs)/home');
+    } catch (error: any) {
+      Alert.alert('Google Sign-In Failed', error.message);
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -178,6 +197,34 @@ export default function Login() {
                   )}
                 </LinearGradient>
               </TouchableOpacity>
+
+              {/* Social Login Buttons */}
+              <View style={styles.socialContainer}>
+                <TouchableOpacity 
+                  style={styles.socialButton} 
+                  activeOpacity={0.7}
+                  onPress={handleGoogleSignIn}
+                  disabled={googleLoading}
+                >
+                  <View style={styles.socialIconWrapper}>
+                    {googleLoading ? (
+                      <ActivityIndicator size="small" color="#DB4437" />
+                    ) : (
+                      <Feather name="chrome" size={24} color="#DB4437" />
+                    )}
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
+                  <View style={styles.socialIconWrapper}>
+                    <Feather name="facebook" size={24} color="#1877F2" />
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
+                  <View style={styles.socialIconWrapper}>
+                    <Feather name="github" size={24} color="#181717" />
+                  </View>
+                </TouchableOpacity>
+              </View>
 
               {/* Sign up link */}
               <View style={styles.signInContainer}>
