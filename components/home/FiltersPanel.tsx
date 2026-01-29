@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -49,6 +50,7 @@ const FiltersPanel = ({
   onPropertyTypeToggle,
   onApply,
 }: FiltersPanelProps) => {
+  const insets = useSafeAreaInsets();
   // Local state for price inputs to avoid jitter
   const [minPriceInput, setMinPriceInput] = useState(priceRange[0].toString());
   const [maxPriceInput, setMaxPriceInput] = useState(priceRange[1].toString());
@@ -88,7 +90,7 @@ const FiltersPanel = ({
             <View style={styles.headerSpacer} />
             <Text style={styles.headerTitle}>Filter</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <X size={24} color="#333" />
+              <X size={24} color="#fff" />
             </TouchableOpacity>
           </View>
 
@@ -107,8 +109,8 @@ const FiltersPanel = ({
                     >
                       <Star
                         size={16}
-                        color={isSelected ? '#00BFA5' : '#FFD700'}
-                        fill={isSelected ? '#00BFA5' : '#FFD700'}
+                        color={isSelected ? '#FFFFFF' : '#94A3B8'}
+                        fill={isSelected ? '#FFFFFF' : 'none'}
                         style={{ marginRight: 4 }}
                       />
                       <Text style={[styles.ratingText, isSelected && styles.ratingTextActive]}>
@@ -131,9 +133,9 @@ const FiltersPanel = ({
                   step={100}
                   value={priceRange[1]}
                   onValueChange={(val) => onPriceRangeChange([priceRange[0], val])}
-                  minimumTrackTintColor="#00BFA5"
-                  maximumTrackTintColor="#E0E0E0"
-                  thumbTintColor="#00BFA5"
+                  minimumTrackTintColor="#00A896"
+                  maximumTrackTintColor="#2D3748"
+                  thumbTintColor="#00A896"
                 />
               </View>
               <View style={styles.priceInputsContainer}>
@@ -186,7 +188,7 @@ const FiltersPanel = ({
               </View>
               <TouchableOpacity style={styles.seeMoreButton}>
                 <Text style={styles.seeMoreText}>See more</Text>
-                <ChevronDown size={16} color="#333" />
+                <ChevronDown size={16} color="#00A896" />
               </TouchableOpacity>
             </View>
 
@@ -218,7 +220,7 @@ const FiltersPanel = ({
           </ScrollView>
 
           {/* Footer */}
-          <View style={styles.footer}>
+          <View style={[styles.footer, { paddingBottom: 20 + insets.bottom }]}>
             <TouchableOpacity style={styles.applyButton} onPress={onApply}>
               <Text style={styles.applyButtonText}>Apply</Text>
             </TouchableOpacity>
@@ -232,11 +234,11 @@ const FiltersPanel = ({
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(15, 22, 41, 0.85)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: '#0F1629',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     height: '90%',
@@ -255,7 +257,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#000',
+    color: '#FFFFFF',
   },
   closeButton: {
     padding: 4,
@@ -270,7 +272,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#000',
+    color: '#FFFFFF',
     marginBottom: 16,
   },
   ratingsContainer: {
@@ -284,20 +286,20 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
-    backgroundColor: '#fff',
+    borderColor: '#2D3E5F',
+    backgroundColor: '#1A2235',
   },
   ratingChipActive: {
-    borderColor: '#00BFA5',
-    backgroundColor: '#E0F2F1',
+    borderColor: '#00A896',
+    backgroundColor: '#00A896',
   },
   ratingText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: '#E2E8F0',
   },
   ratingTextActive: {
-    color: '#00BFA5',
+    color: '#FFFFFF',
   },
   sliderContainer: {
     marginBottom: 16,
@@ -312,7 +314,7 @@ const styles = StyleSheet.create({
   },
   priceInputLabel: {
     fontSize: 14,
-    color: '#000',
+    color: '#E2E8F0',
     marginBottom: 8,
     fontWeight: '500',
   },
@@ -320,20 +322,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E5E5E5',
-    borderRadius: 24,
+    borderColor: '#2D3E5F',
+    borderRadius: 12,
     paddingHorizontal: 16,
     height: 48,
+    backgroundColor: '#1A2235',
   },
   currencySymbol: {
     fontSize: 16,
-    color: '#333',
+    color: '#94A3B8',
     marginRight: 4,
   },
   priceInput: {
     flex: 1,
     fontSize: 16,
-    color: '#333',
+    color: '#FFFFFF',
   },
   facilitiesContainer: {
     flexDirection: 'row',
@@ -350,18 +353,19 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
+    borderColor: '#2D3E5F',
+    backgroundColor: '#1A2235',
     marginRight: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkboxActive: {
-    backgroundColor: '#00BFA5',
-    borderColor: '#00BFA5',
+    backgroundColor: '#00A896',
+    borderColor: '#00A896',
   },
   checkboxLabel: {
     fontSize: 14,
-    color: '#666',
+    color: '#E2E8F0',
   },
   seeMoreButton: {
     flexDirection: 'row',
@@ -370,7 +374,7 @@ const styles = StyleSheet.create({
   },
   seeMoreText: {
     fontSize: 14,
-    color: '#000',
+    color: '#00A896',
     fontWeight: '500',
     marginRight: 4,
   },
@@ -384,35 +388,35 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
-    backgroundColor: '#fff',
+    borderColor: '#2D3E5F',
+    backgroundColor: '#1A2235',
   },
   propertyChipActive: {
-    borderColor: '#00BFA5',
-    backgroundColor: '#fff',
+    borderColor: '#00A896',
+    backgroundColor: '#00A896',
   },
   propertyChipText: {
     fontSize: 14,
-    color: '#333',
+    color: '#E2E8F0',
     fontWeight: '500',
   },
   propertyChipTextActive: {
-    color: '#00BFA5',
+    color: '#FFFFFF',
   },
   footer: {
     padding: 20,
     borderTopWidth: 1,
-    borderTopColor: '#E5E5E5',
+    borderTopColor: '#2D3E5F',
   },
   applyButton: {
-    backgroundColor: '#00BFA5',
+    backgroundColor: '#00A896',
     borderRadius: 28,
     height: 56,
     alignItems: 'center',
     justifyContent: 'center',
   },
   applyButtonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
   },

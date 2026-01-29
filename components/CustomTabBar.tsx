@@ -53,7 +53,7 @@ export default function CustomTabBar() {
   const handleTabPress = (tabPath: string, tabName: string) => {
     // Check if we're already on this tab by comparing the tab name with pathname
     const isCurrentTab = pathname === `/${tabName}` || pathname.endsWith(`/${tabName}`);
-    
+
     // Only navigate if not already on this tab
     if (!isCurrentTab) {
       router.push(tabPath as any);
@@ -62,12 +62,12 @@ export default function CustomTabBar() {
 
   return (
     <View style={styles.container}>
-          <LinearGradient
-       colors={['#232528', '#1e2e3d', '#163b55']}
-       start={{ x: 0, y: 0.5 }}
-       end={{ x: 1, y: 0.5 }}
-       style={styles.tabBar}
-     >
+      <LinearGradient
+        colors={['#232528', '#1e2e3d', '#163b55']}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={styles.tabBar}
+      >
         {tabs.map((tab) => (
           <TabItem
             key={tab.name}
