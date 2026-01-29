@@ -5,7 +5,7 @@ export interface UserData {
   email: string;
   phoneNumber?: string;
   photoURL?: string;
-  role: 'user' | 'admin' | 'super-admin';
+  role: 'user' | 'admin' | 'super-admin' | 'hotel_admin';
   isBanned: boolean;
   street?: string;
   city?: string;

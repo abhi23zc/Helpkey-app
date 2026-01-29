@@ -36,7 +36,6 @@ const TabItem = ({ icon, label, isActive, onPress }: TabItemProps) => (
       color: isActive ? '#FFF' : '#888',
       size: moderateScale(24),
     } as any)}
-    {isActive && <Text style={styles.tabLabel}>{label}</Text>}
   </TouchableOpacity>
 );
 
@@ -51,6 +50,16 @@ export default function CustomTabBar() {
     { name: 'profile', label: 'Wallet', icon: <User2Icon color="#FFF" />, path: '/(tabs)/profile' },
   ];
 
+  const handleTabPress = (tabPath: string, tabName: string) => {
+    // Check if we're already on this tab by comparing the tab name with pathname
+    const isCurrentTab = pathname === `/${tabName}` || pathname.endsWith(`/${tabName}`);
+    
+    // Only navigate if not already on this tab
+    if (!isCurrentTab) {
+      router.push(tabPath as any);
+    }
+  };
+
   return (
     <View style={styles.container}>
           <LinearGradient
@@ -64,8 +73,8 @@ export default function CustomTabBar() {
             key={tab.name}
             icon={tab.icon}
             label={tab.label}
-            isActive={pathname === tab.path}
-            onPress={() => router.push(tab.path as any)}
+            isActive={pathname === `/${tab.name}` || pathname.endsWith(`/${tab.name}`)}
+            onPress={() => handleTabPress(tab.path, tab.name)}
           />
         ))}
       </LinearGradient>

@@ -18,7 +18,7 @@ export default function RootLayout() {
       try {
         // Hide the native splash screen immediately
         await SplashScreen.hideAsync();
-        
+
         // Pre-load any resources here
         await new Promise(resolve => setTimeout(resolve, 100));
       } catch (e) {
@@ -57,6 +57,14 @@ export default function RootLayout() {
             <Stack.Screen name="profile/personal-info" options={{ headerShown: false }} />
             <Stack.Screen name="profile/phone-number" options={{ headerShown: false }} />
             <Stack.Screen name="admin/notifications" options={{ headerShown: false }} />
+            <Stack.Screen name="admin/index" options={{ headerShown: false }} />
+            <Stack.Screen name="admin/dashboard" options={{ headerShown: false }} />
+            <Stack.Screen name="admin/bookings" options={{ headerShown: false }} />
+            <Stack.Screen name="admin/hotels" options={{ headerShown: false }} />
+            <Stack.Screen name="admin/rooms" options={{ headerShown: false }} />
+            <Stack.Screen name="admin/test" options={{ headerShown: false }} />
+            <Stack.Screen name="admin/auth-test" options={{ headerShown: false }} />
+            <Stack.Screen name="admin/debug" options={{ headerShown: false }} />
           </Stack>
         </NotificationProvider>
       </AuthProvider>

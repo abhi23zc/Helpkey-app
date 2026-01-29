@@ -29,7 +29,8 @@ import {
   Bell,
   CreditCard,
   FileText,
-  Lock
+  Lock,
+  UserCheck
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -275,11 +276,31 @@ export default function Profile() {
           </TouchableOpacity>
         </MotiView>
 
+        {/* Admin Section - Only show for admin users */}
+        {(userData?.role === 'admin' || userData?.role === 'super-admin' || userData?.role === 'hotel_admin') && (
+          <MotiView
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ delay: 150, type: 'timing', duration: 500 } as any}
+            style={styles.section}
+          >
+            <SectionHeader title="Admin" />
+            <View style={styles.menuGroup}>
+              <ProfileMenuItem
+                icon={UserCheck}
+                label="Admin Dashboard"
+                value="Manage bookings & hotels"
+                onPress={() => router.push('/admin' as any)}
+              />
+            </View>
+          </MotiView>
+        )}
+
         {/* Account Settings */}
         <MotiView
           from={{ opacity: 0, translateY: 20 }}
           animate={{ opacity: 1, translateY: 0 }}
-          transition={{ delay: 200, type: 'timing', duration: 500 } as any}
+          transition={{ delay: (userData?.role === 'admin' || userData?.role === 'super-admin' || userData?.role === 'hotel_admin') ? 250 : 200, type: 'timing', duration: 500 } as any}
           style={styles.section}
         >
           <SectionHeader title="Account" />
@@ -310,7 +331,7 @@ export default function Profile() {
         <MotiView
           from={{ opacity: 0, translateY: 20 }}
           animate={{ opacity: 1, translateY: 0 }}
-          transition={{ delay: 300, type: 'timing', duration: 500 } as any}
+          transition={{ delay: (userData?.role === 'admin' || userData?.role === 'super-admin' || userData?.role === 'hotel_admin') ? 350 : 300, type: 'timing', duration: 500 } as any}
           style={styles.section}
         >
           <SectionHeader title="Billing" />
@@ -327,7 +348,7 @@ export default function Profile() {
         <MotiView
           from={{ opacity: 0, translateY: 20 }}
           animate={{ opacity: 1, translateY: 0 }}
-          transition={{ delay: 400, type: 'timing', duration: 500 } as any}
+          transition={{ delay: (userData?.role === 'admin' || userData?.role === 'super-admin' || userData?.role === 'hotel_admin') ? 450 : 400, type: 'timing', duration: 500 } as any}
           style={styles.section}
         >
           <SectionHeader title="Preferences" />
@@ -351,7 +372,7 @@ export default function Profile() {
         <MotiView
           from={{ opacity: 0, translateY: 20 }}
           animate={{ opacity: 1, translateY: 0 }}
-          transition={{ delay: 500, type: 'timing', duration: 500 } as any}
+          transition={{ delay: (userData?.role === 'admin' || userData?.role === 'super-admin' || userData?.role === 'hotel_admin') ? 550 : 500, type: 'timing', duration: 500 } as any}
           style={[styles.section, { marginBottom: 40 }]}
         >
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.8}>
