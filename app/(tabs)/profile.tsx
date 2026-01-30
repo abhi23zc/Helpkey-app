@@ -32,7 +32,7 @@ import {
   Lock,
   UserCheck
 } from 'lucide-react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -86,6 +86,7 @@ const SectionHeader = ({ title }: { title: string }) => (
 export default function Profile() {
   const { user, userData, logout } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const handleLogout = async () => {
     Alert.alert(
@@ -121,7 +122,7 @@ export default function Profile() {
             <Text style={styles.headerTitleLight}>Profile</Text>
           </View>
 
-          <ScrollView contentContainerStyle={styles.centerContent} showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={[styles.centerContent, { paddingBottom: 100 + insets.bottom }]} showsVerticalScrollIndicator={false}>
             <MotiView
               from={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -238,7 +239,7 @@ export default function Profile() {
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 + insets.bottom }]}
         showsVerticalScrollIndicator={false}
         bounces={false}
       >

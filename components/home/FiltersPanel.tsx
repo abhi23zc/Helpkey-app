@@ -11,7 +11,6 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -50,7 +49,6 @@ const FiltersPanel = ({
   onPropertyTypeToggle,
   onApply,
 }: FiltersPanelProps) => {
-  const insets = useSafeAreaInsets();
   // Local state for price inputs to avoid jitter
   const [minPriceInput, setMinPriceInput] = useState(priceRange[0].toString());
   const [maxPriceInput, setMaxPriceInput] = useState(priceRange[1].toString());
@@ -220,7 +218,7 @@ const FiltersPanel = ({
           </ScrollView>
 
           {/* Footer */}
-          <View style={[styles.footer, { paddingBottom: 20 + insets.bottom }]}>
+          <View style={styles.footer}>
             <TouchableOpacity style={styles.applyButton} onPress={onApply}>
               <Text style={styles.applyButtonText}>Apply</Text>
             </TouchableOpacity>

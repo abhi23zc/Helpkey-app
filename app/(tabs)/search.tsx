@@ -411,14 +411,14 @@ export default function Search() {
   // Loading state
   if (loading) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={styles.container}>
         <ActivityIndicator size="large" color="#00D9FF" />
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container,]}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
       {/* Search Header */}
@@ -526,7 +526,7 @@ export default function Search() {
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 100 }}
+          contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00D9FF" />
           }

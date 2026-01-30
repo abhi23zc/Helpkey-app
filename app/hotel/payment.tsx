@@ -61,7 +61,7 @@ export default function PaymentScreen() {
 
   // WhatsApp notification hook
   const { sendNotification } = useNotifications();
-  
+
   // Push notification hook
   const { sendCompleteBookingNotifications } = useNotificationHandler();
 
@@ -85,7 +85,7 @@ export default function PaymentScreen() {
         hotelName: hotelData.name,
         aadhaarVerified: userData?.aadhaarData?.verified,
       });
-      
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.timeout);
 
@@ -119,7 +119,7 @@ export default function PaymentScreen() {
       }
 
       const preCheckinData = await preCheckinResponse.json();
-      
+
       if (preCheckinData.success) {
         console.log('🏨 Pre-checkin setup successful:', preCheckinData);
       } else {
@@ -249,11 +249,11 @@ export default function PaymentScreen() {
 
       try {
         const notificationData = createNotificationData(bookingData.reference, allGuestInfoParam);
-        
+
         // Send WhatsApp notifications (existing)
         await sendNotification({ type: 'booking_confirmed', data: notificationData });
         await sendNotification({ type: 'admin_new_booking', data: notificationData });
-        
+
         // Send Push notifications (NEW)
         const pushNotificationData = {
           bookingId: bookingData.reference,
@@ -269,12 +269,12 @@ export default function PaymentScreen() {
           nights: bookingData.nights,
           hotelAdmin: bookingData.hotelAdmin,
         };
-        
+
         console.log('📱 Sending push notifications...');
         const pushSuccess = await sendCompleteBookingNotifications(pushNotificationData);
         console.log('📱 Push notifications result:', pushSuccess);
-        
-      } catch (e) { 
+
+      } catch (e) {
         console.error('Notification error:', e);
       }
 
@@ -427,15 +427,15 @@ export default function PaymentScreen() {
         customerVerification: {}
       };
       const bookingDocId = await createBooking(bookingData);
-      
+
       // Send notifications (WhatsApp + Push)
       try {
         const notificationData = createNotificationData(bookingData.reference, allGuestInfoParam);
-        
+
         // Send WhatsApp notifications
         await sendNotification({ type: 'booking_confirmed', data: notificationData });
         await sendNotification({ type: 'admin_new_booking', data: notificationData });
-        
+
         // Send Push notifications
         const pushNotificationData = {
           bookingId: bookingData.reference,
@@ -451,12 +451,12 @@ export default function PaymentScreen() {
           nights: bookingData.nights,
           hotelAdmin: bookingData.hotelAdmin,
         };
-        
+
         console.log('📱 Sending push notifications (Razorpay)...');
         const pushSuccess = await sendCompleteBookingNotifications(pushNotificationData);
         console.log('📱 Push notifications result (Razorpay):', pushSuccess);
-        
-      } catch (e) { 
+
+      } catch (e) {
         console.error('Notification error (Razorpay):', e);
       }
 
@@ -464,8 +464,8 @@ export default function PaymentScreen() {
       await setupPreCheckin(bookingData.reference, allGuestInfoParam, bookingDocId);
 
       Alert.alert(
-        'Payment Successful', 
-        `Booking Confirmed!${customerPreferences.preCheckinEnabled ? '\n\nPre-checkin activated! You\'ll receive confirmation details shortly.' : ''}`, 
+        'Payment Successful',
+        `Booking Confirmed!${customerPreferences.preCheckinEnabled ? '\n\nPre-checkin activated! You\'ll receive confirmation details shortly.' : ''}`,
         [{ text: 'Done', onPress: () => router.replace('/(tabs)/bookings') }]
       );
     } catch (e) {
@@ -477,7 +477,7 @@ export default function PaymentScreen() {
 
   if (!hotelData || !roomData) {
     return (
-      <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
+      <View style={[styles.loadingContainer]}>
         <ActivityIndicator size="large" color="#111827" />
         <Text style={styles.loadingText}>Loading payment details...</Text>
       </View>
@@ -605,7 +605,7 @@ export default function PaymentScreen() {
               </Text>
               <Text style={styles.priceValue}>₹{totalPrice - preferencesPrice}</Text>
             </View>
-            
+
             {/* Show each preference item with its price */}
             {preferencesPriceBreakdown && preferencesPriceBreakdown.length > 0 && (
               <>
@@ -615,7 +615,7 @@ export default function PaymentScreen() {
                   <View key={index} style={styles.preferenceItemRow}>
                     <Text style={styles.preferenceItemLabel}>• {item.label}</Text>
                     <Text style={styles.preferenceItemValue}>
-                      {item.quantity && item.quantity > 1 
+                      {item.quantity && item.quantity > 1
                         ? `₹${item.price} × ${item.quantity} = ₹${item.price * item.quantity}`
                         : `₹${item.price}`}
                     </Text>
@@ -623,7 +623,7 @@ export default function PaymentScreen() {
                 ))}
               </>
             )}
-            
+
             <View style={[styles.divider, { marginVertical: 12 }]} />
             <View style={styles.priceRow}>
               <Text style={styles.priceLabel}>Taxes & Fees (18%)</Text>
@@ -644,12 +644,12 @@ export default function PaymentScreen() {
             <View style={styles.preferencesCard}>
               {Object.entries(customerPreferences.dynamicPreferences).map(([categoryId, categoryPrefs]) => {
                 if (!categoryPrefs || Object.keys(categoryPrefs).length === 0) return null;
-                
-                const hasValidPrefs = Object.values(categoryPrefs).some(value => 
-                  value !== null && value !== undefined && value !== '' && 
+
+                const hasValidPrefs = Object.values(categoryPrefs).some(value =>
+                  value !== null && value !== undefined && value !== '' &&
                   (Array.isArray(value) ? value.length > 0 : true)
                 );
-                
+
                 if (!hasValidPrefs) return null;
 
                 return (
@@ -658,8 +658,8 @@ export default function PaymentScreen() {
                       {categoryId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                     </Text>
                     {Object.entries(categoryPrefs).map(([optionId, value]) => {
-                      if (value === null || value === undefined || value === '' || 
-                          (Array.isArray(value) && value.length === 0)) {
+                      if (value === null || value === undefined || value === '' ||
+                        (Array.isArray(value) && value.length === 0)) {
                         return null;
                       }
 
@@ -669,9 +669,9 @@ export default function PaymentScreen() {
                             {optionId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                           </Text>
                           <Text style={styles.preferenceValue}>
-                            {Array.isArray(value) ? value.join(', ') : 
-                             typeof value === 'boolean' ? (value ? 'Yes' : 'No') : 
-                             value.toString()}
+                            {Array.isArray(value) ? value.join(', ') :
+                              typeof value === 'boolean' ? (value ? 'Yes' : 'No') :
+                                value.toString()}
                           </Text>
                         </View>
                       );

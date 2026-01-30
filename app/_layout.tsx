@@ -2,10 +2,11 @@ import { AuthProvider } from '@/context/AuthContext';
 import { NotificationProvider } from '@/context/NotificationContext';
 import { Stack } from "expo-router";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import CustomSplashScreen from '@/components/SplashScreen';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet } from 'react-native';
 
 // Prevent the native splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -42,10 +43,11 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#0F1629' }}>
+
+      <GestureHandlerRootView style={{ flex: 1 }}>
         <AuthProvider>
           <NotificationProvider>
-            <SafeAreaView style={{ flex: 1, backgroundColor: '#0F1629' }}>
+            <SafeAreaView style={styles.container} >
               <Stack>
                 <Stack.Screen name="index" options={{ headerShown: false }} />
                 <Stack.Screen name="auth" options={{ headerShown: false }} />
@@ -76,3 +78,12 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0a0e27',
+  }
+});

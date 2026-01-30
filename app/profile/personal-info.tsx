@@ -3,7 +3,7 @@ import { db } from '@/config/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, User, Mail, Calendar, MapPin, Phone, Save, AlertCircle } from 'lucide-react-native';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Alert,
   Platform,
@@ -36,12 +36,68 @@ interface PersonalInfoForm {
   pincode: string;
 }
 
+// Move InputField component OUTSIDE to prevent recreation on every render
+const InputField = ({
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  keyboardType = 'default',
+  icon: Icon,
+  multiline = false,
+  maxLength,
+  focusedField,
+  onFocus,
+  onBlur,
+}: {
+  label: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  placeholder: string;
+  keyboardType?: any;
+  icon: any;
+  multiline?: boolean;
+  maxLength?: number;
+  focusedField: string | null;
+  onFocus: () => void;
+  onBlur: () => void;
+}) => (
+  <MotiView
+    from={{ opacity: 0, translateY: 20 }}
+    animate={{ opacity: 1, translateY: 0 }}
+    transition={{ type: 'timing', duration: 300 } as any}
+    style={styles.inputContainer}
+  >
+    <Text style={styles.label}>{label}</Text>
+    <View style={[
+      styles.inputWrapper,
+      focusedField === label && styles.inputWrapperFocused
+    ]}>
+      <Icon size={18} color="#00D9FF" style={styles.inputIcon} />
+      <TextInput
+        style={[styles.input, multiline && styles.inputMultiline]}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor="rgba(255, 255, 255, 0.4)"
+        keyboardType={keyboardType}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        multiline={multiline}
+        numberOfLines={multiline ? 3 : 1}
+        maxLength={maxLength}
+      />
+    </View>
+  </MotiView>
+);
+
 export default function PersonalInfoScreen() {
   const router = useRouter();
   const { user, userData } = useAuth();
   const insets = useSafeAreaInsets();
   const [isLoading, setIsLoading] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const dataLoadedRef = useRef(false);
   const [formData, setFormData] = useState<PersonalInfoForm>({
     fullName: '',
     phoneNumber: '',
@@ -54,8 +110,9 @@ export default function PersonalInfoScreen() {
     pincode: ''
   });
 
+  // Load user data only once when component mounts
   useEffect(() => {
-    if (userData) {
+    if (userData && !dataLoadedRef.current) {
       setFormData({
         fullName: userData.fullName || '',
         phoneNumber: userData.phoneNumber || '',
@@ -67,6 +124,7 @@ export default function PersonalInfoScreen() {
         state: userData.state || '',
         pincode: userData.pincode || ''
       });
+      dataLoadedRef.current = true;
     }
   }, [userData]);
 
@@ -125,62 +183,14 @@ export default function PersonalInfoScreen() {
     return value.replace(/\D/g, '').slice(0, 6);
   };
 
-  const InputField = ({
-    label,
-    value,
-    onChangeText,
-    placeholder,
-    keyboardType = 'default',
-    icon: Icon,
-    multiline = false,
-    maxLength
-  }: {
-    label: string;
-    value: string;
-    onChangeText: (text: string) => void;
-    placeholder: string;
-    keyboardType?: any;
-    icon: any;
-    multiline?: boolean;
-    maxLength?: number;
-  }) => (
-    <MotiView
-      from={{ opacity: 0, translateY: 20 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: 'timing', duration: 300 } as any}
-      style={styles.inputContainer}
-    >
-      <Text style={styles.label}>{label}</Text>
-      <View style={[
-        styles.inputWrapper,
-        focusedField === label && styles.inputWrapperFocused
-      ]}>
-        <Icon size={18} color="#00D9FF" style={styles.inputIcon} />
-        <TextInput
-          style={[styles.input, multiline && styles.inputMultiline]}
-          value={value}
-          onChangeText={onChangeText}
-          placeholder={placeholder}
-          placeholderTextColor="rgba(255, 255, 255, 0.4)"
-          keyboardType={keyboardType}
-          onFocus={() => setFocusedField(label)}
-          onBlur={() => setFocusedField(null)}
-          multiline={multiline}
-          numberOfLines={multiline ? 3 : 1}
-          maxLength={maxLength}
-        />
-      </View>
-    </MotiView>
-  );
-
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0a0e27" />
-      
+
       {/* Header */}
       <LinearGradient
         colors={['#0a0e27', '#1a1f3a']}
-        style={[styles.header, { paddingTop: insets.top }]}
+        style={[styles.header]}
       >
         <View style={styles.headerContent}>
           <TouchableOpacity
@@ -218,7 +228,7 @@ export default function PersonalInfoScreen() {
           {/* Basic Information */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Basic Information</Text>
-            
+
             <InputField
               label="Full Name"
               value={formData.fullName}
@@ -226,6 +236,9 @@ export default function PersonalInfoScreen() {
               placeholder="Enter your full name"
               icon={User}
               maxLength={50}
+              focusedField={focusedField}
+              onFocus={() => setFocusedField("Full Name")}
+              onBlur={() => setFocusedField(null)}
             />
 
             <InputField
@@ -235,6 +248,9 @@ export default function PersonalInfoScreen() {
               placeholder="Enter your phone number"
               keyboardType="phone-pad"
               icon={Phone}
+              focusedField={focusedField}
+              onFocus={() => setFocusedField("Phone Number")}
+              onBlur={() => setFocusedField(null)}
             />
 
             <InputField
@@ -244,6 +260,9 @@ export default function PersonalInfoScreen() {
               placeholder="DD/MM/YYYY"
               icon={Calendar}
               maxLength={10}
+              focusedField={focusedField}
+              onFocus={() => setFocusedField("Date of Birth")}
+              onBlur={() => setFocusedField(null)}
             />
 
             <InputField
@@ -252,6 +271,9 @@ export default function PersonalInfoScreen() {
               onChangeText={(text) => setFormData(prev => ({ ...prev, gender: text }))}
               placeholder="Male/Female/Other"
               icon={User}
+              focusedField={focusedField}
+              onFocus={() => setFocusedField("Gender")}
+              onBlur={() => setFocusedField(null)}
             />
 
             <InputField
@@ -261,13 +283,16 @@ export default function PersonalInfoScreen() {
               placeholder="Emergency contact number"
               keyboardType="phone-pad"
               icon={Phone}
+              focusedField={focusedField}
+              onFocus={() => setFocusedField("Emergency Contact")}
+              onBlur={() => setFocusedField(null)}
             />
           </View>
 
           {/* Address Information */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Address Information</Text>
-            
+
             <InputField
               label="Street Address"
               value={formData.street}
@@ -275,6 +300,9 @@ export default function PersonalInfoScreen() {
               placeholder="Enter your street address"
               icon={MapPin}
               multiline
+              focusedField={focusedField}
+              onFocus={() => setFocusedField("Street Address")}
+              onBlur={() => setFocusedField(null)}
             />
 
             <InputField
@@ -283,6 +311,9 @@ export default function PersonalInfoScreen() {
               onChangeText={(text) => setFormData(prev => ({ ...prev, city: text }))}
               placeholder="Enter your city"
               icon={MapPin}
+              focusedField={focusedField}
+              onFocus={() => setFocusedField("City")}
+              onBlur={() => setFocusedField(null)}
             />
 
             <InputField
@@ -291,6 +322,9 @@ export default function PersonalInfoScreen() {
               onChangeText={(text) => setFormData(prev => ({ ...prev, state: text }))}
               placeholder="Enter your state"
               icon={MapPin}
+              focusedField={focusedField}
+              onFocus={() => setFocusedField("State")}
+              onBlur={() => setFocusedField(null)}
             />
 
             <InputField
@@ -300,6 +334,9 @@ export default function PersonalInfoScreen() {
               placeholder="Enter 6-digit pincode"
               keyboardType="number-pad"
               icon={MapPin}
+              focusedField={focusedField}
+              onFocus={() => setFocusedField("Pincode")}
+              onBlur={() => setFocusedField(null)}
             />
           </View>
 

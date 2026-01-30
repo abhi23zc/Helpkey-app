@@ -192,7 +192,7 @@ export default function AdminWebView({
   // Show access denied if user doesn't have admin rights
   if (!userHasAdminAccess()) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <View style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
         <View style={styles.accessDeniedContainer}>
           <View style={styles.accessDeniedIconWrapper}>
@@ -226,8 +226,8 @@ export default function AdminWebView({
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+    <View style={styles.container}>
+      {/* <StatusBar barStyle="light-content" backgroundColor="transparent" translucent /> */}
 
       {/* Custom Header - Improved responsive design */}
       {showHeader && showBackButton && (
@@ -266,7 +266,7 @@ export default function AdminWebView({
         <View style={styles.loadingContainer}>
           <View style={styles.loadingContent}>
             <ActivityIndicator size="large" color="#06b6d4" />
-            <Text style={styles.loadingText}>Loading admin dashboard...</Text>
+            <Text style={styles.loadingText}>Loading Please wait...</Text>
           </View>
         </View>
       )}

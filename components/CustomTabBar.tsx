@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -42,6 +43,7 @@ const TabItem = ({ icon, label, isActive, onPress }: TabItemProps) => (
 export default function CustomTabBar() {
   const router = useRouter();
   const pathname = usePathname();
+  const insets = useSafeAreaInsets();
 
   const tabs = [
     { name: 'home', label: 'Home', icon: <Home color="#FFF" />, path: '/(tabs)/home' },
@@ -51,8 +53,9 @@ export default function CustomTabBar() {
   ];
 
   const handleTabPress = (tabPath: string, tabName: string) => {
-    // Check if we're already on this tab by comparing the tab name with pathname
-    const isCurrentTab = pathname === `/${tabName}` || pathname.endsWith(`/${tabName}`);
+    // Check if we're already on this tab by checking if pathname includes the tab name
+    // This handles both /(tabs)/home and /home formats
+    const isCurrentTab = pathname.includes(`/${tabName}`);
 
     // Only navigate if not already on this tab
     if (!isCurrentTab) {
@@ -60,8 +63,11 @@ export default function CustomTabBar() {
     }
   };
 
+  // Calculate bottom position based on safe area insets
+  const bottomPosition = Math.max(insets.bottom, moderateScale(10));
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { bottom: 10 }]}>
       <LinearGradient
         colors={['#232528', '#1e2e3d', '#163b55']}
         start={{ x: 0, y: 0.5 }}
@@ -85,7 +91,6 @@ export default function CustomTabBar() {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? moderateScale(30) : moderateScale(20),
     left: 0,
     right: 0,
     alignItems: 'center',

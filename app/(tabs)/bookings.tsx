@@ -101,23 +101,273 @@ interface Booking {
   createdAt: any;
 }
 
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-// ... (imports)
-
 export default function Bookings() {
   const router = useRouter();
   const { user } = useAuth();
-  const insets = useSafeAreaInsets();
-  // ... (state)
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedTab, setSelectedTab] = useState<'all' | 'upcoming' | 'completed' | 'cancelled'>('all');
 
-  // ... (other functions)
+  useEffect(() => {
+    if (user) {
+      fetchBookings();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const fetchBookings = async () => {
+    try {
+      setLoading(true);
+      const data = await getUserBookings(user?.uid || '');
+      // Sort by creation date (newest first)
+      const sortedData = data.sort((a: any, b: any) => {
+        const dateA = a.createdAt?.seconds || 0;
+        const dateB = b.createdAt?.seconds || 0;
+        return dateB - dateA;
+      });
+      setBookings(sortedData as Booking[]);
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchBookings();
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return { bg: 'rgba(16, 185, 129, 0.15)', text: '#34D399', icon: '#34D399' };
+      case 'confirmed':
+        return { bg: 'rgba(0, 217, 255, 0.15)', text: '#00D9FF', icon: '#00D9FF' };
+      case 'pending':
+        return { bg: 'rgba(251, 191, 36, 0.15)', text: '#FBBF24', icon: '#FBBF24' };
+      case 'cancelled':
+        return { bg: 'rgba(239, 68, 68, 0.15)', text: '#F87171', icon: '#F87171' };
+      default:
+        return { bg: 'rgba(107, 114, 128, 0.15)', text: '#9CA3AF', icon: '#9CA3AF' };
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return CheckCircle;
+      case 'confirmed':
+        return CheckCircle;
+      case 'pending':
+        return Clock;
+      case 'cancelled':
+        return XCircle;
+      default:
+        return AlertCircle;
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const isUpcoming = (checkIn: string) => {
+    return new Date(checkIn) > new Date();
+  };
+
+  const isCompleted = (checkOut: string) => {
+    return new Date(checkOut) < new Date();
+  };
+
+  const filterBookings = () => {
+    switch (selectedTab) {
+      case 'upcoming':
+        return bookings.filter(b => isUpcoming(b.checkIn) && b.status.toLowerCase() !== 'cancelled');
+      case 'completed':
+        return bookings.filter(b => isCompleted(b.checkOut) || b.status.toLowerCase() === 'completed');
+      case 'cancelled':
+        return bookings.filter(b => b.status.toLowerCase() === 'cancelled');
+      default:
+        return bookings;
+    }
+  };
+
+  const filteredBookings = filterBookings();
+
+  const renderBookingCard = (booking: Booking, index: number) => {
+    const StatusIcon = getStatusIcon(booking.status);
+    const statusStyle = getStatusColor(booking.status);
+
+    return (
+      <MotiView
+        key={booking.id}
+        from={{ opacity: 0, translateY: 20 }}
+        animate={{ opacity: 1, translateY: 0 }}
+        transition={{ type: 'timing', duration: 400, delay: index * 100 } as any}
+      >
+        <TouchableOpacity
+          style={styles.bookingCard}
+          activeOpacity={0.9}
+          onPress={() => {
+            router.push(`/booking/${booking.id}` as any);
+          }}
+        >
+          {/* Card Header - Image & Status */}
+          <View style={styles.cardHeader}>
+            {booking.hotelDetails?.image ? (
+              <Image
+                source={{ uri: booking.hotelDetails.image.replace(/\.avif$/, '.jpg') }}
+                style={styles.cardImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.imagePlaceholder}>
+                <MapPin size={32} color="rgba(255, 255, 255, 0.2)" />
+              </View>
+            )}
+
+            <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
+              <StatusIcon size={12} color={statusStyle.icon} strokeWidth={2.5} />
+              <Text style={[styles.statusText, { color: statusStyle.text }]}>{booking.status}</Text>
+            </View>
+          </View>
+
+          {/* Card Content */}
+          <View style={styles.cardContent}>
+            <View style={styles.hotelInfo}>
+              <Text style={styles.hotelName} numberOfLines={1}>{booking.hotelDetails.name}</Text>
+              <View style={styles.locationRow}>
+                <MapPin size={12} color="#00D9FF" />
+                <Text style={styles.locationText} numberOfLines={1}>{booking.hotelDetails.location}</Text>
+              </View>
+            </View>
+
+            {/* Room Info Tag */}
+            <View style={styles.roomTag}>
+              <Text style={styles.roomTagText}>{booking.roomDetails.type}</Text>
+            </View>
+
+            <View style={styles.divider} />
+
+            {/* Booking Details Grid */}
+            <View style={styles.detailsGrid}>
+              <View style={styles.detailItem}>
+                <View style={styles.detailIconBox}>
+                  <Calendar size={14} color="#00D9FF" />
+                </View>
+                <View>
+                  <Text style={styles.detailLabel}>Check-in</Text>
+                  <Text style={styles.detailValue}>{formatDate(booking.checkIn)}</Text>
+                </View>
+              </View>
+
+              <View style={styles.detailItem}>
+                <View style={[styles.detailIconBox, { backgroundColor: 'rgba(0, 217, 255, 0.05)' }]}>
+                  <Clock size={14} color="#00D9FF" />
+                </View>
+                <View>
+                  <Text style={styles.detailLabel}>Duration</Text>
+                  <Text style={styles.detailValue}>
+                    {booking.bookingType === 'hourly'
+                      ? `${booking.hourlyDuration || 0} Hours`
+                      : `${booking.nights} Night${booking.nights > 1 ? 's' : ''}`
+                    }
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Price & Action */}
+            <View style={styles.cardFooter}>
+              <View>
+                <Text style={styles.totalPriceLabel}>Total Amount</Text>
+                <Text style={styles.totalPrice}>₹{booking.totalAmount}</Text>
+              </View>
+
+              <View style={styles.actionButton}>
+                <Text style={styles.actionButtonText}>View Details</Text>
+                <ChevronRight size={16} color="#FFF" />
+              </View>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </MotiView>
+    );
+  };
+
+  const renderEmptyState = () => {
+    if (!user) {
+      return (
+        <View style={styles.emptyState}>
+          <View style={styles.emptyIconCircle}>
+            <User size={48} color="rgba(255, 255, 255, 0.3)" strokeWidth={1.5} />
+          </View>
+          <Text style={styles.emptyTitle}>Log in to see bookings</Text>
+          <Text style={styles.emptySubtitle}>
+            Sign in to access your upcoming and past trips history.
+          </Text>
+          <TouchableOpacity
+            style={styles.signInButton}
+            onPress={() => router.push('/auth/login' as any)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.signInButtonText}>Sign In</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    const emptyMessages = {
+      all: {
+        title: 'No Bookings Found',
+        subtitle: 'Looks like you haven\'t booked any stays yet.',
+      },
+      upcoming: {
+        title: 'No Upcoming Trips',
+        subtitle: 'You have no confirmed upcoming bookings.',
+      },
+      completed: {
+        title: 'No Past Stays',
+        subtitle: 'Your completed bookings will appear here.',
+      },
+      cancelled: {
+        title: 'No Cancellations',
+        subtitle: 'You haven\'t cancelled any bookings.',
+      },
+    };
+
+    const message = emptyMessages[selectedTab];
+
+    return (
+      <View style={styles.emptyState}>
+        <View style={styles.emptyIconCircle}>
+          <Calendar size={48} color="rgba(255, 255, 255, 0.3)" strokeWidth={1.5} />
+        </View>
+        <Text style={styles.emptyTitle}>{message.title}</Text>
+        <Text style={styles.emptySubtitle}>{message.subtitle}</Text>
+        <TouchableOpacity
+          style={styles.exploreButton}
+          onPress={() => router.push('/(tabs)/home')}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.exploreButtonText}>Explore Hotels</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0a0e27" />
 
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'android' ? 20 : 10) }]}>
+      <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>My Bookings</Text>
           {user && (
@@ -181,7 +431,7 @@ export default function Bookings() {
           {/* List */}
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={[styles.scrollContent, { paddingBottom: 150 }]}
+            contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
@@ -212,7 +462,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingTop: 10,
     paddingBottom: 20,
     backgroundColor: '#0a0e27',
   },

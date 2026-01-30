@@ -223,14 +223,24 @@ export default function Onboarding() {
 
         {currentIndex === DATA.length - 1 && (
           <Animated.View entering={FadeInDown.delay(200)}>
-            <TouchableOpacity
-              onPress={() => router.push('/auth/register')}
-              style={styles.registerLink}
-            >
-              <Text style={styles.registerText}>
-                Don't have an account? <Text style={styles.registerHighlight}>Register</Text>
-              </Text>
-            </TouchableOpacity>
+            <View style={styles.authLinksContainer}>
+              <TouchableOpacity
+                onPress={() => router.push('/auth/login')}
+                style={styles.authLink}
+              >
+                <Text style={styles.authLinkText}>
+                  Already have an account? <Text style={styles.authLinkHighlight}>Sign in</Text>
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => router.push('/auth/register')}
+                style={styles.authLink}
+              >
+                <Text style={styles.authLinkText}>
+                  New here? <Text style={styles.authLinkHighlight}>Register</Text>
+                </Text>
+              </TouchableOpacity>
+            </View>
           </Animated.View>
         )}
       </View>
@@ -323,14 +333,18 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
   },
-  registerLink: {
+  authLinksContainer: {
     marginTop: verticalScale(15),
+    gap: verticalScale(10),
   },
-  registerText: {
+  authLink: {
+    marginTop: verticalScale(5),
+  },
+  authLinkText: {
     color: Colors.WHITE,
     fontSize: moderateScale(14),
   },
-  registerHighlight: {
+  authLinkHighlight: {
     color: Colors.PRIMARY,
     fontWeight: '700',
   },

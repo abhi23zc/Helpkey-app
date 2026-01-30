@@ -48,13 +48,7 @@ interface DashboardStats {
   lastUpdated: Date | null;
 }
 
-interface RecentActivity {
-  id: string;
-  type: 'booking_confirmed' | 'booking_pending' | 'booking_completed' | 'booking_cancelled';
-  title: string;
-  time: string;
-  timestamp: Date;
-}
+
 
 interface BookingData {
   id: string;
@@ -79,7 +73,7 @@ export default function AdminIndex() {
     todayBookings: 0,
     lastUpdated: null,
   });
-  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+
   const [hotels, setHotels] = useState<any[]>([]);
 
   // Animation values
@@ -151,19 +145,7 @@ export default function AdminIndex() {
     ).start();
   };
 
-  // Format time ago
-  const formatTimeAgo = (date: Date): string => {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-  };
 
   // Fetch dashboard data
   const fetchDashboardData = useCallback(async () => {
@@ -216,38 +198,7 @@ export default function AdminIndex() {
         lastUpdated: new Date(),
       });
 
-      // Generate recent activities from actual bookings
-      const recentBookings = bookings.slice(0, 5);
-      const activities: RecentActivity[] = recentBookings.map(booking => {
-        const status = booking.status?.toLowerCase() || 'pending';
-        let type: RecentActivity['type'] = 'booking_pending';
-        let title = 'New booking pending';
 
-        if (status === 'confirmed') {
-          type = 'booking_confirmed';
-          title = `Booking confirmed${booking.guestName ? ` - ${booking.guestName}` : ''}`;
-        } else if (status === 'completed') {
-          type = 'booking_completed';
-          title = `Guest checked out${booking.guestName ? ` - ${booking.guestName}` : ''}`;
-        } else if (status === 'cancelled') {
-          type = 'booking_cancelled';
-          title = `Booking cancelled${booking.guestName ? ` - ${booking.guestName}` : ''}`;
-        } else {
-          title = `Booking pending${booking.guestName ? ` - ${booking.guestName}` : ''}`;
-        }
-
-        const timestamp = booking.createdAt?.toDate ? booking.createdAt.toDate() : new Date(booking.createdAt);
-
-        return {
-          id: booking.id,
-          type,
-          title,
-          timestamp,
-          time: formatTimeAgo(timestamp),
-        };
-      });
-
-      setRecentActivities(activities);
 
       // Fetch hotels count
       const hotelsQuery = query(
@@ -272,13 +223,13 @@ export default function AdminIndex() {
 
   // Dynamic menu items based on actual data
   const adminMenuItems: AdminMenuItem[] = [
-    {
-      title: 'Dashboard',
-      description: 'Overview and analytics',
-      icon: 'analytics-outline',
-      route: '/admin/dashboard',
-      colors: ['#06b6d4', '#3b82f6'] as const,
-    },
+    // {
+    //   title: 'Dashboard',
+    //   description: 'Overview and analytics',
+    //   icon: 'analytics-outline',
+    //   route: '/admin/dashboard',
+    //   colors: ['#06b6d4', '#3b82f6'] as const,
+    // },
     {
       title: 'Bookings',
       description: 'Manage reservations',
@@ -289,7 +240,7 @@ export default function AdminIndex() {
     },
     {
       title: 'Hotels',
-      description: `${hotels.length} ${hotels.length === 1 ? 'property' : 'properties'}`,
+      description: "Manage Hotels",
       icon: 'business-outline',
       route: '/admin/hotels',
       colors: ['#8b5cf6', '#7c3aed'] as const,
@@ -335,21 +286,7 @@ export default function AdminIndex() {
     return hasAdminAccess(userData?.role);
   };
 
-  // Get icon and color for activity type
-  const getActivityStyle = (type: RecentActivity['type']) => {
-    switch (type) {
-      case 'booking_confirmed':
-        return { icon: 'checkmark-circle' as const, color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.15)' };
-      case 'booking_pending':
-        return { icon: 'time' as const, color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.15)' };
-      case 'booking_completed':
-        return { icon: 'checkmark-done-circle' as const, color: '#06b6d4', bgColor: 'rgba(6, 182, 212, 0.15)' };
-      case 'booking_cancelled':
-        return { icon: 'close-circle' as const, color: '#ef4444', bgColor: 'rgba(239, 68, 68, 0.15)' };
-      default:
-        return { icon: 'ellipse' as const, color: '#64748b', bgColor: 'rgba(100, 116, 139, 0.15)' };
-    }
-  };
+
 
   // Format currency
   const formatCurrency = (amount: number): string => {
@@ -392,7 +329,7 @@ export default function AdminIndex() {
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container]}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
       {/* Header with animation */}
@@ -465,14 +402,7 @@ export default function AdminIndex() {
             <Text style={styles.welcomeText}>
               Manage your hotel business with powerful admin tools
             </Text>
-            {stats.lastUpdated && (
-              <View style={styles.lastUpdatedContainer}>
-                <Ionicons name="sync" size={12} color="#64748b" />
-                <Text style={styles.lastUpdatedText}>
-                  Updated {formatTimeAgo(stats.lastUpdated)}
-                </Text>
-              </View>
-            )}
+
           </LinearGradient>
         </Animated.View>
 
@@ -668,63 +598,6 @@ export default function AdminIndex() {
           </View>
         </View>
 
-        {/* Recent Activity - Dynamic */}
-        <View style={styles.recentSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Activity</Text>
-            {recentActivities.length > 0 && (
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => router.push('/admin/bookings' as any)}
-              >
-                <Text style={styles.viewAllText}>View All</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {loading ? (
-            <View style={styles.activityList}>
-              <View style={styles.loadingActivityContainer}>
-                <ActivityIndicator size="small" color="#06b6d4" />
-                <Text style={styles.loadingActivityText}>Loading recent activity...</Text>
-              </View>
-            </View>
-          ) : recentActivities.length === 0 ? (
-            <View style={styles.activityList}>
-              <View style={styles.emptyActivityContainer}>
-                <Ionicons name="calendar-clear-outline" size={40} color="#64748b" />
-                <Text style={styles.emptyActivityText}>No recent activity</Text>
-                <Text style={styles.emptyActivitySubtext}>Your booking activities will appear here</Text>
-              </View>
-            </View>
-          ) : (
-            <View style={styles.activityList}>
-              {recentActivities.map((activity, index) => {
-                const activityStyle = getActivityStyle(activity.type);
-                return (
-                  <TouchableOpacity
-                    key={activity.id}
-                    style={[
-                      styles.activityItem,
-                      index < recentActivities.length - 1 && styles.activityItemBorder
-                    ]}
-                    activeOpacity={0.7}
-                    onPress={() => router.push('/admin/bookings' as any)}
-                  >
-                    <View style={[styles.activityIcon, { backgroundColor: activityStyle.bgColor }]}>
-                      <Ionicons name={activityStyle.icon} size={18} color={activityStyle.color} />
-                    </View>
-                    <View style={styles.activityContent}>
-                      <Text style={styles.activityItemTitle} numberOfLines={1}>{activity.title}</Text>
-                      <Text style={styles.activityItemTime}>{activity.time}</Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={16} color="#64748b" />
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          )}
-        </View>
 
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacing} />
@@ -856,16 +729,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: isSmallDevice ? 8 : isTablet ? 24 : 16,
     fontWeight: '400',
   },
-  lastUpdatedContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 12,
-    gap: 6,
-  },
-  lastUpdatedText: {
-    fontSize: 11,
-    color: '#64748b',
-  },
+
 
   // Section Header Styles
   sectionHeader: {
@@ -1189,73 +1053,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
 
-  // Recent Activity
-  recentSection: {
-    marginBottom: isSmallDevice ? 20 : 24,
-  },
-  activityList: {
-    backgroundColor: 'rgba(30, 41, 59, 0.5)',
-    borderRadius: isSmallDevice ? 14 : 16,
-    padding: isSmallDevice ? 12 : 16,
-    borderWidth: 1,
-    borderColor: 'rgba(51, 65, 85, 0.3)',
-  },
-  activityItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: isSmallDevice ? 10 : 12,
-  },
-  activityItemBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(51, 65, 85, 0.3)',
-  },
-  activityIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  activityContent: {
-    flex: 1,
-  },
-  activityItemTitle: {
-    fontSize: isSmallDevice ? 13 : 14,
-    fontWeight: '600',
-    color: '#ffffff',
-    marginBottom: 2,
-  },
-  activityItemTime: {
-    fontSize: isSmallDevice ? 11 : 12,
-    color: '#64748b',
-  },
-  loadingActivityContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 20,
-    gap: 12,
-  },
-  loadingActivityText: {
-    fontSize: 13,
-    color: '#64748b',
-  },
-  emptyActivityContainer: {
-    alignItems: 'center',
-    paddingVertical: 24,
-  },
-  emptyActivityText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#94a3b8',
-    marginTop: 12,
-  },
-  emptyActivitySubtext: {
-    fontSize: 12,
-    color: '#64748b',
-    marginTop: 4,
-  },
+
 
   // Access Denied Styles
   accessDeniedContainer: {

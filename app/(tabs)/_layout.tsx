@@ -2,10 +2,12 @@ import CustomTabBar from "@/components/CustomTabBar";
 import { Stack } from "expo-router";
 import React from "react";
 import { StyleSheet, View } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function TabsLayout() {
   return (
-    <View style={styles.container}>
+
+    <View style={styles.content}>
       <Stack
         screenOptions={{
           headerShown: false,
@@ -18,11 +20,16 @@ export default function TabsLayout() {
       </Stack>
       <CustomTabBar />
     </View>
+
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: '#0a0e27',
+  },
+  content: {
     flex: 1,
   },
 });

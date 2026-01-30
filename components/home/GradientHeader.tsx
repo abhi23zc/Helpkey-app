@@ -194,7 +194,7 @@ const GradientHeader = ({
 
 const styles = StyleSheet.create({
   gradientHeader: {
-    paddingTop: Platform.OS === 'android' ? 50 : 60,
+    paddingTop: 10,
     paddingBottom: 35,
     paddingHorizontal: 20,
     borderBottomLeftRadius: 35,

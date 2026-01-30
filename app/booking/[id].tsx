@@ -309,7 +309,7 @@ export default function BookingDetailsScreen() {
       <StatusBar barStyle="light-content" backgroundColor="#0a0e27" />
 
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'android' ? 12 : 0) }]}>
+      <View style={[styles.header]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <ArrowLeft size={24} color="#FFF" />
         </TouchableOpacity>

@@ -90,10 +90,8 @@ export default function Register() {
       onRequestClose={handleClose}
       statusBarTranslucent
     >
-      <StatusBar barStyle="light-content" backgroundColor="rgba(0, 0, 0, 0.5)" />
+      <StatusBar barStyle="light-content" backgroundColor="#040E22" />
       <View style={styles.modalOverlay}>
-        <Pressable style={styles.backdrop} onPress={handleClose} />
-        
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalContainer}
@@ -102,7 +100,7 @@ export default function Register() {
           {/* Header with close button */}
           <View style={styles.header}>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-              <Feather name="x" size={24} color="#1F2937" />
+              <Feather name="x" size={24} color="#00D9FF" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Create Account</Text>
             <View style={styles.placeholder} />
@@ -123,11 +121,11 @@ export default function Register() {
                   styles.inputWrapper,
                   focusedInput === 'name' && styles.inputWrapperFocused
                 ]}>
-                  <Feather name="user" size={20} color="#6366F1" style={styles.icon} />
+                  <Feather name="user" size={20} color="#00D9FF" style={styles.icon} />
                   <TextInput
                     style={styles.input}
                     placeholder="Enter your full name"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
                     value={name}
                     onChangeText={setName}
                     onFocus={() => setFocusedInput('name')}
@@ -145,11 +143,11 @@ export default function Register() {
                   styles.inputWrapper,
                   focusedInput === 'phone' && styles.inputWrapperFocused
                 ]}>
-                  <Feather name="smartphone" size={20} color="#6366F1" style={styles.icon} />
+                  <Feather name="smartphone" size={20} color="#00D9FF" style={styles.icon} />
                   <TextInput
                     style={styles.input}
                     placeholder="Enter your phone number"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
                     value={phone}
                     onChangeText={setPhone}
                     keyboardType="phone-pad"
@@ -168,11 +166,11 @@ export default function Register() {
                   styles.inputWrapper,
                   focusedInput === 'email' && styles.inputWrapperFocused
                 ]}>
-                  <Feather name="mail" size={20} color="#6366F1" style={styles.icon} />
+                  <Feather name="mail" size={20} color="#00D9FF" style={styles.icon} />
                   <TextInput
                     style={styles.input}
                     placeholder="Enter your email"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -192,11 +190,11 @@ export default function Register() {
                   styles.inputWrapper,
                   focusedInput === 'password' && styles.inputWrapperFocused
                 ]}>
-                  <Feather name="lock" size={20} color="#6366F1" style={styles.icon} />
+                  <Feather name="lock" size={20} color="#00D9FF" style={styles.icon} />
                   <TextInput
                     style={styles.input}
                     placeholder="Create a strong password"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
@@ -209,7 +207,7 @@ export default function Register() {
                     <Feather 
                       name={showPassword ? "eye-off" : "eye"} 
                       size={20} 
-                      color="#9CA3AF" 
+                      color="rgba(255, 255, 255, 0.5)" 
                     />
                   </TouchableOpacity>
                 </View>
@@ -222,11 +220,11 @@ export default function Register() {
                   styles.inputWrapper,
                   focusedInput === 'confirmPassword' && styles.inputWrapperFocused
                 ]}>
-                  <Feather name="lock" size={20} color="#6366F1" style={styles.icon} />
+                  <Feather name="lock" size={20} color="#00D9FF" style={styles.icon} />
                   <TextInput
                     style={styles.input}
                     placeholder="Re-enter your password"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
                     secureTextEntry={!showConfirmPassword}
@@ -239,7 +237,7 @@ export default function Register() {
                     <Feather 
                       name={showConfirmPassword ? "eye-off" : "eye"} 
                       size={20} 
-                      color="#9CA3AF" 
+                      color="rgba(255, 255, 255, 0.5)" 
                     />
                   </TouchableOpacity>
                 </View>
@@ -253,17 +251,17 @@ export default function Register() {
                 disabled={loading}
               >
                 <LinearGradient
-                  colors={['#6366F1', '#4F46E5', '#4338CA']}
+                  colors={['#00D9FF', '#00B4D8', '#0096C7']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.gradientButton}
                 >
                   {loading ? (
-                    <ActivityIndicator color="#FFF" />
+                    <ActivityIndicator color="#040E22" />
                   ) : (
                     <>
                       <Text style={styles.createButtonText}>Create Account</Text>
-                      <Feather name="arrow-right" size={20} color="#FFF" style={styles.buttonIcon} />
+                      <Feather name="arrow-right" size={20} color="#040E22" style={styles.buttonIcon} />
                     </>
                   )}
                 </LinearGradient>
@@ -323,62 +321,47 @@ export default function Register() {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  backdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    backgroundColor: '#040E22',
   },
   modalContainer: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    maxHeight: '92%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 20,
-    overflow: 'hidden',
+    flex: 1,
+    backgroundColor: '#040E22',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 16 : 20,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    paddingTop: Platform.OS === 'android' ? 50 : 60,
+    paddingBottom: 20,
   },
   closeButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(0, 217, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 217, 255, 0.3)',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#1F2937',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
   },
   placeholder: {
     width: 40,
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: Platform.OS === 'android' ? 30 : 40,
+    paddingTop: 10,
+    paddingBottom: Platform.OS === 'android' ? 40 : 60,
   },
   subtitle: {
     fontSize: 14,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -386,54 +369,54 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   label: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
-    marginBottom: 6,
-    marginLeft: 2,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 10,
+    marginLeft: 4,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    height: 52,
-    backgroundColor: '#F9FAFB',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    height: 56,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   inputWrapperFocused: {
-    borderColor: '#6366F1',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#6366F1',
+    borderColor: '#00D9FF',
+    backgroundColor: 'rgba(0, 217, 255, 0.08)',
+    shadowColor: '#00D9FF',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 4,
   },
   icon: {
-    marginRight: 12,
+    marginRight: 14,
   },
   input: {
     flex: 1,
     fontSize: 15,
-    color: '#1F2937',
+    color: '#FFFFFF',
     fontWeight: '500',
     paddingVertical: Platform.OS === 'android' ? 8 : 0,
   },
   createButton: {
     marginTop: 20,
     marginBottom: 18,
-    borderRadius: 12,
+    borderRadius: 14,
     overflow: 'hidden',
-    elevation: 6,
-    shadowColor: '#6366F1',
+    elevation: 8,
+    shadowColor: '#00D9FF',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
   },
   gradientButton: {
-    height: 54,
+    height: 56,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -441,11 +424,11 @@ const styles = StyleSheet.create({
   createButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFF',
+    color: '#040E22',
     letterSpacing: 0.5,
   },
   buttonIcon: {
-    marginLeft: 8,
+    marginLeft: 10,
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -455,12 +438,12 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
   },
   dividerText: {
     marginHorizontal: 12,
-    fontSize: 12,
-    color: '#9CA3AF',
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.5)',
     fontWeight: '500',
   },
   socialContainer: {
@@ -472,12 +455,12 @@ const styles = StyleSheet.create({
   socialButton: {
     width: 64,
     height: 64,
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-    borderRadius: 14,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   socialIconWrapper: {
     width: 36,
@@ -490,15 +473,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 4,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   signInText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.7)',
   },
   signInLink: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#6366F1',
+    color: '#00D9FF',
   },
 });

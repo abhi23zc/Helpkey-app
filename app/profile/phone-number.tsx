@@ -3,7 +3,7 @@ import { db } from '@/config/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Phone, Save, AlertCircle, CheckCircle, Shield } from 'lucide-react-native';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Alert,
   Platform,
@@ -24,6 +24,103 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+// Utility function for phone validation
+const validatePhoneNumber = (phone: string) => {
+  const digits = phone.replace(/\D/g, '');
+  return digits.length === 10 && /^[6-9]\d{9}$/.test(digits);
+};
+
+// Utility function for formatting phone number
+const formatPhoneNumber = (value: string) => {
+  const digits = value.replace(/\D/g, '');
+  const limited = digits.slice(0, 10);
+  if (limited.length >= 6) {
+    return `${limited.slice(0, 5)} ${limited.slice(5)}`;
+  }
+  return limited;
+};
+
+// Move PhoneInputField component OUTSIDE to prevent recreation on every render
+const PhoneInputField = ({
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  description,
+  required = false,
+  focusedField,
+  onFocus,
+  onBlur,
+}: {
+  label: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  placeholder: string;
+  description?: string;
+  required?: boolean;
+  focusedField: string | null;
+  onFocus: () => void;
+  onBlur: () => void;
+}) => {
+  const isValid = value ? validatePhoneNumber(value) : !required;
+
+  return (
+    <MotiView
+      from={{ opacity: 0, translateY: 20 }}
+      animate={{ opacity: 1, translateY: 0 }}
+      transition={{ type: 'timing', duration: 300 } as any}
+      style={styles.inputContainer}
+    >
+      <View style={styles.labelContainer}>
+        <Text style={styles.label}>
+          {label}
+          {required && <Text style={styles.required}> *</Text>}
+        </Text>
+        {value && (
+          <View style={[styles.validationBadge, isValid ? styles.validBadge : styles.invalidBadge]}>
+            {isValid ? (
+              <CheckCircle size={12} color="#059669" />
+            ) : (
+              <AlertCircle size={12} color="#EF4444" />
+            )}
+          </View>
+        )}
+      </View>
+
+      <View style={[
+        styles.inputWrapper,
+        focusedField === label && styles.inputWrapperFocused,
+        !isValid && value && styles.inputWrapperError
+      ]}>
+        <View style={styles.countryCode}>
+          <Text style={styles.countryCodeText}>+91</Text>
+        </View>
+        <TextInput
+          style={styles.input}
+          value={formatPhoneNumber(value)}
+          onChangeText={(text) => onChangeText(text.replace(/\D/g, ''))}
+          placeholder={placeholder}
+          placeholderTextColor="rgba(255, 255, 255, 0.4)"
+          keyboardType="phone-pad"
+          onFocus={onFocus}
+          onBlur={onBlur}
+          maxLength={11} // 10 digits + 1 space
+        />
+      </View>
+
+      {description && (
+        <Text style={styles.description}>{description}</Text>
+      )}
+
+      {!isValid && value && (
+        <Text style={styles.errorText}>
+          Please enter a valid 10-digit Indian mobile number
+        </Text>
+      )}
+    </MotiView>
+  );
+};
+
 export default function PhoneNumberScreen() {
   const router = useRouter();
   const { user, userData } = useAuth();
@@ -32,27 +129,16 @@ export default function PhoneNumberScreen() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [emergencyContact, setEmergencyContact] = useState('');
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const dataLoadedRef = useRef(false);
 
+  // Load user data only once when component mounts
   useEffect(() => {
-    if (userData) {
+    if (userData && !dataLoadedRef.current) {
       setPhoneNumber(userData.phoneNumber || '');
       setEmergencyContact(userData.emergencyContact || '');
+      dataLoadedRef.current = true;
     }
   }, [userData]);
-
-  const formatPhoneNumber = (value: string) => {
-    const digits = value.replace(/\D/g, '');
-    const limited = digits.slice(0, 10);
-    if (limited.length >= 6) {
-      return `${limited.slice(0, 5)} ${limited.slice(5)}`;
-    }
-    return limited;
-  };
-
-  const validatePhoneNumber = (phone: string) => {
-    const digits = phone.replace(/\D/g, '');
-    return digits.length === 10 && /^[6-9]\d{9}$/.test(digits);
-  };
 
   const handleSave = async () => {
     if (!user?.uid) return;
@@ -101,88 +187,15 @@ export default function PhoneNumberScreen() {
     }
   };
 
-  const PhoneInputField = ({
-    label,
-    value,
-    onChangeText,
-    placeholder,
-    description,
-    required = false
-  }: {
-    label: string;
-    value: string;
-    onChangeText: (text: string) => void;
-    placeholder: string;
-    description?: string;
-    required?: boolean;
-  }) => {
-    const isValid = value ? validatePhoneNumber(value) : !required;
-    
-    return (
-      <MotiView
-        from={{ opacity: 0, translateY: 20 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: 'timing', duration: 300 }}
-        style={styles.inputContainer}
-      >
-        <View style={styles.labelContainer}>
-          <Text style={styles.label}>
-            {label}
-            {required && <Text style={styles.required}> *</Text>}
-          </Text>
-          {value && (
-            <View style={[styles.validationBadge, isValid ? styles.validBadge : styles.invalidBadge]}>
-              {isValid ? (
-                <CheckCircle size={12} color="#059669" />
-              ) : (
-                <AlertCircle size={12} color="#EF4444" />
-              )}
-            </View>
-          )}
-        </View>
-        
-        <View style={[
-          styles.inputWrapper,
-          focusedField === label && styles.inputWrapperFocused,
-          !isValid && value && styles.inputWrapperError
-        ]}>
-          <View style={styles.countryCode}>
-            <Text style={styles.countryCodeText}>+91</Text>
-          </View>
-          <TextInput
-            style={styles.input}
-            value={formatPhoneNumber(value)}
-            onChangeText={(text) => onChangeText(text.replace(/\D/g, ''))}
-            placeholder={placeholder}
-            placeholderTextColor="rgba(255, 255, 255, 0.4)"
-            keyboardType="phone-pad"
-            onFocus={() => setFocusedField(label)}
-            onBlur={() => setFocusedField(null)}
-            maxLength={11} // 10 digits + 1 space
-          />
-        </View>
-        
-        {description && (
-          <Text style={styles.description}>{description}</Text>
-        )}
-        
-        {!isValid && value && (
-          <Text style={styles.errorText}>
-            Please enter a valid 10-digit Indian mobile number
-          </Text>
-        )}
-      </MotiView>
-    );
-  };
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0a0e27" />
-      
+
       {/* Header */}
       <LinearGradient
         colors={['#0a0e27', '#1a1f3a']}
-        style={[styles.header, { paddingTop: insets.top }]}
+        style={[styles.header]}
       >
         <View style={styles.headerContent}>
           <TouchableOpacity
@@ -222,7 +235,7 @@ export default function PhoneNumberScreen() {
             <MotiView
               from={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ type: 'timing', duration: 300 }}
+              transition={{ type: 'timing', duration: 300 } as any}
               style={styles.currentPhoneCard}
             >
               <View style={styles.currentPhoneHeader}>
@@ -243,6 +256,9 @@ export default function PhoneNumberScreen() {
             placeholder="Enter your mobile number"
             description="This will be used for booking confirmations and important updates"
             required
+            focusedField={focusedField}
+            onFocus={() => setFocusedField("Phone Number")}
+            onBlur={() => setFocusedField(null)}
           />
 
           {/* Emergency Contact Input */}
@@ -252,20 +268,23 @@ export default function PhoneNumberScreen() {
             onChangeText={setEmergencyContact}
             placeholder="Enter emergency contact number"
             description="A trusted contact who can be reached in case of emergency"
+            focusedField={focusedField}
+            onFocus={() => setFocusedField("Emergency Contact")}
+            onBlur={() => setFocusedField(null)}
           />
 
           {/* Security Note */}
           <MotiView
             from={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 500, type: 'timing', duration: 300 }}
+            transition={{ delay: 500, type: 'timing', duration: 300 } as any}
             style={styles.securityNote}
           >
             <Shield size={16} color="#059669" />
             <View style={styles.securityNoteContent}>
               <Text style={styles.securityNoteTitle}>Secure & Private</Text>
               <Text style={styles.securityNoteText}>
-                Your phone numbers are encrypted and used only for essential communications. 
+                Your phone numbers are encrypted and used only for essential communications.
                 We never share your contact information with third parties.
               </Text>
             </View>
