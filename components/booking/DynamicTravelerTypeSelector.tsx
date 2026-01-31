@@ -10,6 +10,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import { X, Briefcase, Users, Heart, User, Calendar } from 'lucide-react-native';
 import { db } from '@/config/firebase';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
@@ -83,11 +84,11 @@ export default function DynamicTravelerTypeSelector({
 
   const getColorStyles = (color: string) => {
     const colorMap: Record<string, { bg: string; border: string; text: string }> = {
-      blue: { bg: '#EFF6FF', border: '#3B82F6', text: '#1E40AF' },
-      green: { bg: '#ECFDF5', border: '#10B981', text: '#047857' },
-      pink: { bg: '#FDF2F8', border: '#EC4899', text: '#BE185D' },
-      yellow: { bg: '#FEF3C7', border: '#F59E0B', text: '#92400E' },
-      purple: { bg: '#F5F3FF', border: '#8B5CF6', text: '#6D28D9' },
+      blue: { bg: 'rgba(0, 212, 255, 0.1)', border: '#00D4FF', text: '#00D4FF' },
+      green: { bg: 'rgba(16, 185, 129, 0.1)', border: '#10B981', text: '#10B981' },
+      pink: { bg: 'rgba(236, 72, 153, 0.1)', border: '#EC4899', text: '#EC4899' },
+      yellow: { bg: 'rgba(245, 158, 11, 0.1)', border: '#F59E0B', text: '#F59E0B' },
+      purple: { bg: 'rgba(139, 92, 246, 0.1)', border: '#8B5CF6', text: '#8B5CF6' },
     };
     return colorMap[color] || colorMap.blue;
   };
@@ -115,7 +116,7 @@ export default function DynamicTravelerTypeSelector({
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <X size={24} color="#1A1A1A" strokeWidth={2} />
+              <X size={24} color="#FFF" strokeWidth={2} />
             </TouchableOpacity>
           </View>
 
@@ -127,7 +128,7 @@ export default function DynamicTravelerTypeSelector({
           >
             {loading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#111827" />
+                <LoadingSpinner size="large" />
                 <Text style={styles.loadingText}>Loading traveler types...</Text>
               </View>
             ) : travelerTypes.length === 0 ? (
@@ -146,9 +147,9 @@ export default function DynamicTravelerTypeSelector({
                     style={[
                       styles.typeCard,
                       isSelected && {
-                        borderColor: colorStyles.border,
-                        borderWidth: 2,
-                        backgroundColor: colorStyles.bg,
+                        borderColor: '#00D4FF',
+                        borderWidth: 1,
+                        backgroundColor: 'rgba(0, 212, 255, 0.05)',
                       },
                     ]}
                     onPress={() => handleSelect(type.id)}
@@ -161,10 +162,10 @@ export default function DynamicTravelerTypeSelector({
                           { backgroundColor: colorStyles.bg },
                         ]}
                       >
-                        <Icon size={28} color={colorStyles.border} strokeWidth={2} />
+                        <Icon size={24} color={isSelected ? colorStyles.border : 'rgba(255, 255, 255, 0.6)'} strokeWidth={2} />
                       </View>
                       <View style={styles.typeInfo}>
-                        <Text style={styles.typeTitle}>{type.title}</Text>
+                        <Text style={[styles.typeTitle, isSelected && { color: colorStyles.border }]}>{type.title}</Text>
                         <Text style={styles.typeDescription}>
                           {type.description}
                         </Text>
@@ -194,19 +195,22 @@ export default function DynamicTravelerTypeSelector({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#0a0e27',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     height: '85%',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomWidth: 0,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
+        shadowOpacity: 0.3,
         shadowRadius: 12,
       },
       android: {
@@ -222,7 +226,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   headerContent: {
     flex: 1,
@@ -231,12 +235,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: isSmallDevice ? 18 : 20,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#FFF',
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: isSmallDevice ? 13 : 14,
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   closeButton: {
     padding: 4,
@@ -256,7 +260,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   emptyContainer: {
     padding: 40,
@@ -265,39 +269,29 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.6)',
     textAlign: 'center',
   },
   typeCard: {
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E8E8E8',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   typeCardContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   iconContainer: {
-    width: 56,
-    height: 56,
+    width: 48,
+    height: 48,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   typeInfo: {
     flex: 1,
@@ -305,25 +299,26 @@ const styles = StyleSheet.create({
   typeTitle: {
     fontSize: isSmallDevice ? 15 : 16,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#FFF',
     marginBottom: 4,
   },
   typeDescription: {
     fontSize: isSmallDevice ? 12 : 13,
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.5)',
     lineHeight: 18,
   },
   selectedBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 12,
+    backgroundColor: '#00D4FF',
   },
   selectedBadgeText: {
-    color: '#fff',
-    fontSize: 16,
+    color: '#0a0e27',
+    fontSize: 14,
     fontWeight: '700',
   },
 });

@@ -21,6 +21,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MotiView, MotiText } from 'moti';
 
+import LoadingScreen from '@/components/LoadingScreen';
 import InlineLocationSearch from '../../components/InlineLocationSearch';
 import { Hotel } from '../../types/hotel';
 import {
@@ -410,11 +411,7 @@ export default function Search() {
 
   // Loading state
   if (loading) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#00D9FF" />
-      </View>
-    );
+    return <LoadingScreen message="Finding amazing hotels for you..." />;
   }
 
   return (

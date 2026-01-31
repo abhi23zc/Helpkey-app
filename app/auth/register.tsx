@@ -1,15 +1,14 @@
 import { authService } from '@/services/authService';
-import { Feather } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import { AntDesign, Feather } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
-  Modal,
   Platform,
-  Pressable,
+  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -28,7 +27,6 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
@@ -78,410 +76,360 @@ export default function Register() {
     }
   };
 
-  const handleClose = () => {
+  const handleBack = () => {
     router.back();
   };
 
   return (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={true}
-      onRequestClose={handleClose}
-      statusBarTranslucent
-    >
-      <StatusBar barStyle="light-content" backgroundColor="#040E22" />
-      <View style={styles.modalOverlay}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalContainer}
-          keyboardVerticalOffset={0}
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#0a0e27" />
+      
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardContainer}
+      >
+        {/* Header with back button */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+            <Feather name="chevron-left" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
-          {/* Header with close button */}
-          <View style={styles.header}>
-            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-              <Feather name="x" size={24} color="#00D9FF" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Create Account</Text>
-            <View style={styles.placeholder} />
+          {/* App Logo */}
+          <View style={styles.logoContainer}>
+            <View style={styles.logoWrapper}>
+              <Image 
+                source={require('@/assets/images/icon.png')} 
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </View>
           </View>
 
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
+          {/* Welcome Text */}
+          <View style={styles.welcomeContainer}>
+            <Text style={styles.welcomeTitle}>Create Account 👋</Text>
+            <Text style={styles.welcomeSubtitle}>Join us and start your journey.</Text>
+          </View>
+
+          {/* Google Sign In Button */}
+          <TouchableOpacity 
+            style={styles.googleButton}
+            onPress={handleGoogleSignIn}
+            disabled={googleLoading}
+            activeOpacity={0.8}
           >
-            <Text style={styles.subtitle}>Join us and start your journey</Text>
+            {googleLoading ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <>
+                <AntDesign name="google" size={20} color="#00D4FF" />
+                <Text style={styles.googleButtonText}>Sign up with Google</Text>
+              </>
+            )}
+          </TouchableOpacity>
 
-              {/* Your name */}
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Full Name</Text>
-                <View style={[
-                  styles.inputWrapper,
-                  focusedInput === 'name' && styles.inputWrapperFocused
-                ]}>
-                  <Feather name="user" size={20} color="#00D9FF" style={styles.icon} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Enter your full name"
-                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                    value={name}
-                    onChangeText={setName}
-                    onFocus={() => setFocusedInput('name')}
-                    onBlur={() => setFocusedInput(null)}
-                    returnKeyType="next"
-                    blurOnSubmit={false}
-                  />
-                </View>
-              </View>
+          {/* Divider */}
+          <View style={styles.dividerContainer}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
 
-              {/* Phone number */}
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Phone Number</Text>
-                <View style={[
-                  styles.inputWrapper,
-                  focusedInput === 'phone' && styles.inputWrapperFocused
-                ]}>
-                  <Feather name="smartphone" size={20} color="#00D9FF" style={styles.icon} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Enter your phone number"
-                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                    value={phone}
-                    onChangeText={setPhone}
-                    keyboardType="phone-pad"
-                    onFocus={() => setFocusedInput('phone')}
-                    onBlur={() => setFocusedInput(null)}
-                    returnKeyType="next"
-                    blurOnSubmit={false}
-                  />
-                </View>
-              </View>
+          {/* Full Name Input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Full Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your full name"
+              placeholderTextColor="#6B7280"
+              value={name}
+              onChangeText={setName}
+              returnKeyType="next"
+            />
+          </View>
 
-              {/* Email */}
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Email Address</Text>
-                <View style={[
-                  styles.inputWrapper,
-                  focusedInput === 'email' && styles.inputWrapperFocused
-                ]}>
-                  <Feather name="mail" size={20} color="#00D9FF" style={styles.icon} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Enter your email"
-                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    onFocus={() => setFocusedInput('email')}
-                    onBlur={() => setFocusedInput(null)}
-                    returnKeyType="next"
-                    blurOnSubmit={false}
-                  />
-                </View>
-              </View>
+          {/* Phone Input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Phone Number</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your phone number"
+              placeholderTextColor="#6B7280"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+              returnKeyType="next"
+            />
+          </View>
 
-              {/* Set password */}
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Password</Text>
-                <View style={[
-                  styles.inputWrapper,
-                  focusedInput === 'password' && styles.inputWrapperFocused
-                ]}>
-                  <Feather name="lock" size={20} color="#00D9FF" style={styles.icon} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Create a strong password"
-                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                    onFocus={() => setFocusedInput('password')}
-                    onBlur={() => setFocusedInput(null)}
-                    returnKeyType="next"
-                    blurOnSubmit={false}
-                  />
-                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                    <Feather 
-                      name={showPassword ? "eye-off" : "eye"} 
-                      size={20} 
-                      color="rgba(255, 255, 255, 0.5)" 
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
+          {/* Email Input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="yourname@email.com"
+              placeholderTextColor="#6B7280"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              returnKeyType="next"
+            />
+          </View>
 
-              {/* Set password again */}
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Confirm Password</Text>
-                <View style={[
-                  styles.inputWrapper,
-                  focusedInput === 'confirmPassword' && styles.inputWrapperFocused
-                ]}>
-                  <Feather name="lock" size={20} color="#00D9FF" style={styles.icon} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Re-enter your password"
-                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    secureTextEntry={!showConfirmPassword}
-                    onFocus={() => setFocusedInput('confirmPassword')}
-                    onBlur={() => setFocusedInput(null)}
-                    returnKeyType="done"
-                    onSubmitEditing={handleCreate}
-                  />
-                  <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                    <Feather 
-                      name={showConfirmPassword ? "eye-off" : "eye"} 
-                      size={20} 
-                      color="rgba(255, 255, 255, 0.5)" 
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* Create Button */}
-              <TouchableOpacity
-                style={styles.createButton}
-                onPress={handleCreate}
-                activeOpacity={0.9}
-                disabled={loading}
+          {/* Password Input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Password</Text>
+            <View style={styles.passwordInputContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="min 8. characters"
+                placeholderTextColor="#6B7280"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                returnKeyType="next"
+              />
+              <TouchableOpacity 
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.eyeButton}
               >
-                <LinearGradient
-                  colors={['#00D9FF', '#00B4D8', '#0096C7']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.gradientButton}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#040E22" />
-                  ) : (
-                    <>
-                      <Text style={styles.createButtonText}>Create Account</Text>
-                      <Feather name="arrow-right" size={20} color="#040E22" style={styles.buttonIcon} />
-                    </>
-                  )}
-                </LinearGradient>
+                <Feather 
+                  name={showPassword ? "eye-off" : "eye"} 
+                  size={20} 
+                  color="#6B7280" 
+                />
               </TouchableOpacity>
+            </View>
+          </View>
 
-              {/* Divider */}
-              <View style={styles.dividerContainer}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>Or continue with</Text>
-                <View style={styles.dividerLine} />
-              </View>
+          {/* Confirm Password Input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Confirm Password</Text>
+            <View style={styles.passwordInputContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Re-enter your password"
+                placeholderTextColor="#6B7280"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showConfirmPassword}
+                returnKeyType="done"
+                onSubmitEditing={handleCreate}
+              />
+              <TouchableOpacity 
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={styles.eyeButton}
+              >
+                <Feather 
+                  name={showConfirmPassword ? "eye-off" : "eye"} 
+                  size={20} 
+                  color="#6B7280" 
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
 
-              {/* Social Login Buttons */}
-              <View style={styles.socialContainer}>
-                <TouchableOpacity 
-                  style={styles.socialButton} 
-                  activeOpacity={0.7}
-                  onPress={handleGoogleSignIn}
-                  disabled={googleLoading}
-                >
-                  <View style={styles.socialIconWrapper}>
-                    {googleLoading ? (
-                      <ActivityIndicator size="small" color="#DB4437" />
-                    ) : (
-                      <Feather name="chrome" size={24} color="#DB4437" />
-                    )}
-                  </View>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
-                  <View style={styles.socialIconWrapper}>
-                    <Feather name="facebook" size={24} color="#1877F2" />
-                  </View>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
-                  <View style={styles.socialIconWrapper}>
-                    <Feather name="github" size={24} color="#181717" />
-                  </View>
-                </TouchableOpacity>
-              </View>
+          {/* Create Account Button */}
+          <TouchableOpacity
+            style={styles.createButton}
+            onPress={handleCreate}
+            activeOpacity={0.9}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#FFF" />
+            ) : (
+              <Text style={styles.createButtonText}>Create Account</Text>
+            )}
+          </TouchableOpacity>
 
-              {/* Sign in link */}
-              <View style={styles.signInContainer}>
-                <Text style={styles.signInText}>Already have an account? </Text>
-                <Link href="/auth/login" asChild>
-                  <TouchableOpacity>
-                    <Text style={styles.signInLink}>Sign in</Text>
-                  </TouchableOpacity>
-                </Link>
-              </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </View>
-    </Modal>
+          {/* Sign in link */}
+          <View style={styles.signInContainer}>
+            <Text style={styles.signInText}>Already have an account? </Text>
+            <Link href="/auth/login" asChild>
+              <TouchableOpacity>
+                <Text style={styles.signInLink}>Sign in</Text>
+              </TouchableOpacity>
+            </Link>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
+  container: {
     flex: 1,
-    backgroundColor: '#040E22',
+    backgroundColor: '#0a0e27',
   },
-  modalContainer: {
+  keyboardContainer: {
     flex: 1,
-    backgroundColor: '#040E22',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 50 : 60,
-    paddingBottom: 20,
+    paddingTop: Platform.OS === 'android' ? 20 : 10,
+    paddingBottom: 10,
   },
-  closeButton: {
+  backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0, 217, 255, 0.1)',
     justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(0, 217, 255, 0.3)',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: 0.3,
-  },
-  placeholder: {
-    width: 40,
+    alignItems: 'flex-start',
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: Platform.OS === 'android' ? 40 : 60,
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingBottom: 40,
   },
-  subtitle: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.6)',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  inputContainer: {
-    marginBottom: 14,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.9)',
-    marginBottom: 10,
-    marginLeft: 4,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
+  logoContainer: {
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    height: 56,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  inputWrapperFocused: {
-    borderColor: '#00D9FF',
-    backgroundColor: 'rgba(0, 217, 255, 0.08)',
-    shadowColor: '#00D9FF',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  icon: {
-    marginRight: 14,
-  },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: '#FFFFFF',
-    fontWeight: '500',
-    paddingVertical: Platform.OS === 'android' ? 8 : 0,
-  },
-  createButton: {
     marginTop: 20,
-    marginBottom: 18,
-    borderRadius: 14,
-    overflow: 'hidden',
-    elevation: 8,
-    shadowColor: '#00D9FF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
+    marginBottom: 30,
   },
-  gradientButton: {
-    height: 56,
-    flexDirection: 'row',
+  logoWrapper: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+    backgroundColor: '#2A2D5A',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#00D4FF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: '#00D4FF20',
   },
-  createButtonText: {
-    fontSize: 16,
+  logo: {
+    width: 50,
+    height: 50,
+  },
+  welcomeContainer: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  welcomeTitle: {
+    fontSize: 28,
     fontWeight: '700',
-    color: '#040E22',
-    letterSpacing: 0.5,
+    color: '#FFFFFF',
+    marginBottom: 8,
+    textAlign: 'center',
   },
-  buttonIcon: {
-    marginLeft: 10,
+  welcomeSubtitle: {
+    fontSize: 16,
+    color: '#9CA3AF',
+    textAlign: 'center',
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 16,
+    marginBottom: 24,
+  },
+  googleButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginLeft: 12,
   },
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 20,
+    marginBottom: 24,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: '#374151',
   },
   dividerText: {
-    marginHorizontal: 12,
-    fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.5)',
+    marginHorizontal: 16,
+    fontSize: 14,
+    color: '#9CA3AF',
     fontWeight: '500',
   },
-  socialContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 12,
-    marginBottom: 24,
+  inputContainer: {
+    marginBottom: 16,
   },
-  socialButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  input: {
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    fontSize: 16,
+    color: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
-  socialIconWrapper: {
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
+  passwordInputContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#374151',
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  passwordInput: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    fontSize: 16,
+    color: '#FFFFFF',
+  },
+  eyeButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  createButton: {
+    backgroundColor: '#00D4FF',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    marginBottom: 32,
+    shadowColor: '#00D4FF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  createButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1A1B3A',
   },
   signInContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 4,
-    marginBottom: 12,
   },
   signInText: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#9CA3AF',
   },
   signInLink: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#00D9FF',
+    color: '#00D4FF',
   },
 });

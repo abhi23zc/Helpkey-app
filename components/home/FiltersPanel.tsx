@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -49,6 +50,8 @@ const FiltersPanel = ({
   onPropertyTypeToggle,
   onApply,
 }: FiltersPanelProps) => {
+  const insets = useSafeAreaInsets();
+
   // Local state for price inputs to avoid jitter
   const [minPriceInput, setMinPriceInput] = useState(priceRange[0].toString());
   const [maxPriceInput, setMaxPriceInput] = useState(priceRange[1].toString());
@@ -75,6 +78,8 @@ const FiltersPanel = ({
   };
 
   return (
+
+
     <Modal
       visible={visible}
       animationType="slide"
@@ -131,9 +136,9 @@ const FiltersPanel = ({
                   step={100}
                   value={priceRange[1]}
                   onValueChange={(val) => onPriceRangeChange([priceRange[0], val])}
-                  minimumTrackTintColor="#00A896"
+                  minimumTrackTintColor="#00D4FF"
                   maximumTrackTintColor="#2D3748"
-                  thumbTintColor="#00A896"
+                  thumbTintColor="#00D4FF"
                 />
               </View>
               <View style={styles.priceInputsContainer}>
@@ -186,7 +191,7 @@ const FiltersPanel = ({
               </View>
               <TouchableOpacity style={styles.seeMoreButton}>
                 <Text style={styles.seeMoreText}>See more</Text>
-                <ChevronDown size={16} color="#00A896" />
+                <ChevronDown size={16} color="#00D4FF" />
               </TouchableOpacity>
             </View>
 
@@ -218,7 +223,7 @@ const FiltersPanel = ({
           </ScrollView>
 
           {/* Footer */}
-          <View style={styles.footer}>
+          <View style={[styles.footer, { paddingBottom: insets.bottom }]}>
             <TouchableOpacity style={styles.applyButton} onPress={onApply}>
               <Text style={styles.applyButtonText}>Apply</Text>
             </TouchableOpacity>
@@ -226,6 +231,7 @@ const FiltersPanel = ({
         </View>
       </View>
     </Modal>
+
   );
 };
 
@@ -236,10 +242,10 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#0F1629',
+    backgroundColor: '#0a0e27',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    height: '90%',
+    height: '85%',
     paddingTop: 20,
   },
   header: {
@@ -262,7 +268,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
   section: {
     marginBottom: 24,
@@ -284,12 +290,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#2D3E5F',
-    backgroundColor: '#1A2235',
+    borderColor: '#374151',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   ratingChipActive: {
-    borderColor: '#00A896',
-    backgroundColor: '#00A896',
+    borderColor: '#00D4FF',
+    backgroundColor: '#00D4FF',
   },
   ratingText: {
     fontSize: 14,
@@ -320,11 +326,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#2D3E5F',
+    borderColor: '#374151',
     borderRadius: 12,
     paddingHorizontal: 16,
     height: 48,
-    backgroundColor: '#1A2235',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   currencySymbol: {
     fontSize: 16,
@@ -351,15 +357,15 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#2D3E5F',
-    backgroundColor: '#1A2235',
+    borderColor: '#374151',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     marginRight: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkboxActive: {
-    backgroundColor: '#00A896',
-    borderColor: '#00A896',
+    backgroundColor: '#00D4FF',
+    borderColor: '#00D4FF',
   },
   checkboxLabel: {
     fontSize: 14,
@@ -372,7 +378,7 @@ const styles = StyleSheet.create({
   },
   seeMoreText: {
     fontSize: 14,
-    color: '#00A896',
+    color: '#00D4FF',
     fontWeight: '500',
     marginRight: 4,
   },
@@ -386,12 +392,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#2D3E5F',
-    backgroundColor: '#1A2235',
+    borderColor: '#374151',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   propertyChipActive: {
-    borderColor: '#00A896',
-    backgroundColor: '#00A896',
+    borderColor: '#00D4FF',
+    backgroundColor: '#00D4FF',
   },
   propertyChipText: {
     fontSize: 14,
@@ -404,17 +410,17 @@ const styles = StyleSheet.create({
   footer: {
     padding: 20,
     borderTopWidth: 1,
-    borderTopColor: '#2D3E5F',
+    borderTopColor: '#374151',
   },
   applyButton: {
-    backgroundColor: '#00A896',
+    backgroundColor: '#00D4FF',
     borderRadius: 28,
     height: 56,
     alignItems: 'center',
     justifyContent: 'center',
   },
   applyButtonText: {
-    color: '#FFFFFF',
+    color: '#0a0e27',
     fontSize: 16,
     fontWeight: '700',
   },

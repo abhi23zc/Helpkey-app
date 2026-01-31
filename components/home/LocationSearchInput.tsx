@@ -14,6 +14,7 @@ import {
   Keyboard,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface PlacePrediction {
   place_id: string;
@@ -184,6 +185,7 @@ export default function LocationSearchInput({
       </View>
     </TouchableOpacity>
   );
+  const insets = useSafeAreaInsets();
 
   return (
     <Modal
@@ -193,7 +195,7 @@ export default function LocationSearchInput({
       onRequestClose={onClose}
     >
       <StatusBar barStyle="light-content" backgroundColor="#0a0e27" />
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
         {/* Header with Search Bar */}
         <View style={styles.header}>
           <TouchableOpacity

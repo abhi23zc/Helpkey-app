@@ -40,6 +40,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import RoomCard from '@/components/hotel/RoomCard';
+import LoadingScreen from '@/components/LoadingScreen';
 import { db } from '@/config/firebase';
 import { Hotel, Review, Room } from '@/types/hotel';
 import { collection, doc, getDoc, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
@@ -285,11 +286,7 @@ export default function HotelDetail() {
   };
 
   if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#00D9FF" />
-      </View>
-    );
+    return <LoadingScreen message="Loading hotel details..." />;
   }
 
   if (!hotel) {

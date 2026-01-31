@@ -1,5 +1,6 @@
 import { useAuth } from '@/context/AuthContext';
 import { getUserBookings } from '@/services/bookingService';
+import LoadingScreen from '@/components/LoadingScreen';
 import { useRouter } from 'expo-router';
 import {
   AlertCircle,
@@ -379,9 +380,7 @@ export default function Bookings() {
       </View>
 
       {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#00D9FF" />
-        </View>
+        <LoadingScreen message="Loading your bookings..." />
       ) : (
         <>
           {/* Tabs */}
